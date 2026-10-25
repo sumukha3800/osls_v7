@@ -11,9 +11,9 @@ import { extractZip, isZipBuffer } from '../extract-zip.ts';
 const redirectStatusCodes = new Set([301, 302, 303, 307, 308]);
 const genericMimeTypes = new Set(['application/octet-stream', 'binary/octet-stream']);
 
-const filenameFromPath = (requestUrl) => path.basename(new URL(requestUrl).pathname);
+const filenameFromPath = (requestUrl: string) => path.basename(new URL(requestUrl).pathname);
 
-const getExtFromMime = (headers) => {
+const getExtFromMime = (headers: Record<string, string>) => {
   const header = headers['content-type'];
 
   if (!header) {
@@ -27,7 +27,14 @@ const getExtFromMime = (headers) => {
   return mime.extension(mimeType) || null;
 };
 
-const getFilename = ({ requestUrl, headers, data, explicitFilename }) => {
+interface FilenameSource {
+  requestUrl: string;
+  headers: Record<string, string>;
+  data: Buffer;
+  explicitFilename?: string;
+}
+
+const getFilename = ({ requestUrl, headers, data, explicitFilename }: FilenameSource) => {
   if (explicitFilename) {
     return explicitFilename;
   }
@@ -56,7 +63,7 @@ const getFilename = ({ requestUrl, headers, data, explicitFilename }) => {
 };
 
 const fetchWithRedirects = async (
-  requestUrl,
+  requestUrl: string | URL,
   {
     headers,
     dispatcher,
@@ -117,7 +124,11 @@ const fetchWithRedirects = async (
   throw new Error('Too many redirects');
 };
 
-export default (uri, output, opts?) => {
+export default (
+  uri: string | URL,
+  output?: string | Record<string, any> | null,
+  opts?: Record<string, any> | null
+) => {
   return (async () => {
     if (typeof output === 'object') {
       opts = output;
@@ -183,7 +194,8 @@ export default (uri, output, opts?) => {
         explicitFilename: opts.filename,
       })
     );
-    const outputFilepath = path.join(output, filename);
+    // A string here: an options object passed as `output` was moved to `opts` above
+    const outputFilepath = path.join(output as string, filename);
 
     await fsp.mkdir(path.dirname(outputFilepath), { recursive: true });
     await fsp.writeFile(outputFilepath, data);

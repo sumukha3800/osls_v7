@@ -4,16 +4,27 @@ import { progress, log } from '../../../log.ts';
 import joinTextTokens from '../../log/join-text-tokens.ts';
 import style from './style.ts';
 
-export default ({ logLevelIndex }) => {
+// Emitted by the progress reporter (lib/log/get-progress-reporter.ts)
+interface ProgressUpdate {
+  namespace: string;
+  name: string;
+  levelIndex: number;
+  textTokens: unknown;
+  options: Record<string, any> | null;
+}
+
+export default ({ logLevelIndex }: { logLevelIndex: number }) => {
   const cliProgressFooter = createProgressFooter();
   cliProgressFooter.shouldAddProgressAnimationPrefix = true;
   cliProgressFooter.progressAnimationPrefixFrames =
-    cliProgressFooter.progressAnimationPrefixFrames.map((frame) => style.noticeSymbol(frame));
+    cliProgressFooter.progressAnimationPrefixFrames.map((frame: string) =>
+      style.noticeSymbol(frame)
+    );
 
-  let mainProgressTextContent;
-  let mainProgressIntervalId;
-  let mainProgressStartTime;
-  let lastMainEventText;
+  let mainProgressTextContent: string | undefined;
+  let mainProgressIntervalId: ReturnType<typeof setInterval> | undefined;
+  let mainProgressStartTime: number | undefined;
+  let lastMainEventText: string | undefined;
 
   let isClosed = false;
   progress.clear = () => {
@@ -22,12 +33,12 @@ export default ({ logLevelIndex }) => {
     cliProgressFooter.updateProgress();
   };
 
-  const ongoingSubProgress = new Map();
+  const ongoingSubProgress = new Map<string, string>();
   const repaint = () => {
     if (isClosed) {
       return;
     }
-    const progressItems = [];
+    const progressItems: string[] = [];
     if (mainProgressStartTime) {
       progressItems.push(
         `${mainProgressTextContent} ${style.aside(
@@ -39,7 +50,7 @@ export default ({ logLevelIndex }) => {
     cliProgressFooter.updateProgress(progressItems);
   };
 
-  emitter.on('update', ({ namespace, name, levelIndex, textTokens, options }) => {
+  emitter.on('update', ({ namespace, name, levelIndex, textTokens, options }: ProgressUpdate) => {
     if (levelIndex > logLevelIndex) {
       return;
     }
@@ -59,7 +70,7 @@ export default ({ logLevelIndex }) => {
     }
     repaint();
   });
-  emitter.on('remove', ({ namespace, name }) => {
+  emitter.on('remove', ({ namespace, name }: { namespace: string; name: string }) => {
     ongoingSubProgress.delete(`${namespace}:${name}`);
     repaint();
   });

@@ -73,8 +73,9 @@ export interface ServerlessClasses {
 // entry points, which osls vendors under `lib/utils/serverless-utils`. The vendored modules
 // have the extension of this file: `.ts` in the sources, `.js` in `dist/`
 const compatibilityAliasesKey = Symbol.for('osls.compatibilityAliases');
-if (!globalThis[compatibilityAliasesKey]) {
-  globalThis[compatibilityAliasesKey] = true;
+const globalScope = globalThis as Record<symbol, unknown>;
+if (!globalScope[compatibilityAliasesKey]) {
+  globalScope[compatibilityAliasesKey] = true;
   const vendoredServerlessUtilsPath = path.resolve(import.meta.dirname, 'utils/serverless-utils');
   const extension = path.extname(import.meta.filename);
   const compatibilityAliases = new Map(
@@ -141,7 +142,7 @@ class Serverless {
   constructor(config: ServerlessConfig = {}) {
     if (!isPlainObject(config)) config = {};
 
-    if (isStackFromOldLocalFallback(new Error().stack)) {
+    if (isStackFromOldLocalFallback(new Error().stack ?? '')) {
       // Prevent old local fallback, as it's not compatible with this version of the CLI
       throw new ServerlessError(
         [
@@ -364,11 +365,9 @@ class Serverless {
         this.variablesMeta.delete(key);
       }
     }
-    if (!isObject(value)) {
-      const lastKey = configurationPathKeys.pop();
-      value = { [lastKey]: value };
-    }
-    parseEntries(Object.entries(value), configurationPathKeys, this.variablesMeta);
+    // A non object value is parsed as an entry of its parent
+    const entriesValue = isObject(value) ? value : { [configurationPathKeys.pop()!]: value };
+    parseEntries(Object.entries(entriesValue), configurationPathKeys, this.variablesMeta);
   }
 }
 

@@ -75,7 +75,15 @@ export default class GreetingPlugin implements Plugin {
     const name: string = this.options.name;
     // @ts-expect-error The logger takes messages, not an options object
     this.log.get(42);
-    void [region, timeout, name];
+    // @ts-expect-error `getAccountId()` resolves to a string
+    const accountId: Promise<number> = this.serverless.getProvider('aws').getAccountId();
+    // @ts-expect-error Commands are spawned by name
+    void this.serverless.pluginManager.spawn(42);
+    // @ts-expect-error Properties are defined with a JSON schema
+    this.serverless.configSchemaHandler.defineTopLevelProperty('greeting', 'string');
+    // @ts-expect-error `getStage()` returns a string
+    const stage: number = this.serverless.getProvider('aws').getStage();
+    void [region, timeout, name, accountId, stage];
   }
 }
 

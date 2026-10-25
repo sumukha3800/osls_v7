@@ -131,7 +131,8 @@
     "test:ci": "npm run prettier-check:updated && npm run lint:updated && npm run test:isolated",
     "test:isolated": "mocha --config test/mocha/config.json --parallel \"test/unit/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.json",
-    "typecheck:consumers": "node scripts/check-typescript-consumers.ts"
+    "typecheck:consumers": "node scripts/check-typescript-consumers.ts",
+    "typecheck:strict": "node scripts/typecheck-strict.ts"
   },
   "engines": {
     "node": "^22.18.0 || ^24.0.0"

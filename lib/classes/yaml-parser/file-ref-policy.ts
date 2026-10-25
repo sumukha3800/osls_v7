@@ -4,15 +4,18 @@ import { fileURLToPath } from 'node:url';
 import { denyExternalRef, throwOptionsError } from './external-ref-errors.ts';
 import { assertKnownOptions, assertOptionsObject } from './option-validation.ts';
 
+type AllowedRoot = { path: string; realpath: string };
+type FileRefOptions = { allowedRoots: AllowedRoot[] | null };
+
 const DEFAULT_ALLOWED_ROOTS = ['.'];
 const FILE_REF_POLICY_HINT =
   'The code calling yamlParser.parse can allow this path by adding a trusted root ' +
   'to externalRefs.file.allowedRoots.';
 
-const realpathIfExists = async (filePath) => {
+const realpathIfExists = async (filePath: string): Promise<string> => {
   try {
     return await fsp.realpath(filePath);
-  } catch (error) {
+  } catch (error: any) {
     if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') throw error;
   }
 
@@ -22,7 +25,7 @@ const realpathIfExists = async (filePath) => {
   return path.join(await realpathIfExists(parentPath), path.basename(filePath));
 };
 
-const isPathInside = (rootPath, candidatePath) => {
+const isPathInside = (rootPath: string, candidatePath: string) => {
   const relativePath = path.relative(rootPath, candidatePath);
   return (
     relativePath === '' ||
@@ -30,14 +33,17 @@ const isPathInside = (rootPath, candidatePath) => {
   );
 };
 
-const normalizeAllowedRoot = async (documentDir, rootPath) => {
+const normalizeAllowedRoot = async (
+  documentDir: string,
+  rootPath: unknown
+): Promise<AllowedRoot> => {
   if (typeof rootPath !== 'string') {
     throwOptionsError(
       'YAML parser option externalRefs.file.allowedRoots must contain only strings.'
     );
   }
 
-  let absolutePath;
+  let absolutePath: string;
   try {
     absolutePath = rootPath.toLowerCase().startsWith('file:')
       ? fileURLToPath(rootPath)
@@ -54,7 +60,10 @@ const normalizeAllowedRoot = async (documentDir, rootPath) => {
   };
 };
 
-const normalizeFileRefOptions = async (documentDir, options: Record<string, any> = {}) => {
+const normalizeFileRefOptions = async (
+  documentDir: string,
+  options: Record<string, any> = {}
+): Promise<FileRefOptions> => {
   assertOptionsObject(options, 'externalRefs.file');
   assertKnownOptions(options, 'externalRefs.file', ['allowedRoots']);
 
@@ -76,7 +85,7 @@ const normalizeFileRefOptions = async (documentDir, options: Record<string, any>
   };
 };
 
-const getRefFilePath = (documentUrl) => {
+const getRefFilePath = (documentUrl: string) => {
   try {
     const url = new URL(documentUrl);
     if (url.protocol === 'file:') return fileURLToPath(url);
@@ -86,16 +95,19 @@ const getRefFilePath = (documentUrl) => {
   }
 };
 
-const isFileRefAllowedByPath = (candidatePath, allowedRoots, rootProperty) =>
-  allowedRoots.some((allowedRoot) => isPathInside(allowedRoot[rootProperty], candidatePath));
+const isFileRefAllowedByPath = (
+  candidatePath: string,
+  allowedRoots: AllowedRoot[],
+  rootProperty: keyof AllowedRoot
+) => allowedRoots.some((allowedRoot) => isPathInside(allowedRoot[rootProperty], candidatePath));
 
-const denyFileRefOutsideAllowedRoots = (documentUrl) => {
+const denyFileRefOutsideAllowedRoots: (documentUrl: string) => never = (documentUrl) => {
   denyExternalRef(
     `Blocked YAML $ref file outside allowed roots: ${documentUrl}. ${FILE_REF_POLICY_HINT}`
   );
 };
 
-const assertFileRefAllowed = async (documentUrl, options) => {
+const assertFileRefAllowed = async (documentUrl: string, options: FileRefOptions) => {
   if (options.allowedRoots == null) return;
 
   const candidatePath = getRefFilePath(documentUrl);
@@ -115,6 +127,7 @@ const assertFileRefAllowed = async (documentUrl, options) => {
 };
 
 export { assertFileRefAllowed, normalizeFileRefOptions };
+export type { AllowedRoot, FileRefOptions };
 
 export default {
   assertFileRefAllowed,

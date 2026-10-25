@@ -18,16 +18,16 @@ if (!log.verbose) {
 
   // Notice level message common message decorators
   Object.defineProperties(log, {
-    success: getterDescriptor(function () {
+    success: getterDescriptor(function (this: Logger) {
       return this.notice;
     }),
-    skip: getterDescriptor(function () {
+    skip: getterDescriptor(function (this: Logger) {
       return this.notice;
     }),
   });
 
   Object.defineProperties(log, {
-    verbose: getterDescriptor(function () {
+    verbose: getterDescriptor(function (this: Logger) {
       return this.info;
     }),
   });
@@ -68,7 +68,23 @@ const getPluginWriters: GetPluginWriters = memoizee(
   { primitive: true }
 );
 
-const defaultStyle = {
+// Styles text tokens for output. The CLI log reporter (log-reporters/node/style.ts) joins them
+// into a decorated string; without it they are returned as an array
+export type LogStyleDecorator = (text?: unknown, ...textTokens: unknown[]) => string | unknown[];
+
+export interface LogStyle {
+  aside: LogStyleDecorator;
+  error: LogStyleDecorator;
+  link: LogStyleDecorator;
+  linkStrong: LogStyleDecorator;
+  noticeSymbol: LogStyleDecorator;
+  strong: LogStyleDecorator;
+  title: LogStyleDecorator;
+  warning: LogStyleDecorator;
+  [name: string]: LogStyleDecorator;
+}
+
+const defaultStyle: LogStyle = {
   aside: (text, ...textTokens) => [text, ...textTokens],
   error: (text, ...textTokens) => [text, ...textTokens],
   link: (text, ...textTokens) => [text, ...textTokens],
@@ -79,7 +95,7 @@ const defaultStyle = {
   warning: (text, ...textTokens) => [text, ...textTokens],
 };
 
-const style = (() => {
+const style = ((): LogStyle => {
   if (!globalState.logStyle) return (globalState.logStyle = defaultStyle);
   for (const key of Object.keys(defaultStyle)) {
     if (!globalState.logStyle[key]) globalState.logStyle[key] = defaultStyle[key];

@@ -17,6 +17,12 @@ const HTTP_REF_POLICY_HINT =
   'externalRefs.http.allowedUnsafeHosts.';
 const UNSAFE_HOSTNAME_SUFFIXES = ['.local', '.internal', '.intranet', '.corp', '.home', '.lan'];
 type IpFamily = 'ipv4' | 'ipv6';
+type HttpRefOptions = { allowUnsafeUrls: boolean; allowedUnsafeHosts: string[] };
+type RefFileInfo = { url: string; extension: string; hash: string };
+type RefResolver = {
+  canRead: (fileInfo: RefFileInfo) => boolean;
+  read: (fileInfo: RefFileInfo) => Promise<Buffer>;
+};
 const UNSAFE_IP_BLOCKS: (['subnet', string, number, IpFamily] | ['address', string, IpFamily])[] = [
   ['subnet', '0.0.0.0', 8, 'ipv4'],
   ['subnet', '10.0.0.0', 8, 'ipv4'],
@@ -46,7 +52,7 @@ const UNSAFE_IP_BLOCKS: (['subnet', string, number, IpFamily] | ['address', stri
   ['subnet', 'ff00::', 8, 'ipv6'],
 ];
 
-let safeHttpAgent;
+let safeHttpAgent: Agent | undefined;
 
 const createUnsafeIpBlockList = () => {
   const blockList = new net.BlockList();
@@ -64,7 +70,7 @@ const createUnsafeIpBlockList = () => {
 
 const unsafeIpBlockList = createUnsafeIpBlockList();
 
-const isAllowedUnsafeHttpHost = (documentUrl, allowedUnsafeHosts) => {
+const isAllowedUnsafeHttpHost = (documentUrl: string, allowedUnsafeHosts: string[]) => {
   const url = new URL(documentUrl);
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
 
@@ -80,13 +86,13 @@ const isAllowedUnsafeHttpHost = (documentUrl, allowedUnsafeHosts) => {
   return allowedUnsafeHosts.some((allowedHost) => hostCandidates.includes(allowedHost));
 };
 
-const normalizeHostname = (hostname) =>
+const normalizeHostname = (hostname: string) =>
   hostname
     .toLowerCase()
     .replace(/^\[(.*)]$/, '$1')
     .replace(/\.$/, '');
 
-const isUnsafeHostname = (hostname) => {
+const isUnsafeHostname = (hostname: string) => {
   const normalizedHostname = normalizeHostname(hostname);
 
   return (
@@ -96,12 +102,12 @@ const isUnsafeHostname = (hostname) => {
   );
 };
 
-const getMappedIPv4Address = (address) => {
+const getMappedIPv4Address = (address: string) => {
   const match = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(address.toLowerCase());
   return match && match[1];
 };
 
-const isUnsafeIpAddress = (address) => {
+const isUnsafeIpAddress = (address: string): boolean => {
   const normalizedAddress = normalizeHostname(address);
   const mappedIPv4Address = getMappedIPv4Address(normalizedAddress);
 
@@ -113,14 +119,14 @@ const isUnsafeIpAddress = (address) => {
   return unsafeIpBlockList.check(normalizedAddress, ipVersion === 6 ? 'ipv6' : 'ipv4');
 };
 
-const createUnsafeHttpRefAccessDeniedError = (message) =>
+const createUnsafeHttpRefAccessDeniedError = (message: string) =>
   createExternalRefAccessDeniedError(`${message}. ${HTTP_REF_POLICY_HINT}`);
 
-const denyUnsafeHttpRef = (message) => {
+const denyUnsafeHttpRef = (message: string) => {
   throw createUnsafeHttpRefAccessDeniedError(message);
 };
 
-const validateResolvedAddress = (hostname, address) => {
+const validateResolvedAddress = (hostname: string, address: string) => {
   if (!isUnsafeIpAddress(address)) return;
 
   throw createUnsafeHttpRefAccessDeniedError(
@@ -155,21 +161,22 @@ const getSafeHttpAgent = () => {
                 validateResolvedAddress(hostname, address);
               }
             } catch (validationError) {
-              callback(validationError);
+              callback(validationError as Error);
               return;
             }
 
             callback(null, address, family);
           });
         },
-      },
+        // net.LookupFunction types the callback without the error-only call
+      } as { lookup: net.LookupFunction },
     });
   }
 
   return safeHttpAgent;
 };
 
-const assertHttpRefResolvesSafely = async (documentUrl) => {
+const assertHttpRefResolvesSafely = async (documentUrl: string) => {
   const { hostname, protocol } = new URL(documentUrl);
   const normalizedHostname = normalizeHostname(hostname);
 
@@ -190,18 +197,18 @@ const assertHttpRefResolvesSafely = async (documentUrl) => {
   }
 };
 
-const assertHttpRefAllowed = async (documentUrl, options) => {
+const assertHttpRefAllowed = async (documentUrl: string, options: HttpRefOptions) => {
   if (isAllowedUnsafeHttpHost(documentUrl, options.allowedUnsafeHosts)) return;
   await assertHttpRefResolvesSafely(documentUrl);
 };
 
-const requestHttpDocument = async (documentUrl, dispatcher) => {
-  let timeoutId;
-  let controller;
+const requestHttpDocument = async (documentUrl: string, dispatcher: Agent | null) => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  let controller: AbortController | undefined;
 
   if (typeof AbortController !== 'undefined') {
     controller = new AbortController();
-    timeoutId = setTimeout(() => controller.abort(), DEFAULT_HTTP_TIMEOUT);
+    timeoutId = setTimeout(() => controller!.abort(), DEFAULT_HTTP_TIMEOUT);
   }
 
   try {
@@ -236,7 +243,7 @@ const requestHttpDocument = async (documentUrl, dispatcher) => {
   }
 };
 
-const readHttpDocumentSafely = async (documentUrl, options) => {
+const readHttpDocumentSafely = async (documentUrl: string, options: HttpRefOptions) => {
   let currentUrl = documentUrl;
 
   for (let redirectCount = 0; ; redirectCount += 1) {
@@ -264,7 +271,12 @@ const readHttpDocumentSafely = async (documentUrl, options) => {
   }
 };
 
-const readHttpRef = async (documentUrl, fileInfo, HTTPResolver, options) => {
+const readHttpRef = async (
+  documentUrl: string,
+  fileInfo: RefFileInfo,
+  HTTPResolver: RefResolver,
+  options: HttpRefOptions
+) => {
   if (options.allowUnsafeUrls) {
     const httpResolver = { ...HTTPResolver, safeUrlResolver: false };
     return httpResolver.read(fileInfo);
@@ -274,6 +286,7 @@ const readHttpRef = async (documentUrl, fileInfo, HTTPResolver, options) => {
 };
 
 export { readHttpRef };
+export type { HttpRefOptions, RefFileInfo, RefResolver };
 
 export default {
   readHttpRef,

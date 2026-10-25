@@ -33,9 +33,11 @@ if (globalState.logLevelIndex == null) {
     return true;
   });
 
-  const logLevelIndex = logLevels.includes(process.env.SLS_LOG_LEVEL)
-    ? logLevels.indexOf(process.env.SLS_LOG_LEVEL)
-    : logLevels.indexOf('notice');
+  const logLevel = process.env.SLS_LOG_LEVEL;
+  const logLevelIndex =
+    logLevel && logLevels.includes(logLevel)
+      ? logLevels.indexOf(logLevel)
+      : logLevels.indexOf('notice');
 
   const isInteractive = isInteractiveTerminal() || process.env.SLS_INTERACTIVE_SETUP_ENABLE;
 
@@ -44,7 +46,7 @@ if (globalState.logLevelIndex == null) {
   globalState.logLevelIndex = logLevelIndex;
 
   // Substantial output (not subject to filtering)
-  outputEmitter.on('write', ({ mode, textTokens }) => {
+  outputEmitter.on('write', ({ mode, textTokens }: { mode: string; textTokens: unknown[] }) => {
     if (mode === 'text') process.stdout.write(joinTextTokens(textTokens));
   });
 

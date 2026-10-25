@@ -33,11 +33,11 @@ const getCacheDir = () => {
 // `require("...")` calls. They are replaced with imports of the files those requests resolve to
 // from this package, so they resolve against our dependencies and not the cache location, and
 // the validator is evaluated as an ES module. The cached code stays free of absolute paths
-const importValidatorModule = async (code) => {
-  const dependencies = new Map();
-  const body = code.replace(/require\("([^"\\]+)"\)/g, (match, request) => {
+const importValidatorModule = async (code: string) => {
+  const dependencies = new Map<string, string>();
+  const body = code.replace(/require\("([^"\\]+)"\)/g, (match, request: string) => {
     if (!dependencies.has(request)) dependencies.set(request, `__dependency${dependencies.size}`);
-    return dependencies.get(request);
+    return dependencies.get(request)!;
   });
   const imports = Array.from(dependencies, ([request, name]) => {
     const url = pathToFileURL(resolveFrom(import.meta.dirname, request)).href;
@@ -78,7 +78,7 @@ const getValidate = async (schema: AnySchema): Promise<ValidateFunction> => {
     let validate;
     try {
       validate = ajv.compile(schema);
-    } catch (err) {
+    } catch (err: any) {
       if (err.message && err.message.includes('strict mode')) {
         throw new ServerlessError(
           'At least one of the plugins defines a validation schema that is invalid. Try disabling plugins one by one to identify the problematic plugin and report it to the plugin maintainers.',
@@ -101,7 +101,7 @@ const getValidate = async (schema: AnySchema): Promise<ValidateFunction> => {
   let loadedModuleCode;
   try {
     loadedModuleCode = await loadValidatorModuleCode();
-  } catch (error) {
+  } catch (error: any) {
     if (!error || error.code !== 'ENOENT') throw error;
     // The cached validator lives in ~/.serverless/artifacts, which can be
     // cleaned up externally at any time. Treat a read of a just-removed file

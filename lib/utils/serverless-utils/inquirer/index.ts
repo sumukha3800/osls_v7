@@ -1,6 +1,6 @@
 import readline from 'node:readline/promises';
 
-const parseConfirm = (value, defaultValue = true) => {
+const parseConfirm = (value: string, defaultValue = true) => {
   const answer = String(value || '')
     .trim()
     .toLowerCase();

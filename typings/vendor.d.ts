@@ -14,7 +14,7 @@ interface TypeEnsureOptions {
   errorCode?: string;
   isOptional?: boolean;
   name?: string;
-  Error?: new (message?: string) => Error;
+  Error?: new (message: string) => Error;
 }
 
 declare module 'type/array/ensure.js' {

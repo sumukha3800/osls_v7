@@ -39,7 +39,7 @@ const getGlobalConfigPath = () => {
   return defaultGlobalConfigPath;
 };
 
-function storeConfig(config, configPath) {
+function storeConfig(config: Record<string, any>, configPath: string) {
   config.meta = config.meta || {};
   config.meta.updated_at = Math.round(Date.now() / 1000);
 
@@ -47,7 +47,7 @@ function storeConfig(config, configPath) {
 
   try {
     writeFileAtomic.sync(configPath, jsonConfig);
-  } catch (error) {
+  } catch (error: any) {
     logDebug(
       `Unable to store serverless config: ${configPath} due to ${error.code} error`,
       error.stack
@@ -74,7 +74,7 @@ function getLocalConfig() {
   try {
     // JSON.parse converts the buffer to a string
     return JSON.parse(fs.readFileSync(localConfigPath) as unknown as string);
-  } catch (error) {
+  } catch (error: any) {
     if (error.code === 'ENOENT') {
       return {};
     }
@@ -100,7 +100,7 @@ function getGlobalConfig() {
   try {
     // JSON.parse converts the buffer to a string
     return JSON.parse(fs.readFileSync(globalConfigPath) as unknown as string);
-  } catch (error) {
+  } catch (error: any) {
     // If the file does not exist, we want to recreate default global configuration
     if (error.code !== 'ENOENT') {
       log.warning(
@@ -151,7 +151,7 @@ function getConfigForUpdate() {
   return result;
 }
 
-function set(key, value) {
+function set(key: string | Record<string, unknown> | null | undefined, value?: unknown) {
   const configForUpdate = getConfigForUpdate();
   let { config } = configForUpdate;
   const { configPath } = configForUpdate;
@@ -166,7 +166,7 @@ function set(key, value) {
   return getConfig();
 }
 
-function deleteValue(key) {
+function deleteValue(key: string | string[]) {
   const configForUpdate = getConfigForUpdate();
   const config = structuredClone(configForUpdate.config);
   const { configPath } = configForUpdate;
@@ -179,7 +179,7 @@ function deleteValue(key) {
   return getConfig();
 }
 
-function get(path) {
+function get(path: string | string[] | null | undefined) {
   if (path == null) return undefined;
 
   const config = getConfig();

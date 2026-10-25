@@ -34,12 +34,22 @@ export interface HookEntry {
   hook: (...args: any[]) => unknown;
 }
 
+// A plugin class: a core plugin, or the export of a plugin module
+export type PluginClass = (new (
+  serverless: Serverless,
+  options: Record<string, any>,
+  utils: Record<string, any>
+) => PluginInstance) & { _serverlessExternalPluginName?: string };
+
+// `plugins` of the service configuration: a list, or the legacy `{ localPath, modules }` notation
+export type ServicePluginsConfiguration = string[] | { localPath?: string; modules?: string[] };
+
 let hooksIdCounter = 0;
 let nestTracker = 0;
 
-const getCommandByPath = (commands, commandPath) => {
+const getCommandByPath = (commands: Record<string, LoadedCommand>, commandPath: string) => {
   const [head, ...rest] = commandPath.split(':');
-  let current = commands[head];
+  let current: LoadedCommand | undefined = commands[head];
 
   for (const name of rest) {
     if (!current || !current.commands) return undefined;
@@ -49,7 +59,11 @@ const getCommandByPath = (commands, commandPath) => {
   return current;
 };
 
-const mergeCommands = (target, source) => {
+// Commands are plain objects merged key by key
+const mergeCommands = (
+  target: Record<string, any> | undefined,
+  source: Record<string, any>
+): any => {
   if (!target) return source;
   for (const key of Object.keys(source)) {
     if (target[key] == null) {
@@ -63,7 +77,7 @@ const mergeCommands = (target, source) => {
         }
         break;
       case 'commands':
-        for (const [name, value] of Object.entries(source.commands)) {
+        for (const [name, value] of Object.entries<Record<string, any>>(source.commands)) {
           target.commands[name] = mergeCommands(target.commands[name], value);
         }
         break;
@@ -78,7 +92,7 @@ const mergeCommands = (target, source) => {
 
 const pluginSubpathSegmentPattern = /^[A-Za-z0-9._~-]+$/;
 
-const splitPluginReference = (reference) => {
+const splitPluginReference = (reference: string) => {
   const segments = reference.split('/');
   const packageSegmentCount = reference.startsWith('@') ? 2 : 1;
   return {
@@ -88,7 +102,7 @@ const splitPluginReference = (reference) => {
   };
 };
 
-const validatePluginSubpath = (subpath, entry) => {
+const validatePluginSubpath = (subpath: string, entry: string) => {
   const segments = subpath.split('/');
   const isValid = segments.every(
     (segment) => segment !== '.' && segment !== '..' && pluginSubpathSegmentPattern.test(segment)
@@ -101,13 +115,17 @@ const validatePluginSubpath = (subpath, entry) => {
   }
 };
 
-const validateConfiguredPluginReference = (entry, serviceDir) => {
+const validateConfiguredPluginReference = (
+  entry: unknown,
+  serviceDir: string | null | undefined
+) => {
   if (typeof entry !== 'string' || entry.trim() !== entry || entry === '') {
     throw new ServerlessError('Plugin entries must be strings.', 'INVALID_PLUGIN_REFERENCE');
   }
 
   if (entry.startsWith('./')) {
-    const serviceRoot = path.resolve(serviceDir);
+    // Service plugins are configured in a service directory
+    const serviceRoot = path.resolve(serviceDir!);
     const resolved = path.resolve(serviceRoot, entry);
     const relative = path.relative(serviceRoot, resolved);
 
@@ -142,7 +160,7 @@ const validateConfiguredPluginReference = (entry, serviceDir) => {
  * executing the rest of the current command's lifecycle chain.
  */
 class TerminateHookChain extends Error {
-  constructor(commands) {
+  constructor(commands: string[]) {
     const commandChain = commands.join(':');
     const message = `Terminating ${commandChain}`;
     super(message);
@@ -186,15 +204,15 @@ class PluginManager {
     this.deprecatedEvents = {};
   }
 
-  setCliOptions(options) {
+  setCliOptions(options: Record<string, any>) {
     this.cliOptions = options;
   }
 
-  setCliCommands(commands) {
+  setCliCommands(commands: string[]) {
     this.cliCommands = commands;
   }
 
-  addPlugin(Plugin) {
+  addPlugin(Plugin: PluginClass) {
     const pluginUtils = {};
     if (Plugin._serverlessExternalPluginName) {
       Object.assign(pluginUtils, getPluginWriters(Plugin._serverlessExternalPluginName));
@@ -204,13 +222,15 @@ class PluginManager {
       this.externalPlugins.add(pluginInstance);
     }
 
-    let pluginProvider = null;
+    let pluginProvider: string | null = null;
     // check if plugin is provider agnostic
     if (pluginInstance.provider) {
       if (typeof pluginInstance.provider === 'string') {
         pluginProvider = pluginInstance.provider;
       } else if (isObject(pluginInstance.provider)) {
-        pluginProvider = pluginInstance.provider.constructor.getProviderName();
+        // A provider instance, whose class has a static `getProviderName()`
+        const provider = pluginInstance.provider as { constructor: { getProviderName(): string } };
+        pluginProvider = provider.constructor.getProviderName();
       }
     }
 
@@ -235,7 +255,7 @@ class PluginManager {
     return pluginInstance;
   }
 
-  async loadAllPlugins(servicePlugins) {
+  async loadAllPlugins(servicePlugins: ServicePluginsConfiguration | null | undefined) {
     isRegisteringExternalPlugins = false;
     (await import('../plugins/index.ts')).default
       .filter(Boolean)
@@ -247,8 +267,12 @@ class PluginManager {
     return this.asyncPluginInit();
   }
 
-  async requireServicePlugin(serviceDir, pluginPath, legacyLocalPluginsPath) {
-    const tryResolve = (dirname, request) => {
+  async requireServicePlugin(
+    serviceDir: string,
+    pluginPath: string,
+    legacyLocalPluginsPath?: string | null
+  ) {
+    const tryResolve = (dirname: string, request: string) => {
       try {
         return resolveFrom(dirname, request);
       } catch {
@@ -279,7 +303,7 @@ class PluginManager {
     return importModule(externalPluginPath);
   }
 
-  async resolveServicePlugins(servicePlugs) {
+  async resolveServicePlugins(servicePlugs: ServicePluginsConfiguration | null | undefined) {
     const arePluginLoadFailuresTolerated =
       this.serverless.processedInput.isHelpRequest ||
       this.cliOptions.help ||
@@ -287,19 +311,19 @@ class PluginManager {
     const pluginsObject = this.parsePluginsObject(servicePlugs, {
       tolerateInvalidEntries: arePluginLoadFailuresTolerated,
     });
-    const serviceDir = this.serverless.serviceDir;
+    const serviceDir = this.serverless.serviceDir!;
 
     const pluginNames = pluginsObject.modules
       // Initially @serverless/enterprise-plugin was published as external plugin
       // We ensure to not load it, if for some reason it's still in service configuration
       .filter((name) => name !== '@serverless/enterprise-plugin');
 
-    const plugins = [];
+    const plugins: PluginClass[] = [];
     for (const name of pluginNames) {
       let Plugin;
       try {
         Plugin = await this.requireServicePlugin(serviceDir, name, pluginsObject.localPath);
-      } catch (error) {
+      } catch (error: any) {
         if (error.code !== 'PLUGIN_NOT_FOUND') throw error;
 
         // Plugin not installed
@@ -341,21 +365,20 @@ class PluginManager {
   }
 
   getLocalPluginsPathPatterns() {
+    // Local plugins are resolved from the service directory
+    const serviceDir = this.serverless.serviceDir!;
     return this.localPluginsPaths
       .map(({ resolvedPath, inputPath }) => {
-        const absoluteInputPath = path.resolve(this.serverless.serviceDir, inputPath);
+        const absoluteInputPath = path.resolve(serviceDir, inputPath);
         if (
           absoluteInputPath === resolvedPath ||
           absoluteInputPath + path.extname(resolvedPath) === resolvedPath
         ) {
-          return path.relative(this.serverless.serviceDir, resolvedPath);
+          return path.relative(serviceDir, resolvedPath);
         }
 
         if (resolvedPath.startsWith(absoluteInputPath + path.sep)) {
-          return path.relative(
-            this.serverless.serviceDir,
-            path.join(path.dirname(resolvedPath), '/**')
-          );
+          return path.relative(serviceDir, path.join(path.dirname(resolvedPath), '/**'));
         }
 
         return null;
@@ -363,12 +386,15 @@ class PluginManager {
       .filter((v) => v !== null);
   }
 
-  parsePluginsObject(servicePlugs, { tolerateInvalidEntries = false } = {}) {
+  parsePluginsObject(
+    servicePlugs: ServicePluginsConfiguration | null | undefined,
+    { tolerateInvalidEntries = false } = {}
+  ) {
     let localPath =
       this.serverless &&
       this.serverless.serviceDir &&
       path.join(this.serverless.serviceDir, '.serverless_plugins');
-    let modules = [];
+    let modules: string[] = [];
 
     if (Array.isArray(servicePlugs)) {
       modules = servicePlugs;
@@ -385,7 +411,7 @@ class PluginManager {
     modules = modules.flatMap((entry) => {
       try {
         return [validateConfiguredPluginReference(entry, this.serverless.serviceDir)];
-      } catch (error) {
+      } catch (error: any) {
         if (!tolerateInvalidEntries) throw error;
         log.warning(`Ignoring invalid "plugins" configuration entry: ${error.message}`);
         return [];
@@ -395,7 +421,7 @@ class PluginManager {
     return { modules, localPath };
   }
 
-  createCommandAlias(alias, command) {
+  createCommandAlias(alias: string, command: string) {
     // Deny self overrides
     if (command.startsWith(alias)) {
       throw new ServerlessError(
@@ -405,7 +431,7 @@ class PluginManager {
     }
 
     const splitAlias = alias.split(':');
-    const aliasTarget = splitAlias.reduce((__, aliasPath) => {
+    const aliasTarget = splitAlias.reduce<Record<string, any>>((__, aliasPath) => {
       const currentAlias = __;
       if (!currentAlias[aliasPath]) {
         currentAlias[aliasPath] = {};
@@ -421,7 +447,7 @@ class PluginManager {
     }
     // Check if the alias would overwrite an exiting command
     if (
-      splitAlias.reduce((__, aliasPath) => {
+      splitAlias.reduce<{ commands?: Record<string, LoadedCommand> } | null>((__, aliasPath) => {
         if (!__ || !__.commands || !__.commands[aliasPath]) {
           return null;
         }
@@ -518,7 +544,7 @@ class PluginManager {
       target: Record<string, any>;
     }[] = [{ commands: this.commands, target: result }];
     while (stack.length) {
-      const currentCommands = stack.pop();
+      const currentCommands = stack.pop()!;
       const commands = currentCommands.commands;
       const target = currentCommands.target;
       if (commands) {
@@ -542,7 +568,7 @@ class PluginManager {
     stack.length = 0;
     stack.push({ aliases: this.aliases, target: result });
     while (stack.length) {
-      const currentAlias = stack.pop();
+      const currentAlias = stack.pop()!;
       const aliases = currentAlias.aliases;
       const target = currentAlias.target;
       if (aliases) {
@@ -565,9 +591,9 @@ class PluginManager {
     return result;
   }
 
-  getAliasCommandTarget(aliasArray) {
+  getAliasCommandTarget(aliasArray: string[]) {
     // Check if the command references an alias
-    const aliasCommand = aliasArray.reduce((__, commandPath) => {
+    const aliasCommand = aliasArray.reduce<Record<string, any> | null>((__, commandPath) => {
       if (!__ || !__[commandPath]) {
         return null;
       }
@@ -585,13 +611,13 @@ class PluginManager {
    * @param allowEntryPoints {undefined|boolean} Allow entrypoint commands to be returned
    * @returns {Object} Command
    */
-  getCommand(commandsArray, allowEntryPoints?) {
+  getCommand(commandsArray: string[], allowEntryPoints?: boolean): LoadedCommand {
     // Check if the command references an alias
     const aliasCommandTarget = this.getAliasCommandTarget(commandsArray);
     const commandOrAlias = aliasCommandTarget ? aliasCommandTarget.split(':') : commandsArray;
 
     return commandOrAlias.reduce(
-      (current, name, index) => {
+      (current: LoadedCommand, name: string, index: number) => {
         const commandExists = name in current.commands;
         const isNotContainer = commandExists && current.commands[name].type !== 'container';
         const isNotEntrypoint = commandExists && current.commands[name].type !== 'entrypoint';
@@ -614,7 +640,8 @@ class PluginManager {
           'UNRECOGNIZED COMMAND'
         );
       },
-      { commands: this.commands }
+      // The root, returned as is only for an empty commands array
+      { commands: this.commands } as LoadedCommand
     );
   }
 
@@ -622,7 +649,7 @@ class PluginManager {
     return this.plugins;
   }
 
-  getLifecycleEventsData(command) {
+  getLifecycleEventsData(command: LoadedCommand) {
     const lifecycleEventsData = [];
     let hooksLength = 0;
     for (const lifecycleEventSubName of command.lifecycleEvents || []) {
@@ -643,7 +670,7 @@ class PluginManager {
     return { lifecycleEventsData, hooksLength };
   }
 
-  async runHooks(hookName, hooks) {
+  async runHooks(hookName: string, hooks: HookEntry[]) {
     const debugLog = log.get('lifecycle:command:invoke:hook');
     const hookId = ++hooksIdCounter;
     for (const { hook } of hooks) {
@@ -656,7 +683,7 @@ class PluginManager {
     }
   }
 
-  async invoke(commandsArray, allowEntryPoints?) {
+  async invoke(commandsArray: string[], allowEntryPoints?: boolean) {
     const command = this.getCommand(commandsArray, allowEntryPoints);
     if (command.type === 'container') {
       renderCommandHelp(commandsArray.join(' '), this.serverless.processedInput);
@@ -699,11 +726,11 @@ class PluginManager {
    * Invokes the given command and starts the command's lifecycle.
    * This method can be called by plugins directly to spawn a separate sub lifecycle.
    */
-  async spawn(commandsArray, options) {
-    let commands = commandsArray;
-    if (typeof commandsArray === 'string') {
-      commands = commandsArray.split(':');
-    }
+  async spawn(
+    commandsArray: string | string[],
+    options?: { terminateLifecycleAfterExecution?: boolean }
+  ) {
+    const commands = typeof commandsArray === 'string' ? commandsArray.split(':') : commandsArray;
     await this.invoke(commands, true);
     if (options && options.terminateLifecycleAfterExecution) {
       throw new TerminateHookChain(commands);
@@ -713,7 +740,7 @@ class PluginManager {
   /**
    * Called by the CLI to start a public command.
    */
-  async run(commandsArray) {
+  async run(commandsArray: string[]) {
     this.commandRunStartTime = Date.now();
     if (commandsArray[0] !== 'plugin') {
       // first initialize hooks
@@ -744,7 +771,7 @@ class PluginManager {
    * Check if the command is valid. Internally this function will only find
    * CLI accessible commands (command.type !== 'entrypoint')
    */
-  validateCommand(commandsArray) {
+  validateCommand(commandsArray: string[]) {
     this.getCommand(commandsArray);
   }
 
@@ -752,7 +779,7 @@ class PluginManager {
    * If the command has no use when operated in a working directory with no serverless
    * configuration file, throw an error
    */
-  validateServerlessConfigDependency(command) {
+  validateServerlessConfigDependency(command: PluginCommandConfig) {
     if (command.configDependent || command.serviceDependencyMode === 'required') {
       if (!this.serverless.configurationInput) {
         const msg = [

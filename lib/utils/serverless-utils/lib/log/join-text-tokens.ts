@@ -1,7 +1,7 @@
 import ensureString from 'type/string/ensure.js';
 
-const flattenDeep = (items) => {
-  const result = [];
+const flattenDeep = (items: Iterable<unknown>): unknown[] => {
+  const result: unknown[] = [];
   for (const item of items) {
     if (Array.isArray(item)) {
       result.push(...flattenDeep(item));
@@ -12,7 +12,7 @@ const flattenDeep = (items) => {
   return result;
 };
 
-export default (textTokens) =>
+export default (textTokens: Iterable<unknown>): string =>
   `${flattenDeep(textTokens)
     .map((textToken) => ensureString(textToken, { isOptional: true, name: 'textToken' }) || '')
     .join('\n')}\n`;

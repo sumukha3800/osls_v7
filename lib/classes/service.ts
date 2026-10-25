@@ -60,7 +60,8 @@ class Service {
   declare serviceFilename: any;
   declare serviceObject: { name: string; [key: string]: any } | null;
 
-  constructor(serverless, data?) {
+  // `serverless`: the Serverless instance, or a stub of the properties used
+  constructor(serverless: any, data?: Record<string, any> | null) {
     // #######################################################################
     // ## KEEP SYNCHRONIZED WITH EQUIVALENT IN ~/lib/plugins/print/print.js ##
     // #######################################################################
@@ -85,7 +86,7 @@ class Service {
     if (data) this.update(data);
   }
 
-  async load(rawOptions) {
+  async load(rawOptions?: Record<string, any> | null) {
     const options = rawOptions || {};
     if (!hasOwn(options, 'stage') && hasOwn(options, 's')) options.stage = options.s;
     if (hasOwn(options, 'stage')) options.stage = validateStage(options.stage);
@@ -109,7 +110,8 @@ class Service {
     // TODO: Remove with next major
     this.serviceFilename = this.serverless.configurationFilename;
 
-    const configurationInput = this.serverless.configurationInput;
+    // Set with `serviceDir`, which `load()` checks
+    const configurationInput = this.serverless.configurationInput!;
 
     this.initialServerlessConfig = configurationInput;
 
@@ -200,7 +202,7 @@ class Service {
     if (
       ymlVersion &&
       version !== ymlVersion &&
-      !semver.satisfies(semver.coerce(version).raw, ymlVersion)
+      !semver.satisfies(semver.coerce(version)!.raw, ymlVersion)
     ) {
       const errorMessage = [
         `The osls version (${version}) does not satisfy the`,
@@ -249,7 +251,7 @@ class Service {
     this.outputs = configurationInput.outputs;
   }
 
-  setFunctionNames(rawOptions) {
+  setFunctionNames(rawOptions?: Record<string, any> | null) {
     const options = rawOptions || {};
     if (!hasOwn(options, 'stage') && hasOwn(options, 's')) options.stage = options.s;
     if (hasOwn(options, 'stage')) options.stage = validateStage(options.stage);
@@ -291,9 +293,11 @@ class Service {
   }
 
   mergeArrays() {
-    ['resources', 'functions'].forEach((key) => {
-      if (Array.isArray(this[key])) {
-        this[key] = this[key].reduce((memo, value) => {
+    (['resources', 'functions'] as const).forEach((key) => {
+      // Either may be an array of objects to merge, which the declared types do not describe
+      const configuration: unknown = this[key];
+      if (Array.isArray(configuration)) {
+        (this as Record<string, any>)[key] = configuration.reduce((memo, value) => {
           if (value) {
             if (isPlainObject(value)) {
               return mergePlainObjects(memo, value);
@@ -345,12 +349,12 @@ class Service {
     return this;
   }
 
-  update(data) {
+  update(data: Record<string, any>) {
     return mergePlainObjects(this, data);
   }
 
   getServiceName(): string {
-    return this.serviceObject.name;
+    return this.serviceObject!.name;
   }
 
   getServiceObject() {
@@ -381,7 +385,7 @@ class Service {
 
   getLayer(layerName: string): AwsLayer {
     if (hasOwn(this.layers, layerName)) {
-      return this.layers[layerName];
+      return this.layers![layerName];
     }
     throw new ServerlessError(
       `Layer "${layerName}" doesn't exist in this Service`,
@@ -390,7 +394,8 @@ class Service {
   }
 
   getEventInFunction(eventName: string, functionName: string): AwsFunctionEvent {
-    const event = this.getFunction(functionName).events.find(
+    // `setFunctionNames()` sets `events` on every function
+    const event = this.getFunction(functionName).events!.find(
       (e) => Object.keys(e)[0] === eventName
     );
     if (event) {
@@ -403,10 +408,10 @@ class Service {
   }
 
   getAllEventsInFunction(functionName: string): AwsFunctionEvent[] {
-    return this.getFunction(functionName).events;
+    return this.getFunction(functionName).events!;
   }
 
-  publish(dataParam) {
+  publish(dataParam?: Record<string, any> | null) {
     const data = dataParam || {};
     this.pluginsData = mergePlainObjects(this.pluginsData, data);
   }

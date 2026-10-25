@@ -22,7 +22,9 @@ const functionNames = [
   'Transform',
 ];
 
-const yamlType = (name, kind) => {
+type YamlKind = 'mapping' | 'scalar' | 'sequence';
+
+const yamlType = (name: string, kind: YamlKind) => {
   const functionName = ['Ref', 'Condition'].includes(name) ? name : `Fn::${name}`;
   return new yaml.Type(`!${name}`, {
     kind,
@@ -41,7 +43,7 @@ const yamlType = (name, kind) => {
 
 const createSchema = () => {
   const types = functionNames.flatMap((functionName) =>
-    ['mapping', 'scalar', 'sequence'].map((kind) => yamlType(functionName, kind))
+    (['mapping', 'scalar', 'sequence'] as const).map((kind) => yamlType(functionName, kind))
   );
   // Drop implicit timestamps so date-shaped plain scalars (e.g. an IAM policy
   // `Version: 2012-10-17`) stay strings; an explicit `!!timestamp` tag still constructs a Date

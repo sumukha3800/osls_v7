@@ -1,0 +1,22 @@
+{
+  // Type checks the files moved to strict mode (`pnpm run typecheck:strict`)
+  // `include` is the list of strict files: a file, or a directory as `<dir>/**/*.ts`. Files they
+  // import are type checked too, but scripts/typecheck-strict.ts only reports errors in the
+  // listed ones. Add directories here once they type check in strict mode
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true
+  },
+  "include": [
+    "typings/**/*.d.ts",
+    "types/**/*.d.ts",
+    "lib/plugin-types.ts",
+    "lib/serverless.ts",
+    "lib/serverless-error.ts",
+    "lib/classes/**/*.ts",
+    "lib/plugins/aws/provider.ts",
+    "lib/utils/serverless-utils/**/*.ts"
+  ],
+  "exclude": []
+}
