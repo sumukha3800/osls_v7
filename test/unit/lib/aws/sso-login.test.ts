@@ -1,5 +1,6 @@
 import * as chai from 'chai';
 import * as sinon from 'sinon';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import esmock from 'esmock';
 
@@ -7,8 +8,12 @@ const { expect } = chai;
 
 // esmock resolves package names with the "module"/"import" export conditions, which point
 // @smithy/core/config at a bundler-only ES build. Node.js loads the "node" (CommonJS) build, so
-// the mock is keyed by the path Node.js resolves
-const smithyCoreConfigPath = fileURLToPath(import.meta.resolve('@smithy/core/config'));
+// the mock is keyed by the path Node.js resolves, relative to this file with forward slashes
+// (esmock does not match Windows absolute paths)
+const smithyCoreConfigPath = path
+  .relative(import.meta.dirname, fileURLToPath(import.meta.resolve('@smithy/core/config')))
+  .split(path.sep)
+  .join('/');
 
 describe('test/unit/lib/aws/sso-login.test.ts', () => {
   let originalEnv;
