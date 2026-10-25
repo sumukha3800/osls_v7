@@ -1,9 +1,30 @@
 import spawn from 'cross-spawn';
 import { PassThrough } from 'node:stream';
+import type { Readable } from 'node:stream';
+import type { ChildProcess } from 'node:child_process';
 import { validateSpawnInput } from './spawn-policy.ts';
 
 const sensitiveOptionNamePattern =
   /(?:^|[-_])(?:auth|authorization|credential|password|passwd|pwd|secret|token|api[-_]?key|access[-_]?key)(?:$|[-_])/i;
+
+export interface SpawnResult {
+  child: ChildProcess;
+  stdout: Readable | null;
+  stderr: Readable | null;
+  // Interleaved stdout and stderr
+  std: PassThrough | null;
+  stdoutBuffer: Buffer;
+  stderrBuffer: Buffer;
+  stdBuffer: Buffer;
+  code?: number | null;
+  signal?: NodeJS.Signals | null;
+}
+
+// The rejection reason: the error with the result properties
+export type SpawnError = Error & Partial<SpawnResult>;
+
+// The returned promise also exposes the result properties while the process runs
+export type SpawnPromise = Promise<SpawnResult> & SpawnResult;
 
 const toBuffer = (chunk) => (Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
 
@@ -66,7 +87,11 @@ const redactArgs = (args) => {
   return redactedArgs;
 };
 
-export default (command, args = [], options = {}) => {
+export default (
+  command: string,
+  args: readonly unknown[] = [],
+  options: Record<string, any> = {}
+): SpawnPromise => {
   if (args == null) args = [];
   options = options || {};
   validateSpawnInput(command, args, options);
@@ -76,7 +101,7 @@ export default (command, args = [], options = {}) => {
   const { shouldCloseStdin, input, ...spawnOptions }: Record<string, any> = options;
 
   const child = spawn(normalizedCommand, normalizedArgs, spawnOptions);
-  const result = {
+  const result: Pick<SpawnResult, 'child' | 'stdout' | 'stderr' | 'std' | 'code' | 'signal'> = {
     child,
     stdout: child.stdout || null,
     stderr: child.stderr || null,
@@ -93,7 +118,7 @@ export default (command, args = [], options = {}) => {
   const discardStdData = () => {};
   let settled = false;
   let waitingForStdDrain = false;
-  const pausedForStd = new Set();
+  const pausedForStd = new Set<Readable>();
 
   const resumeStdPausedStreams = () => {
     waitingForStdDrain = false;
@@ -134,7 +159,7 @@ export default (command, args = [], options = {}) => {
     }
   };
 
-  const snapshot = () => ({
+  const snapshot = (): SpawnResult => ({
     child: result.child,
     stdout: result.stdout,
     stderr: result.stderr,
@@ -176,7 +201,7 @@ export default (command, args = [], options = {}) => {
     });
   }
 
-  const promise = new Promise((resolve, reject) => {
+  const promise = new Promise<SpawnResult>((resolve, reject) => {
     child.on('error', (error) => {
       if (settled) return;
       settled = true;
@@ -201,7 +226,7 @@ export default (command, args = [], options = {}) => {
       }
 
       const reason = signal ? `signal ${signal}` : `code ${code}`;
-      const error = new Error(
+      const error: SpawnError = new Error(
         `\`${[normalizedCommand, ...redactArgs(normalizedArgs)].join(' ')}\` Exited with ${reason}`
       );
       error.code = code;
@@ -217,7 +242,7 @@ export default (command, args = [], options = {}) => {
     }
   });
 
-  return Object.defineProperties(promise, {
+  return Object.defineProperties(promise as SpawnPromise, {
     child: { enumerable: true, get: () => result.child },
     stdout: { enumerable: true, get: () => result.stdout },
     stderr: { enumerable: true, get: () => result.stderr },

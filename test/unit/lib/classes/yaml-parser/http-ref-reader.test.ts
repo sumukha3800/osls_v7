@@ -1,5 +1,6 @@
 import dns from 'node:dns';
 import http from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { expect } from 'chai';
 import { readHttpRef } from '../../../../../lib/classes/yaml-parser/http-ref-reader.ts';
 
@@ -17,8 +18,8 @@ describe('yaml-parser/http-ref-reader', () => {
       expect(err.code).to.equal('YAML_REF_ACCESS_DENIED');
     });
 
-  const listen = (server, host = '127.0.0.1') =>
-    new Promise((resolve, reject) => {
+  const listen = (server: http.Server, host = '127.0.0.1') =>
+    new Promise<void>((resolve, reject) => {
       const onError = (error) => {
         server.off('error', onError);
         reject(error);
@@ -31,8 +32,8 @@ describe('yaml-parser/http-ref-reader', () => {
       });
     });
 
-  const close = (server) =>
-    new Promise((resolve, reject) =>
+  const close = (server: http.Server) =>
+    new Promise<void>((resolve, reject) =>
       server.close((error) => {
         if (error) reject(error);
         else resolve();
@@ -69,7 +70,7 @@ describe('yaml-parser/http-ref-reader', () => {
     });
 
     await listen(server);
-    const url = `http://127.0.0.1:${server.address().port}/ref.yml`;
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/ref.yml`;
 
     try {
       await expectAccessDenied(readHttpRef(url, getFileInfo(url), HTTPResolver, safeOptions));
@@ -113,7 +114,7 @@ describe('yaml-parser/http-ref-reader', () => {
     const originalPromisesLookup = dns.promises.lookup;
     let fetchCount = 0;
 
-    dns.promises.lookup = (hostname, options) => {
+    dns.promises.lookup = ((hostname, options) => {
       if (hostname === 'private-resolution.test') {
         return Promise.resolve([{ address: '10.0.0.5', family: 4 }]);
       }
@@ -125,7 +126,7 @@ describe('yaml-parser/http-ref-reader', () => {
       }
 
       return originalPromisesLookup.call(dns.promises, hostname, options);
-    };
+    }) as typeof dns.promises.lookup;
     globalThis.fetch = async () => {
       fetchCount += 1;
       return new Response('foo: bar\n', { status: 200 });
@@ -149,10 +150,10 @@ describe('yaml-parser/http-ref-reader', () => {
     const originalPromisesLookup = dns.promises.lookup;
     let lookupCount = 0;
 
-    dns.promises.lookup = (hostname, options) => {
+    dns.promises.lookup = ((hostname, options) => {
       lookupCount += 1;
       return originalPromisesLookup.call(dns.promises, hostname, options);
-    };
+    }) as typeof dns.promises.lookup;
 
     try {
       await expectAccessDenied(
@@ -183,14 +184,14 @@ describe('yaml-parser/http-ref-reader', () => {
     const url = 'http://rebind.test:49152/ref.yml';
     let connectionLookupCount = 0;
 
-    dns.promises.lookup = (hostname, options) => {
+    dns.promises.lookup = ((hostname, options) => {
       if (hostname === 'rebind.test') {
         return Promise.resolve([{ address: '93.184.216.34', family: 4 }]);
       }
 
       return originalPromisesLookup.call(dns.promises, hostname, options);
-    };
-    dns.lookup = (hostname, options, callback) => {
+    }) as typeof dns.promises.lookup;
+    dns.lookup = ((hostname, options, callback) => {
       if (typeof options === 'function') {
         callback = options;
         options = {};
@@ -203,7 +204,7 @@ describe('yaml-parser/http-ref-reader', () => {
       }
 
       originalLookup.call(dns, hostname, options, callback);
-    };
+    }) as typeof dns.lookup;
 
     try {
       await expectAccessDenied(readHttpRef(url, getFileInfo(url), HTTPResolver, safeOptions));
@@ -220,14 +221,14 @@ describe('yaml-parser/http-ref-reader', () => {
     const url = 'http://array-rebind.test:49152/ref.yml';
     let connectionLookupCount = 0;
 
-    dns.promises.lookup = (hostname, options) => {
+    dns.promises.lookup = ((hostname, options) => {
       if (hostname === 'array-rebind.test') {
         return Promise.resolve([{ address: '93.184.216.34', family: 4 }]);
       }
 
       return originalPromisesLookup.call(dns.promises, hostname, options);
-    };
-    dns.lookup = (hostname, options, callback) => {
+    }) as typeof dns.promises.lookup;
+    dns.lookup = ((hostname, options, callback) => {
       if (typeof options === 'function') {
         callback = options;
         options = {};
@@ -243,7 +244,7 @@ describe('yaml-parser/http-ref-reader', () => {
       }
 
       originalLookup.call(dns, hostname, options, callback);
-    };
+    }) as typeof dns.lookup;
 
     try {
       await expectAccessDenied(readHttpRef(url, getFileInfo(url), HTTPResolver, safeOptions));
@@ -261,12 +262,12 @@ describe('yaml-parser/http-ref-reader', () => {
     });
 
     await listen(server);
-    const url = `http://127.0.0.1:${server.address().port}/ref.yml`;
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/ref.yml`;
 
     try {
       const result = await readHttpRef(url, getFileInfo(url), HTTPResolver, {
         allowUnsafeUrls: false,
-        allowedUnsafeHosts: [`127.0.0.1:${server.address().port}`],
+        allowedUnsafeHosts: [`127.0.0.1:${(server.address() as AddressInfo).port}`],
       });
 
       expect(result.toString('utf8')).to.equal('foo: bar\n');
@@ -311,7 +312,7 @@ describe('yaml-parser/http-ref-reader', () => {
       throw error;
     }
 
-    const url = `http://[::1]:${server.address().port}/ref.yml`;
+    const url = `http://[::1]:${(server.address() as AddressInfo).port}/ref.yml`;
 
     try {
       const result = await readHttpRef(url, getFileInfo(url), HTTPResolver, {
@@ -331,13 +332,13 @@ describe('yaml-parser/http-ref-reader', () => {
     const url = 'http://public-ref.test:8080/ref.yml';
     let fetchedUrl;
 
-    dns.promises.lookup = (hostname, options) => {
+    dns.promises.lookup = ((hostname, options) => {
       if (hostname === 'public-ref.test') {
         return Promise.resolve([{ address: '93.184.216.34', family: 4 }]);
       }
 
       return originalPromisesLookup.call(dns.promises, hostname, options);
-    };
+    }) as typeof dns.promises.lookup;
     globalThis.fetch = async (nextUrl) => {
       fetchedUrl = nextUrl;
       return new Response('foo: bar\n', { status: 200 });
@@ -366,13 +367,13 @@ describe('yaml-parser/http-ref-reader', () => {
     });
 
     await listen(server);
-    const url = `http://127.0.0.1:${server.address().port}/ref.yml`;
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/ref.yml`;
 
     try {
       await expectAccessDenied(
         readHttpRef(url, getFileInfo(url), HTTPResolver, {
           allowUnsafeUrls: false,
-          allowedUnsafeHosts: [`127.0.0.1:${server.address().port}`],
+          allowedUnsafeHosts: [`127.0.0.1:${(server.address() as AddressInfo).port}`],
         })
       );
     } finally {
@@ -393,12 +394,12 @@ describe('yaml-parser/http-ref-reader', () => {
     });
 
     await listen(server);
-    const url = `http://127.0.0.1:${server.address().port}/redirect.yml`;
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/redirect.yml`;
 
     try {
       const result = await readHttpRef(url, getFileInfo(url), HTTPResolver, {
         allowUnsafeUrls: false,
-        allowedUnsafeHosts: [`127.0.0.1:${server.address().port}`],
+        allowedUnsafeHosts: [`127.0.0.1:${(server.address() as AddressInfo).port}`],
       });
 
       expect(result.toString('utf8')).to.equal('foo: bar\n');
@@ -414,13 +415,13 @@ describe('yaml-parser/http-ref-reader', () => {
     });
 
     await listen(server);
-    const url = `http://127.0.0.1:${server.address().port}/missing.yml`;
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/missing.yml`;
 
     try {
       await expect(
         readHttpRef(url, getFileInfo(url), HTTPResolver, {
           allowUnsafeUrls: false,
-          allowedUnsafeHosts: [`127.0.0.1:${server.address().port}`],
+          allowedUnsafeHosts: [`127.0.0.1:${(server.address() as AddressInfo).port}`],
         })
       ).to.be.rejectedWith(/HTTP ERROR 404/);
     } finally {
@@ -435,13 +436,13 @@ describe('yaml-parser/http-ref-reader', () => {
     });
 
     await listen(server);
-    const url = `http://127.0.0.1:${server.address().port}/ref.yml`;
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/ref.yml`;
 
     try {
       await expectAccessDenied(
         readHttpRef(url, getFileInfo(url), HTTPResolver, {
           allowUnsafeUrls: false,
-          allowedUnsafeHosts: [`127.0.0.1:${server.address().port}`],
+          allowedUnsafeHosts: [`127.0.0.1:${(server.address() as AddressInfo).port}`],
         })
       );
     } finally {
@@ -458,13 +459,13 @@ describe('yaml-parser/http-ref-reader', () => {
     });
 
     await listen(server);
-    const url = `http://127.0.0.1:${server.address().port}/0`;
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/0`;
 
     try {
       await expect(
         readHttpRef(url, getFileInfo(url), HTTPResolver, {
           allowUnsafeUrls: false,
-          allowedUnsafeHosts: [`127.0.0.1:${server.address().port}`],
+          allowedUnsafeHosts: [`127.0.0.1:${(server.address() as AddressInfo).port}`],
         })
       ).to.be.rejectedWith(/Too many redirects/);
     } finally {

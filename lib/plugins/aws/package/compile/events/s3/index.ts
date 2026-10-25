@@ -411,7 +411,9 @@ class AwsCompileS3Events {
       });
     }
 
-    const allCustomResourceLogicalIds = Array.from(new Set(Object.values(bucketResources).flat()));
+    const allCustomResourceLogicalIds = Array.from(
+      new Set(Object.values<any>(bucketResources).flat())
+    );
 
     allCustomResourceLogicalIds.forEach((currResourceLogicalId, idx) => {
       if (idx > 0) {

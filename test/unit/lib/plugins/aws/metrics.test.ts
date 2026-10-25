@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import AwsMetrics from '../../../../../lib/plugins/aws/metrics.ts';
 import ServerlessError from '../../../../../lib/serverless-error.ts';
 import { CloudWatchClient, GetMetricStatisticsCommand } from '@aws-sdk/client-cloudwatch';
@@ -116,7 +117,7 @@ describe('AwsMetrics', () => {
     it('should set the startTime to yesterday as the default value if not provided', () => {
       awsMetrics.options.startTime = null;
 
-      let yesterday = new Date();
+      let yesterday: Date | number = new Date();
       yesterday = yesterday.setDate(yesterday.getDate() - 1);
       yesterday = new Date(yesterday);
       const yesterdaysYear = yesterday.getFullYear();
@@ -142,7 +143,7 @@ describe('AwsMetrics', () => {
     it('should translate human friendly syntax (e.g. 24h) for startTime', () => {
       awsMetrics.options.startTime = '24h'; // 24 hours ago
 
-      let yesterday = new Date();
+      let yesterday: Date | number = new Date();
       yesterday = yesterday.setDate(yesterday.getDate() - 1);
       yesterday = new Date(yesterday);
       const yesterdaysYear = yesterday.getFullYear();
@@ -247,7 +248,7 @@ describe('AwsMetrics', () => {
     });
 
     afterEach(() => {
-      CloudWatchClient.prototype.send.restore();
+      (CloudWatchClient.prototype.send as SinonStub).restore();
     });
 
     it('should gather service wide function metrics if no function option is specified', async () => {

@@ -1,5 +1,6 @@
 import * as chai from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import monitorStack from '../../../../../../lib/plugins/aws/lib/monitor-stack.ts';
 import { CloudFormationClient, DescribeStackEventsCommand } from '@aws-sdk/client-cloudformation';
 import esmock from 'esmock';
@@ -32,13 +33,13 @@ describe('monitorStack', () => {
 
   afterEach(() => {
     delete awsPlugin.cloudFormationClientPromise;
-    if (CloudFormationClient.prototype.send.restore) {
-      CloudFormationClient.prototype.send.restore();
+    if ((CloudFormationClient.prototype.send as SinonStub).restore) {
+      (CloudFormationClient.prototype.send as SinonStub).restore();
     }
   });
 
   const stubDescribeStackEvents = () => {
-    const describeStackEventsStub = sinon.stub();
+    const describeStackEventsStub: SinonStub & { sendStub?: SinonStub } = sinon.stub();
     const sendStub = sinon.stub(CloudFormationClient.prototype, 'send').callsFake((command) => {
       expect(command).to.be.instanceOf(DescribeStackEventsCommand);
       return describeStackEventsStub('CloudFormation', 'describeStackEvents', command.input);

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import { getTmpDirPath } from '../../../../../../utils/fs.ts';
 import runServerless from '../../../../../../utils/run-serverless.ts';
 import releasePendingRequestsUntilSettled from '../../../../../../utils/release-pending-requests-until-settled.ts';
@@ -472,11 +473,13 @@ describe('lib/plugins/aws/package/compile/layers/index.test.ts', () => {
       expect(
         describeStacksStub
           .getCalls()
-          .every((call) => call.args[0].input.StackName === 'service-dev')
+          .every(
+            (call) => (call.args[0] as DescribeStacksCommand).input.StackName === 'service-dev'
+          )
       ).to.equal(true);
     } finally {
       for (const resolve of pendingResolvers.splice(0)) resolve();
-      CloudFormationClient.prototype.send.restore();
+      (CloudFormationClient.prototype.send as SinonStub).restore();
     }
   });
 
@@ -501,8 +504,12 @@ describe('lib/plugins/aws/package/compile/layers/index.test.ts', () => {
     await awsCompileLayers.compileLayers();
 
     expect(awsCompileLayers.compareWithLastLayer).to.have.been.calledTwice;
-    expect(awsCompileLayers.compareWithLastLayer.firstCall.args).to.deep.equal(['layerOne']);
-    expect(awsCompileLayers.compareWithLastLayer.secondCall.args).to.deep.equal(['layerTwo']);
+    expect((awsCompileLayers.compareWithLastLayer as SinonStub).firstCall.args).to.deep.equal([
+      'layerOne',
+    ]);
+    expect((awsCompileLayers.compareWithLastLayer as SinonStub).secondCall.args).to.deep.equal([
+      'layerTwo',
+    ]);
     expect(provider.getAwsSdkV3Config).to.not.have.been.called;
   });
 });

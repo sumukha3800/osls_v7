@@ -1,6 +1,13 @@
 import { writeText, style } from '../../utils/serverless-utils/log.ts';
+import type { OptionsSchema } from '../commands-schema/types.ts';
 
-export default (commandOptions) => {
+// Some callers also pass `{ shouldWriteModernOnly }`, which is not used
+type RenderOptions = (
+  commandOptions: OptionsSchema,
+  options?: { shouldWriteModernOnly?: boolean }
+) => void;
+
+const renderOptions: RenderOptions = (commandOptions) => {
   const indentFillLength = 40;
 
   for (const [option, optionsObject] of Object.entries(commandOptions)) {
@@ -27,3 +34,5 @@ export default (commandOptions) => {
     writeText(`--${option}${shortcutInfo}${requiredInfo} ${optionsUsage}`);
   }
 };
+
+export default renderOptions;

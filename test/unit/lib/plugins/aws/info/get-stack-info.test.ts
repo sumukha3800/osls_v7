@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import AwsInfo from '../../../../../../lib/plugins/aws/info/index.ts';
 import retry from '../../../../../../lib/aws/retry.ts';
 import {
@@ -86,8 +87,8 @@ describe('#getStackInfo()', () => {
   });
 
   afterEach(() => {
-    CloudFormationClient.prototype.send.restore();
-    ApiGatewayV2Client.prototype.send.restore();
+    (CloudFormationClient.prototype.send as SinonStub).restore();
+    (ApiGatewayV2Client.prototype.send as SinonStub).restore();
   });
 
   it('attach info from describeStack call to this.gatheredData if result is available', async () => {

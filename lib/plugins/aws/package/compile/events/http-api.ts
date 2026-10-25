@@ -415,7 +415,7 @@ Object.defineProperties(
             'EXTERNAL_HTTP_API_AUTHORIZERS_CONFIG'
           );
         }
-        for (const [name, authorizerConfig] of Object.entries(userAuthorizers)) {
+        for (const [name, authorizerConfig] of Object.entries<any>(userAuthorizers)) {
           let authorizerFunctionObject;
 
           if (authorizerConfig.type === 'request') {
@@ -493,7 +493,7 @@ Object.defineProperties(
           })}`;
       }
 
-      for (const [functionName, functionData] of Object.entries(
+      for (const [functionName, functionData] of Object.entries<any>(
         this.serverless.service.functions
       )) {
         const routeTargetData = {

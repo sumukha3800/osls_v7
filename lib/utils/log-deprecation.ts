@@ -7,7 +7,7 @@ import safeMoveFile from './fs/safe-move-file.ts';
 import { style, log } from './serverless-utils/log.ts';
 import healthStatusFilename from './health-status-filename.ts';
 
-const triggeredDeprecations = new Set();
+const triggeredDeprecations = new Set<string>();
 const bufferedDeprecations = [];
 
 const deprecationLogger = log.get('deprecation');

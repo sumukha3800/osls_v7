@@ -3,7 +3,7 @@ import mergePlainObjects from '../../../../lib/utils/merge-plain-objects.ts';
 
 describe('mergePlainObjects', () => {
   afterEach(() => {
-    delete Object.prototype.polluted;
+    delete (Object.prototype as { polluted?: unknown }).polluted;
   });
 
   it('should deeply merge nested plain objects', () => {
@@ -120,7 +120,7 @@ describe('mergePlainObjects', () => {
     expect(target).to.deep.equal({
       custom: { ok: true },
     });
-    expect({}.polluted).to.equal(undefined);
+    expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
     expect(Object.getPrototypeOf(target)).to.equal(Object.prototype);
   });
 
@@ -131,7 +131,7 @@ describe('mergePlainObjects', () => {
     mergePlainObjects(target, source);
 
     expect(target).to.deep.equal({});
-    expect({}.polluted).to.equal(undefined);
+    expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
   });
 
   it('does not stack-overflow on a self-cyclic source object', () => {
@@ -157,7 +157,7 @@ describe('mergePlainObjects', () => {
   });
 
   it('does not stack-overflow on a self-cyclic source array', () => {
-    const arr = [1, 2];
+    const arr: unknown[] = [1, 2];
     arr.push(arr);
 
     const result = mergePlainObjects({}, { list: arr });
@@ -182,9 +182,11 @@ describe('mergePlainObjects', () => {
 
       expect(Object.prototype.hasOwnProperty.call(target, 'branch')).to.equal(true);
       expect(target.branch).to.deep.equal({ safe: true });
-      expect(Object.prototype.branch).to.deep.equal({ preexisting: 'yes' });
+      expect((Object.prototype as { branch?: unknown }).branch).to.deep.equal({
+        preexisting: 'yes',
+      });
     } finally {
-      delete Object.prototype.branch;
+      delete (Object.prototype as { branch?: unknown }).branch;
     }
   });
 
@@ -194,7 +196,7 @@ describe('mergePlainObjects', () => {
 
     mergePlainObjects(target, source);
 
-    expect({}.polluted).to.equal(undefined);
+    expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
     expect(Object.getPrototypeOf(target.items[0])).to.equal(Object.prototype);
   });
 

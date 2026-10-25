@@ -6,7 +6,13 @@ const textDecoder = new TextDecoder('utf8', {
   ignoreBOM: false,
 });
 
-export default async (stdin = process.stdin) => {
+// The parts of `process.stdin` that are used
+type StdinLike = {
+  isTTY?: boolean;
+  setEncoding?: (encoding: BufferEncoding) => unknown;
+} & AsyncIterable<string | Uint8Array>;
+
+export default async (stdin: StdinLike = process.stdin): Promise<string> => {
   if (stdin.isTTY) return '';
 
   const chunks = [];

@@ -35,70 +35,76 @@ export default {
 
     const events = [];
 
-    Object.entries(this.serverless.service.functions).forEach(([functionName, functionObject]) => {
-      functionObject.events.forEach((event) => {
-        if (event.alb) {
-          if (isObject(event.alb)) {
-            const { albId, listenerId } = this.validateListenerArn(
-              event.alb.listenerArn,
-              functionName
-            );
-            const albObj: Record<string, any> = {
-              // This is set to the ALB ID if the listener ARNs are provided as strings,
-              // or the listener logical ID if listenerARNs are given as refs
-              albId,
-              listenerId,
-              listenerArn: event.alb.listenerArn,
-              priority: event.alb.priority,
-              conditions: {},
-              // the following is data which is not defined on the event-level
-              functionName,
-            };
+    Object.entries<any>(this.serverless.service.functions).forEach(
+      ([functionName, functionObject]) => {
+        functionObject.events.forEach((event) => {
+          if (event.alb) {
+            if (isObject(event.alb)) {
+              const { albId, listenerId } = this.validateListenerArn(
+                event.alb.listenerArn,
+                functionName
+              );
+              const albObj: Record<string, any> = {
+                // This is set to the ALB ID if the listener ARNs are provided as strings,
+                // or the listener logical ID if listenerARNs are given as refs
+                albId,
+                listenerId,
+                listenerArn: event.alb.listenerArn,
+                priority: event.alb.priority,
+                conditions: {},
+                // the following is data which is not defined on the event-level
+                functionName,
+              };
 
-            if (event.alb.conditions.path) {
-              albObj.conditions.path = [].concat(event.alb.conditions.path);
-            }
-            if (event.alb.conditions.host) {
-              albObj.conditions.host = [].concat(event.alb.conditions.host);
-            }
-            if (event.alb.conditions.method) {
-              albObj.conditions.method = [].concat(event.alb.conditions.method);
-            }
-            if (event.alb.conditions.header) {
-              albObj.conditions.header = [].concat(event.alb.conditions.header);
-            }
-            if (event.alb.conditions.query) {
-              albObj.conditions.query = event.alb.conditions.query;
-            }
-            if (event.alb.conditions.ip) {
-              albObj.conditions.ip = [].concat(event.alb.conditions.ip);
-            }
-            this.validateConditions(event.alb.conditions, functionName);
+              if (event.alb.conditions.path) {
+                albObj.conditions.path = [].concat(event.alb.conditions.path);
+              }
+              if (event.alb.conditions.host) {
+                albObj.conditions.host = [].concat(event.alb.conditions.host);
+              }
+              if (event.alb.conditions.method) {
+                albObj.conditions.method = [].concat(event.alb.conditions.method);
+              }
+              if (event.alb.conditions.header) {
+                albObj.conditions.header = [].concat(event.alb.conditions.header);
+              }
+              if (event.alb.conditions.query) {
+                albObj.conditions.query = event.alb.conditions.query;
+              }
+              if (event.alb.conditions.ip) {
+                albObj.conditions.ip = [].concat(event.alb.conditions.ip);
+              }
+              this.validateConditions(event.alb.conditions, functionName);
 
-            if (event.alb.multiValueHeaders) {
-              albObj.multiValueHeaders = event.alb.multiValueHeaders;
-            }
-            if (event.alb.targetGroupName) {
-              if (this.provider.getAlbTargetGroupPrefix()) {
-                throw new ServerlessError(
-                  'ALB "targetGroupName" setting is exclusive with "provider.alb.targetGroupPrefix": Please specify only one.',
-                  'ALB_TARGET_GROUP_NAME_EXCLUSIVE'
+              if (event.alb.multiValueHeaders) {
+                albObj.multiValueHeaders = event.alb.multiValueHeaders;
+              }
+              if (event.alb.targetGroupName) {
+                if (this.provider.getAlbTargetGroupPrefix()) {
+                  throw new ServerlessError(
+                    'ALB "targetGroupName" setting is exclusive with "provider.alb.targetGroupPrefix": Please specify only one.',
+                    'ALB_TARGET_GROUP_NAME_EXCLUSIVE'
+                  );
+                }
+                albObj.targetGroupName = event.alb.targetGroupName;
+              }
+
+              if (event.alb.authorizer) {
+                albObj.authorizers = this.validateEventAuthorizers(
+                  event,
+                  authorizers,
+                  functionName
                 );
               }
-              albObj.targetGroupName = event.alb.targetGroupName;
+              if (event.alb.healthCheck) {
+                albObj.healthCheck = this.validateAlbHealthCheck(event);
+              }
+              events.push(albObj);
             }
-
-            if (event.alb.authorizer) {
-              albObj.authorizers = this.validateEventAuthorizers(event, authorizers, functionName);
-            }
-            if (event.alb.healthCheck) {
-              albObj.healthCheck = this.validateAlbHealthCheck(event);
-            }
-            events.push(albObj);
           }
-        }
-      });
-    });
+        });
+      }
+    );
     this.validatePriorities(events);
 
     return {

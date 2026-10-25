@@ -13,6 +13,15 @@ import releasePendingRequestsUntilSettled from '../../../../../../../../../../ut
 import runServerless from '../../../../../../../../../../utils/run-serverless.ts';
 import esmock from 'esmock';
 
+// disassociateUsagePlan is a mixin: these tests attach the host plugin fields to it directly.
+type UsagePlanHost = typeof disassociateUsagePlan & {
+  serverless?: Serverless;
+  options?: Record<string, unknown>;
+  provider?: AwsProvider;
+  disassociateUsagePlanApiGatewayClientPromise?: Promise<unknown>;
+  disassociateUsagePlanCloudFormationClientPromise?: Promise<unknown>;
+};
+
 function getApiGatewayMethod(command) {
   if (command instanceof GetUsagePlansCommand) return 'getUsagePlans';
   if (command instanceof UpdateUsagePlanCommand) return 'updateUsagePlan';
@@ -54,9 +63,9 @@ describe('#disassociateUsagePlan()', () => {
         throw new Error(`Unexpected CloudFormation command: ${command.constructor.name}`);
       });
 
-    disassociateUsagePlan.serverless = serverless;
-    disassociateUsagePlan.options = options;
-    disassociateUsagePlan.provider = awsProvider;
+    (disassociateUsagePlan as UsagePlanHost).serverless = serverless;
+    (disassociateUsagePlan as UsagePlanHost).options = options;
+    (disassociateUsagePlan as UsagePlanHost).provider = awsProvider;
 
     providerRequestStub
       .withArgs('CloudFormation', 'describeStackResource')
@@ -93,12 +102,15 @@ describe('#disassociateUsagePlan()', () => {
   afterEach(() => {
     apiGatewaySendStub.restore();
     cloudFormationSendStub.restore();
-    delete disassociateUsagePlan.disassociateUsagePlanApiGatewayClientPromise;
-    delete disassociateUsagePlan.disassociateUsagePlanCloudFormationClientPromise;
+    delete (disassociateUsagePlan as UsagePlanHost).disassociateUsagePlanApiGatewayClientPromise;
+    delete (disassociateUsagePlan as UsagePlanHost)
+      .disassociateUsagePlanCloudFormationClientPromise;
   });
 
   it('should remove association from the usage plan', async () => {
-    disassociateUsagePlan.serverless.service.provider.apiGateway = { apiKeys: ['apiKey1'] };
+    (disassociateUsagePlan as UsagePlanHost).serverless.service.provider.apiGateway = {
+      apiKeys: ['apiKey1'],
+    };
 
     return disassociateUsagePlan.disassociateUsagePlan().then(() => {
       expect(providerRequestStub.callCount).to.be.equal(3);
@@ -147,7 +159,9 @@ describe('#disassociateUsagePlan()', () => {
         },
       ],
     });
-    disassociateUsagePlan.serverless.service.provider.apiGateway = { apiKeys: ['apiKey1'] };
+    (disassociateUsagePlan as UsagePlanHost).serverless.service.provider.apiGateway = {
+      apiKeys: ['apiKey1'],
+    };
 
     return disassociateUsagePlan.disassociateUsagePlan().then(() => {
       expect(providerRequestStub.callCount).to.be.equal(4);
@@ -200,7 +214,9 @@ describe('#disassociateUsagePlan()', () => {
         },
       ],
     });
-    disassociateUsagePlan.serverless.service.provider.apiGateway = { apiKeys: ['apiKey1'] };
+    (disassociateUsagePlan as UsagePlanHost).serverless.service.provider.apiGateway = {
+      apiKeys: ['apiKey1'],
+    };
 
     return disassociateUsagePlan.disassociateUsagePlan().then(() => {
       expect(providerRequestStub.callCount).to.be.equal(2);
@@ -228,7 +244,9 @@ describe('#disassociateUsagePlan()', () => {
           },
         ],
       });
-    disassociateUsagePlan.serverless.service.provider.apiGateway = { apiKeys: ['apiKey1'] };
+    (disassociateUsagePlan as UsagePlanHost).serverless.service.provider.apiGateway = {
+      apiKeys: ['apiKey1'],
+    };
 
     await disassociateUsagePlan.disassociateUsagePlan();
 
@@ -258,7 +276,9 @@ describe('#disassociateUsagePlan()', () => {
     providerRequestStub.withArgs('APIGateway', 'getUsagePlans', { limit: 500 }).resolves({
       items: [{ id: 'usage-plan-without-stages' }],
     });
-    disassociateUsagePlan.serverless.service.provider.apiGateway = { apiKeys: ['apiKey1'] };
+    (disassociateUsagePlan as UsagePlanHost).serverless.service.provider.apiGateway = {
+      apiKeys: ['apiKey1'],
+    };
 
     await disassociateUsagePlan.disassociateUsagePlan();
 
@@ -267,7 +287,9 @@ describe('#disassociateUsagePlan()', () => {
 
   it('should resolve when getUsagePlans returns no items', async () => {
     providerRequestStub.withArgs('APIGateway', 'getUsagePlans', { limit: 500 }).resolves({});
-    disassociateUsagePlan.serverless.service.provider.apiGateway = { apiKeys: ['apiKey1'] };
+    (disassociateUsagePlan as UsagePlanHost).serverless.service.provider.apiGateway = {
+      apiKeys: ['apiKey1'],
+    };
 
     await disassociateUsagePlan.disassociateUsagePlan();
 
@@ -302,7 +324,9 @@ describe('#disassociateUsagePlan()', () => {
       }
       throw new Error(`Unexpected APIGateway command: ${command.constructor.name}`);
     });
-    disassociateUsagePlan.serverless.service.provider.apiGateway = { apiKeys: ['apiKey1'] };
+    (disassociateUsagePlan as UsagePlanHost).serverless.service.provider.apiGateway = {
+      apiKeys: ['apiKey1'],
+    };
 
     const promise = disassociateUsagePlan.disassociateUsagePlan();
     for (let index = 0; index < 20 && pendingResolvers.length < 2; index += 1) {
@@ -320,7 +344,9 @@ describe('#disassociateUsagePlan()', () => {
   });
 
   it('uses existing API Gateway and CloudFormation client promises from the plugin context', async () => {
-    disassociateUsagePlan.serverless.service.provider.apiGateway = { apiKeys: ['apiKey1'] };
+    (disassociateUsagePlan as UsagePlanHost).serverless.service.provider.apiGateway = {
+      apiKeys: ['apiKey1'],
+    };
     const cloudFormationSend = sinon.stub().callsFake(async (command) => {
       if (command instanceof DescribeStackResourceCommand) {
         return { StackResourceDetail: { PhysicalResourceId: 'resource-id' } };
@@ -344,12 +370,14 @@ describe('#disassociateUsagePlan()', () => {
     const getAwsSdkV3ConfigStub = sinon
       .stub(awsProvider, 'getAwsSdkV3Config')
       .throws(new Error('Expected existing clients to be reused'));
-    disassociateUsagePlan.disassociateUsagePlanCloudFormationClientPromise = Promise.resolve({
-      send: cloudFormationSend,
-    });
-    disassociateUsagePlan.disassociateUsagePlanApiGatewayClientPromise = Promise.resolve({
-      send: apiGatewaySend,
-    });
+    (disassociateUsagePlan as UsagePlanHost).disassociateUsagePlanCloudFormationClientPromise =
+      Promise.resolve({
+        send: cloudFormationSend,
+      });
+    (disassociateUsagePlan as UsagePlanHost).disassociateUsagePlanApiGatewayClientPromise =
+      Promise.resolve({
+        send: apiGatewaySend,
+      });
 
     try {
       await disassociateUsagePlan.disassociateUsagePlan();
@@ -520,7 +548,9 @@ describe('#disassociateUsagePlan()', () => {
   });
 
   it('should resolve if no api keys are given', async () => {
-    disassociateUsagePlan.serverless.service.provider.apiGateway = { apiKeys: [] };
+    (disassociateUsagePlan as UsagePlanHost).serverless.service.provider.apiGateway = {
+      apiKeys: [],
+    };
 
     return disassociateUsagePlan.disassociateUsagePlan().then(() => {
       expect(providerRequestStub.callCount).to.be.equal(0);

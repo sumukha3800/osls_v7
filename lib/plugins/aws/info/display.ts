@@ -69,7 +69,7 @@ export default {
           const { httpApiEventsPlugin } = this.serverless;
           httpApiEventsPlugin.resolveConfiguration();
 
-          for (const functionData of Object.values(this.serverless.service.functions)) {
+          for (const functionData of Object.values<any>(this.serverless.service.functions)) {
             for (const event of functionData.events) {
               if (!event.httpApi) continue;
               outputSectionItems.push(

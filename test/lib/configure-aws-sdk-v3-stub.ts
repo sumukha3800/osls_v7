@@ -2,7 +2,15 @@ import { finished } from 'node:stream/promises';
 import ensurePlainObject from 'type/plain-object/ensure.js';
 import { hasOwn } from '../../lib/utils/safe-object.ts';
 
-const serviceDefinitions = {
+interface ServiceDefinition {
+  packageName: string;
+  clientName: string;
+  commands: Record<string, string>;
+  paginators?: Record<string, { name: string; inputToken: string; outputToken: string }>;
+  extraMethods?: string[];
+}
+
+const serviceDefinitions: Record<string, ServiceDefinition> = {
   APIGateway: {
     packageName: '@aws-sdk/client-api-gateway',
     clientName: 'APIGatewayClient',
@@ -134,7 +142,7 @@ const serviceDefinitions = {
   },
 };
 
-function getMethodByCommandName(definition, commandName) {
+function getMethodByCommandName(definition: ServiceDefinition, commandName) {
   for (const [method, candidateCommandName] of Object.entries(definition.commands)) {
     if (candidateCommandName === commandName) return method;
   }
@@ -192,7 +200,7 @@ function getMethodStub(stubMap, service, method) {
   return serviceConfig[method];
 }
 
-function supportsMethod(definition, method) {
+function supportsMethod(definition: ServiceDefinition, method) {
   return (
     definition.commands[method] ||
     (definition.paginators || {})[method] ||
@@ -251,8 +259,20 @@ function createLibStorageModuleStub({ stubMap, state, passContextToCallbacks }) 
   };
 }
 
-function createModuleStub({ service, definition, stubMap, state, passContextToCallbacks }) {
-  const exports = {};
+function createModuleStub({
+  service,
+  definition,
+  stubMap,
+  state,
+  passContextToCallbacks,
+}: {
+  service: string;
+  definition: ServiceDefinition;
+  stubMap: any;
+  state: any;
+  passContextToCallbacks: boolean;
+}) {
+  const exports: Record<string, any> = {};
 
   const Client = createNamedClass(
     definition.clientName,

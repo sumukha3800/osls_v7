@@ -24,7 +24,7 @@ describe('test/unit/lib/commands/plugin-management.test.ts', () => {
       [`${maxLengthName}@latest`, { name: maxLengthName, version: 'latest' }],
       [scopedMaxLengthName, { name: scopedMaxLengthName, version: 'latest' }],
       [`${scopedMaxLengthName}@1.2.3`, { name: scopedMaxLengthName, version: '1.2.3' }],
-    ]) {
+    ] as Array<[string, { name: string; version: string }]>) {
       it(`parses valid plugin spec "${input}"`, () => {
         expect(parsePluginInstallSpec(input)).to.include(expected);
         expect(parsePluginInstallSpec(input).installSpec).to.equal(

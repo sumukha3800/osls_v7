@@ -34,7 +34,8 @@ const npmList = async (cwd, envName, outputFilePath) => {
     await outputFile.close();
   }
 };
-const readFile = (...args) => fsp.readFile(...args);
+// Keeps the overloads of `fsp.readFile` (a Buffer without encoding, a string with one)
+const readFile = ((...args: [any, any?]) => fsp.readFile(...args)) as typeof fsp.readFile;
 
 const excludeNodeDevDependenciesMemoized = memoizee(excludeNodeDevDependencies, {
   promise: true,
@@ -281,7 +282,7 @@ const zipService = {
 
         const cleanup = output.closed
           ? cleanupPartialArtifact()
-          : new Promise((cleanupResolve) => output.once('close', cleanupResolve)).then(
+          : new Promise<void>((cleanupResolve) => output.once('close', cleanupResolve)).then(
               cleanupPartialArtifact
             );
 

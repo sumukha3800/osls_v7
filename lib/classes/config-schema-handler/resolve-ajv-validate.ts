@@ -1,4 +1,5 @@
 import ajvModule from 'ajv';
+import type { AnySchema, ValidateFunction } from 'ajv';
 import path from 'node:path';
 import os from 'node:os';
 import { pathToFileURL } from 'node:url';
@@ -15,7 +16,8 @@ import ensureExists from '../../utils/ensure-exists.ts';
 import ServerlessError from '../../serverless-error.ts';
 import ajvPackageJson from 'ajv/package.json' with { type: 'json' };
 import ajvFormatsPackageJson from 'ajv-formats/package.json' with { type: 'json' };
-const Ajv: Record<string, any> = ajvModule.default;
+// The CommonJS export is the Ajv class, which also carries the named exports (eg. `_`)
+const Ajv = ajvModule.default as typeof ajvModule.default & { _: typeof ajvModule._ };
 const standaloneCode = standaloneModule.default;
 const ajvVersion = ajvPackageJson.version;
 const ajvFormatsVersion = ajvFormatsPackageJson.version;
@@ -49,9 +51,9 @@ const importValidatorModule = async (code) => {
 // of speeding up tests and reducing their memory footprint.
 // If that solution proves to not be enough, we can improve it
 // with `uni-global` package.
-const cachedValidatorsBySchemaHash = {};
+const cachedValidatorsBySchemaHash: Record<string, ValidateFunction> = {};
 
-const getValidate = async (schema) => {
+const getValidate = async (schema: AnySchema): Promise<ValidateFunction> => {
   const schemaHash = getSchemaHash(schema);
   if (cachedValidatorsBySchemaHash[schemaHash]) {
     return cachedValidatorsBySchemaHash[schemaHash];

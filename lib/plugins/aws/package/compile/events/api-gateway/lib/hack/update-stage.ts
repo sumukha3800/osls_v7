@@ -123,7 +123,9 @@ async function resolveAccountInfo() {
 
 function resolveApiGatewayResource(resources) {
   const apiGatewayResources = Object.fromEntries(
-    Object.entries(resources).filter(([, resource]) => resource.Type === 'AWS::ApiGateway::RestApi')
+    Object.entries<any>(resources).filter(
+      ([, resource]) => resource.Type === 'AWS::ApiGateway::RestApi'
+    )
   );
   const apiGatewayResourcesIds = Object.keys(apiGatewayResources);
   if (apiGatewayResourcesIds.length !== 1) return null;
@@ -261,7 +263,7 @@ function handleLogs() {
   const logs = this.state.service.provider.logs.restApi;
   const ops = this.apiGatewayStagePatchOperations;
 
-  let operations = [
+  let operations: { op: string; path: string; value?: string }[] = [
     { op: 'replace', path: '/*/*/logging/dataTrace', value: 'false' },
     { op: 'replace', path: '/*/*/logging/loglevel', value: 'OFF' },
   ];

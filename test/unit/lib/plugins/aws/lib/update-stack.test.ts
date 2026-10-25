@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import { CloudFormationClient, SetStackPolicyCommand } from '@aws-sdk/client-cloudformation';
 import retry from '../../../../../../lib/aws/retry.ts';
 import esmock from 'esmock';
@@ -52,7 +53,7 @@ describe('updateStack', () => {
   });
 
   afterEach(() => {
-    CloudFormationClient.prototype.send.restore();
+    (CloudFormationClient.prototype.send as SinonStub).restore();
   });
 
   it('retries setting the stack policy on throttling errors', async () => {

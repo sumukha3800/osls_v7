@@ -38,7 +38,10 @@ describe('test/unit/scripts/serverless-signals.test.ts', () => {
     originalStackTraceLimit = Error.stackTraceLimit;
   });
 
-  const loadScript = async ({ signals = ['SIGINT', 'SIGTERM'], listenerCount = 0 } = {}) => {
+  const loadScript = async ({
+    signals = ['SIGINT', 'SIGTERM'] as Array<string | symbol>,
+    listenerCount = 0,
+  } = {}) => {
     sleepDeferred = deferred();
     renderVersionDeferred = deferred();
     onceHandlers = new Map();

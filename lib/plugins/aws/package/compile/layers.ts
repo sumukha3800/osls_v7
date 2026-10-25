@@ -232,21 +232,24 @@ class AwsCompileLayers {
     };
   }
 
-  cfOutputLayerTemplate() {
+  // A CloudFormation output; `Value` is set by the caller
+  cfOutputLayerTemplate(): { Description: string; Value: any } {
     return {
       Description: 'Current Lambda layer version',
       Value: 'Value',
     };
   }
 
-  cfOutputLayerHashTemplate() {
+  // A CloudFormation output; `Value` is set by the caller
+  cfOutputLayerHashTemplate(): { Description: string; Value: any } {
     return {
       Description: 'Current Lambda layer hash',
       Value: 'Value',
     };
   }
 
-  cfOutputLayerS3KeyTemplate() {
+  // A CloudFormation output; `Value` is set by the caller
+  cfOutputLayerS3KeyTemplate(): { Description: string; Value: any } {
     return {
       Description: 'Current Lambda layer S3Key',
       Value: 'Value',

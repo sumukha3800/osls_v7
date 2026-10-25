@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import { CloudFormationClient, DescribeChangeSetCommand } from '@aws-sdk/client-cloudformation';
 import esmock from 'esmock';
 
@@ -30,7 +31,7 @@ describe('waitForChangeSetCreation', () => {
   });
 
   afterEach(() => {
-    CloudFormationClient.prototype.send.restore();
+    (CloudFormationClient.prototype.send as SinonStub).restore();
   });
 
   const expectDescribeChangeSetCall = (call) => {

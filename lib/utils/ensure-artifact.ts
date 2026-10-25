@@ -6,7 +6,8 @@ import os from 'node:os';
 const { version } = packageModule;
 
 const ensureArtifactInCache = memoizee(
-  async (filename, cachePath, generate) => {
+  // Not passed when deleting a cache entry (the cache is keyed by the first two arguments)
+  async (filename: string, cachePath: string, generate?: () => unknown) => {
     await ensureExists(path.resolve(cachePath, filename), generate);
     return cachePath;
   },

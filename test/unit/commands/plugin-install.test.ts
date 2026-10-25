@@ -121,7 +121,7 @@ describe('test/unit/commands/plugin-install.test.ts', () => {
 
       // Simulate that the variable has been resolved
       configuration.plugins = [pluginName];
-      const serviceDir: Record<string, any> = fixture.servicePath;
+      const serviceDir = fixture.servicePath;
       const configurationFilePath = await resolveConfigurationPath({
         cwd: serviceDir,
       });
@@ -150,7 +150,7 @@ describe('test/unit/commands/plugin-install.test.ts', () => {
     it('rejects before installing or updating the configuration file', async () => {
       const fixture = await setupProgrammaticFixture('function');
       const configuration = fixture.serviceConfig;
-      const serviceDir: Record<string, any> = fixture.servicePath;
+      const serviceDir = fixture.servicePath;
       const configurationFilePath = await resolveConfigurationPath({
         cwd: serviceDir,
       });
@@ -178,7 +178,7 @@ describe('test/unit/commands/plugin-install.test.ts', () => {
       it(`rejects ${JSON.stringify(inputName)} before installing`, async () => {
         const fixture = await setupProgrammaticFixture('function');
         const configuration = fixture.serviceConfig;
-        const serviceDir: Record<string, any> = fixture.servicePath;
+        const serviceDir = fixture.servicePath;
         const configurationFilePath = await resolveConfigurationPath({
           cwd: serviceDir,
         });
@@ -212,7 +212,7 @@ describe('test/unit/commands/plugin-install.test.ts', () => {
       it(`passes ${JSON.stringify(expectedPackageSpec)} as one npm argv element`, async () => {
         const fixture = await setupProgrammaticFixture('function');
         const configuration = fixture.serviceConfig;
-        const serviceDir: Record<string, any> = fixture.servicePath;
+        const serviceDir = fixture.servicePath;
         const configurationFilePath = await resolveConfigurationPath({
           cwd: serviceDir,
         });
@@ -235,7 +235,7 @@ describe('test/unit/commands/plugin-install.test.ts', () => {
     it('omits --ignore-scripts', async () => {
       const fixture = await setupProgrammaticFixture('function');
       const configuration = fixture.serviceConfig;
-      const serviceDir: Record<string, any> = fixture.servicePath;
+      const serviceDir = fixture.servicePath;
       const configurationFilePath = await resolveConfigurationPath({
         cwd: serviceDir,
       });

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import yauzl from 'yauzl';
+import type { Readable } from 'node:stream';
 const fsp = fs.promises;
 
 const pathPosix = path.posix;
@@ -122,7 +123,7 @@ const assertNoSymlinkInPath = async (rootPath, targetPath) => {
 };
 
 const openEntryReadStream = (zipfile, entry) => {
-  return new Promise((resolve, reject) => {
+  return new Promise<Readable>((resolve, reject) => {
     zipfile.openReadStream(entry, (error, stream) => {
       if (error) {
         reject(error);

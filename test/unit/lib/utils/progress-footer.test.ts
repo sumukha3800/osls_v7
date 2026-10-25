@@ -107,14 +107,14 @@ describe('test/unit/lib/utils/progress-footer.test.ts', () => {
     const intervals = [];
     sinon.stub(global, 'setInterval').callsFake((callback, interval) => {
       intervals.push(interval);
-      return { unref: sinon.stub() };
+      return { unref: sinon.stub() } as unknown as NodeJS.Timeout;
     });
     sinon.stub(global, 'clearInterval');
 
     for (const [platform, expectedInterval] of [
       ['linux', 80],
       ['win32', 100],
-    ]) {
+    ] as Array<[NodeJS.Platform, number]>) {
       const stdout = createMockStream();
       const stderr = createMockStream();
       const createProgressFooter = await loadProgressFooter(platform);

@@ -53,6 +53,15 @@ describe('test/unit/lib/aws/credentials.test.ts', () => {
   }
   FakeNodeHttpHandler.instances = [];
 
+  interface LoadCredentialsOptions {
+    files?: Record<string, string | Error>;
+    fromIni: sinon.SinonStub;
+    fromNodeProviderChain: sinon.SinonStub;
+    readline?: ReturnType<typeof createFakeReadline>;
+    logWarning?: sinon.SinonSpy;
+    withInteractiveSsoLogin?: sinon.SinonStub;
+  }
+
   async function loadCredentials({
     files = {},
     fromIni,
@@ -60,7 +69,7 @@ describe('test/unit/lib/aws/credentials.test.ts', () => {
     readline,
     logWarning,
     withInteractiveSsoLogin,
-  }) {
+  }: LoadCredentialsOptions) {
     const readFileSync = sinon.stub().callsFake((filePath) => {
       if (Object.prototype.hasOwnProperty.call(files, filePath)) {
         const result = files[filePath];
@@ -481,7 +490,7 @@ describe('test/unit/lib/aws/credentials.test.ts', () => {
         'config single-quoted profile default',
         { [configFilePath]: ["[profile 'default']", 'region = us-east-1'].join('\n') },
       ],
-    ]) {
+    ] as Array<[string, Record<string, string>]>) {
       const { doesImplicitDefaultProfileExist } = await loadCredentials({
         files,
         fromIni,

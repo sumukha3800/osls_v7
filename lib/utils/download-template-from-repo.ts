@@ -312,7 +312,10 @@ async function parseRepoURL(inputUrl) {
       return reject(new ServerlessError('URL is required', 'MISSING_TEMPLATE_URL'));
     }
 
-    const url = URL.parse(inputUrl.replace(/\/$/, ''));
+    // Legacy `url.parse()` result, given WHATWG style `username` and `password` properties
+    const url: ReturnType<typeof URL.parse> & { username?: string; password?: string } = URL.parse(
+      inputUrl.replace(/\/$/, '')
+    );
     if (url.auth) {
       const [username, password] = url.auth.split(':');
       url.username = username;

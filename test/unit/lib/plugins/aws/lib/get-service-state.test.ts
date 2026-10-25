@@ -10,7 +10,7 @@ describe('#getServiceState()', () => {
   let readFileSyncStub;
 
   beforeEach(() => {
-    readFileSyncStub = sinon.stub().returns();
+    readFileSyncStub = sinon.stub().returns(undefined);
     context = {
       options: {},
       provider: {

@@ -53,7 +53,7 @@ const setupPluginFixture = async () => {
     },
   });
 
-  const serviceDir: Record<string, any> = fixture.servicePath;
+  const serviceDir = fixture.servicePath;
   const configurationFilePath = await resolveConfigurationPath({
     cwd: serviceDir,
   });
@@ -121,7 +121,7 @@ describe('test/unit/commands/plugin-uninstall.test.ts', () => {
       });
 
       const configuration = fixture.serviceConfig;
-      const fixtureServiceDir: Record<string, any> = fixture.servicePath;
+      const fixtureServiceDir = fixture.servicePath;
       const fixtureConfigurationPath = await resolveConfigurationPath({
         cwd: fixtureServiceDir,
       });
@@ -155,7 +155,7 @@ describe('test/unit/commands/plugin-uninstall.test.ts', () => {
       });
 
       const configuration = fixture.serviceConfig;
-      const fixtureServiceDir: Record<string, any> = fixture.servicePath;
+      const fixtureServiceDir = fixture.servicePath;
       const fixtureConfigurationPath = await resolveConfigurationPath({
         cwd: fixtureServiceDir,
       });

@@ -4,7 +4,16 @@ import copy from './fs/copy.ts';
 import { renameService } from './rename-service.ts';
 import ServerlessError from '../serverless-error.ts';
 
-export default async ({ templatePath, projectDir, projectName }) => {
+export default async ({
+  templatePath,
+  projectDir,
+  projectName,
+}: {
+  templatePath: string;
+  projectDir: string;
+  // When given, the service in the copied configuration is renamed to it
+  projectName?: string;
+}) => {
   const sourcePath = untildify(templatePath);
 
   try {

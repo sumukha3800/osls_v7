@@ -300,7 +300,7 @@ class AwsCompileCloudFrontEvents {
     const userConfig = this.serverless.service.provider.cloudFront || {};
     if (userConfig.cachePolicies) {
       const Resources = this.serverless.service.provider.compiledCloudFormationTemplate.Resources;
-      for (const [name, cachePolicyConfig] of Object.entries(userConfig.cachePolicies)) {
+      for (const [name, cachePolicyConfig] of Object.entries<any>(userConfig.cachePolicies)) {
         this.cachePolicies.add(name);
 
         Object.assign(Resources, {

@@ -6,6 +6,7 @@ import normalizeAjvErrors from './normalize-ajv-errors.ts';
 import resolveAjvValidate from './resolve-ajv-validate.ts';
 import { log, style } from '../../utils/serverless-utils/log.ts';
 import { setByPath } from '../../utils/object-path.ts';
+import type Serverless from '../../serverless.ts';
 
 const FUNCTION_NAME_PATTERN = '^[a-zA-Z0-9-_]+$';
 const ERROR_PREFIX = 'Configuration error';
@@ -73,10 +74,11 @@ const denormalizeUserConfig = (userConfig, { removedValuesMap }) => {
 const configurationValidationResults = new WeakMap();
 
 class ConfigSchemaHandler {
-  declare schema: any;
-  declare serverless: any;
+  // The JSON schema of the service configuration, extended by plugins
+  declare schema: Record<string, any>;
+  declare serverless: Serverless;
 
-  constructor(serverless) {
+  constructor(serverless: Serverless) {
     this.serverless = serverless;
     this.schema = structuredClone(schema);
 
@@ -108,9 +110,7 @@ class ConfigSchemaHandler {
       configurationValidationResults.set(this.serverless.configurationInput, !validate.errors);
     }
     if (validate.errors && this.serverless.service.configValidationMode !== 'off') {
-      const messages = normalizeAjvErrors(validate.errors).map(
-        (err: Record<string, any>) => err.message
-      );
+      const messages = normalizeAjvErrors(validate.errors).map((err) => err.message);
       this.handleErrorMessages(messages);
     }
   }
@@ -350,15 +350,21 @@ class ConfigSchemaHandler {
 }
 
 class PropertyCollisionError extends Error {
-  declare property: any;
+  declare property: string;
 
-  constructor(property) {
+  constructor(property: string) {
     super();
     this.property = property;
   }
 }
 
-function addPropertiesToSchema(subSchema, extension = { properties: {}, required: [] }) {
+function addPropertiesToSchema(
+  subSchema: Record<string, any>,
+  extension: { properties?: Record<string, any>; required?: string[] } = {
+    properties: {},
+    required: [],
+  }
+) {
   let collidingExtensionPropertyKey;
   const existingSubSchemaPropertiesKeys = new Set(Object.keys(subSchema.properties));
   Object.keys(extension.properties).some((extensionPropertiesKey) => {

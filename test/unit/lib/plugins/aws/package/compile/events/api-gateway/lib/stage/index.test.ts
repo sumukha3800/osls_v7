@@ -9,7 +9,14 @@ import AwsProvider from '../../../../../../../../../../../lib/plugins/aws/provid
 import { createTmpDir } from '../../../../../../../../../../utils/fs.ts';
 import runServerless from '../../../../../../../../../../utils/run-serverless.ts';
 
-if (!childProcess.execAsync) childProcess.execAsync = promisify(childProcess.exec);
+// Legacy hook: tests attach a promisified exec to the child_process module so it can be stubbed.
+type ChildProcessWithExecAsync = typeof childProcess & {
+  execAsync?: typeof childProcess.exec.__promisify__;
+};
+
+if (!(childProcess as ChildProcessWithExecAsync).execAsync) {
+  (childProcess as ChildProcessWithExecAsync).execAsync = promisify(childProcess.exec);
+}
 
 describe('#compileStage()', () => {
   let serverless;
@@ -80,7 +87,7 @@ describe('#compileStage()', () => {
 
   describe('logs', () => {
     beforeEach(() => {
-      sinon.stub(childProcess, 'execAsync');
+      sinon.stub(childProcess as ChildProcessWithExecAsync, 'execAsync');
       // setting up API Gateway logs
       awsCompileApigEvents.serverless.service.provider.logs = {
         restApi: true,

@@ -1,8 +1,9 @@
 import globalOptions from './common-options/global.ts';
 import serviceOptions from './common-options/service.ts';
 import awsServiceOptions from './common-options/aws-service.ts';
+import type { CommandsSchema } from './types.ts';
 
-const commands = new Map();
+const commands: CommandsSchema = new Map();
 
 commands.commonOptions = globalOptions;
 

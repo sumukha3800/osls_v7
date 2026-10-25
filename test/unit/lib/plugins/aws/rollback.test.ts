@@ -5,9 +5,12 @@ import Serverless from '../../../../../lib/serverless.ts';
 import * as chai from 'chai';
 import { assert } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import logEmitter from 'log/lib/emitter.js';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { Readable } from 'node:stream';
+
+type TestError = Error & { code?: string };
 
 const expect = chai.expect;
 
@@ -24,7 +27,8 @@ describe('AwsRollback', () => {
     if (serverless && serverless.pluginManager.spawn.restore) {
       serverless.pluginManager.spawn.restore();
     }
-    if (S3Client.prototype.send.restore) S3Client.prototype.send.restore();
+    if ((S3Client.prototype.send as SinonStub).restore)
+      (S3Client.prototype.send as SinonStub).restore();
     serverless = new Serverless({ commands: [], options: {} });
     provider = new AwsProvider(serverless, options);
     serverless.setProvider('aws', provider);
@@ -48,7 +52,8 @@ describe('AwsRollback', () => {
   );
 
   afterEach(() => {
-    if (S3Client.prototype.send.restore) S3Client.prototype.send.restore();
+    if ((S3Client.prototype.send as SinonStub).restore)
+      (S3Client.prototype.send as SinonStub).restore();
     serverless.pluginManager.spawn.restore();
   });
 
@@ -511,7 +516,7 @@ describe('test/unit/lib/plugins/aws/rollback.test.ts', () => {
             headObject: () => {},
             headBucket: () => {},
             listObjectsV2: () => {
-              const err = new Error('error!');
+              const err: TestError = new Error('error!');
               err.code = 'AWS_S3_LIST_OBJECTS_V2_ACCESS_DENIED';
               throw err;
             },

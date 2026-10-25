@@ -41,8 +41,20 @@ const waitFor = async (condition) => {
   throw new Error('Timed out waiting for condition');
 };
 
+type FakeOutputStream = EventEmitter & {
+  pause?: sinon.SinonSpy;
+  resume?: sinon.SinonSpy;
+  isPaused?: () => boolean;
+};
+
+type FakeChild = EventEmitter & {
+  stdout?: FakeOutputStream;
+  stderr?: FakeOutputStream;
+  stdin?: { end: sinon.SinonSpy };
+};
+
 const createFakeOutputStream = () => {
-  const outputStream = new EventEmitter();
+  const outputStream: FakeOutputStream = new EventEmitter();
   let paused = false;
 
   outputStream.pause = sinon.spy(() => {
@@ -59,7 +71,7 @@ const createFakeOutputStream = () => {
 };
 
 const createFakeChild = () => {
-  const child = new EventEmitter();
+  const child: FakeChild = new EventEmitter();
 
   child.stdout = createFakeOutputStream();
   child.stderr = createFakeOutputStream();
@@ -119,7 +131,7 @@ describe('spawn', () => {
   });
 
   it('requires args to be an array', () => {
-    const error = expectThrownCode(() => spawn('npm', 'install'), 'INVALID_SPAWN_INPUT');
+    const error = expectThrownCode(() => spawn('npm', 'install' as any), 'INVALID_SPAWN_INPUT');
 
     expect(error.message).to.equal('Spawn args must be an array.');
   });

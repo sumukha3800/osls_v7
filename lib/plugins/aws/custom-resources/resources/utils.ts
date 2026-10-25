@@ -31,7 +31,7 @@ async function response(event, context, status, data = {}, err?) {
     },
   };
 
-  return new Promise((resolve, reject) => {
+  return new Promise<typeof data | void>((resolve, reject) => {
     const request = https.request(options, (resp) => {
       logger.log(`STATUS: ${resp.statusCode}`);
       logger.log(`HEADERS: ${JSON.stringify(resp.headers)}`);

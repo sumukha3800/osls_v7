@@ -44,10 +44,10 @@ function fromPrefixedEnv(prefix) {
   };
 }
 
-function promptMfaCode(mfaSerial) {
+function promptMfaCode(mfaSerial: string) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     let answered = false;
     rl.question(`Enter MFA code for ${mfaSerial}: `, (answer) => {
       answered = true;

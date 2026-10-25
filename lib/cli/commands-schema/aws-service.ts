@@ -1,7 +1,8 @@
 import awsServiceOptions from './common-options/aws-service.ts';
 import serviceCommands from './service.ts';
+import type { CommandsSchema } from './types.ts';
 
-const commands = new Map();
+const commands: CommandsSchema = new Map();
 
 commands.commonOptions = awsServiceOptions;
 

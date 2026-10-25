@@ -10,7 +10,11 @@ describe('extendedValidate', () => {
   let readFileSyncStub;
   let stateFileMock;
 
-  const createServiceConfig = () => ({
+  const createServiceConfig = (): {
+    service: string;
+    provider: string;
+    functions: Record<string, { handler: string }>;
+  } => ({
     service: 'first-service',
     provider: 'aws',
     functions: {

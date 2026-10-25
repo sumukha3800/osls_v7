@@ -3,6 +3,12 @@ import logEmitter from 'log/lib/emitter.js';
 import runServerless from '../../../../../utils/run-serverless.ts';
 import { expect } from 'chai';
 
+type TestError = Error & {
+  $metadata?: Record<string, unknown>;
+  $response?: unknown;
+  code?: string;
+};
+
 describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
   const baseAwsSdkV3StubMap = {
     STS: {
@@ -121,7 +127,7 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
         { stages: ['prod'] },
         false,
       ],
-    ]) {
+    ] satisfies [string, boolean | { stages: string[] }, boolean][]) {
       it(description, async () => {
         const { awsSdkV3Stub, updateTerminationProtectionStub } =
           await deployWithDeletionProtection(deletionProtection);
@@ -806,7 +812,7 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
         S3: {
           listObjectsV2: { Contents: [] },
           headBucket: () => {
-            const err = new Error();
+            const err: TestError = new Error();
             err.code = 'AWS_S3_HEAD_BUCKET_NOT_FOUND';
             throw err;
           },
@@ -894,7 +900,7 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
         S3: {
           listObjectsV2: { Contents: [] },
           headBucket: () => {
-            const err = new Error();
+            const err: TestError = new Error();
             err.code = 'AWS_S3_HEAD_BUCKET_NOT_FOUND';
             throw err;
           },
@@ -1585,7 +1591,7 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
         S3: {
           listObjectsV2: { Contents: [] },
           headBucket: () => {
-            const err = new Error();
+            const err: TestError = new Error();
             err.code = 'AWS_S3_HEAD_BUCKET_NOT_FOUND';
             throw err;
           },
@@ -1685,7 +1691,7 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
         S3: {
           listObjectsV2: { Contents: [] },
           headBucket: () => {
-            const err = new Error();
+            const err: TestError = new Error();
             err.code = 'AWS_S3_HEAD_BUCKET_NOT_FOUND';
             throw err;
           },
@@ -2069,7 +2075,7 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
       },
       S3: {
         headBucket: () => {
-          const err = new Error('Moved Permanently');
+          const err: TestError = new Error('Moved Permanently');
           err.name = 'PermanentRedirect';
           err.$metadata = { httpStatusCode: 301 };
           err.$response = { headers: { 'x-amz-bucket-region': 'us-west-1' } };
@@ -2110,7 +2116,7 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
       },
       S3: {
         headBucket: () => {
-          const err = new Error();
+          const err: TestError = new Error();
           err.code = 'AWS_S3_HEAD_BUCKET_NOT_FOUND';
           throw err;
         },
@@ -2147,7 +2153,7 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
       },
       S3: {
         headBucket: () => {
-          const err = new Error();
+          const err: TestError = new Error();
           err.code = 'AWS_S3_HEAD_BUCKET_NOT_FOUND';
           throw err;
         },
@@ -2185,7 +2191,7 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
       },
       S3: {
         headBucket: () => {
-          const err = new Error();
+          const err: TestError = new Error();
           err.code = 'AWS_S3_HEAD_BUCKET_FORBIDDEN';
           throw err;
         },

@@ -35,7 +35,20 @@ const reportEventualErrors = (variablesMeta) => {
   );
 };
 
-export default async ({ serviceDir, servicePath, configuration, options, sources = null }) => {
+export default async ({
+  serviceDir,
+  servicePath,
+  configuration,
+  options,
+  sources = null,
+}: {
+  serviceDir?: string;
+  // Legacy name of `serviceDir`, used when it is not given
+  servicePath?: string;
+  configuration: Record<string, any>;
+  options?: Record<string, any>;
+  sources?: Record<string, any> | null;
+}) => {
   serviceDir = ensureString(serviceDir || servicePath);
   ensurePlainObject(configuration);
   options = ensurePlainObject(options, { default: {} });

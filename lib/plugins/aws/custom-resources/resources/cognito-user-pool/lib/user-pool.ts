@@ -6,6 +6,7 @@ import {
   DescribeUserPoolCommand,
   UpdateUserPoolCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
+import type { ListUserPoolsCommandInput } from '@aws-sdk/client-cognito-identity-provider';
 
 const cognito = new CognitoIdentityProviderClient({ maxAttempts: MAX_AWS_REQUEST_TRY });
 
@@ -40,7 +41,7 @@ function getUpdateConfigFromCurrentSetup(currentSetup) {
 async function findUserPoolByName(config) {
   const { userPoolName, region } = config;
 
-  const payload: Record<string, any> = {
+  const payload: ListUserPoolsCommandInput = {
     MaxResults: 60,
   };
 
@@ -143,7 +144,7 @@ async function removeConfiguration(config) {
 function removeExistingLambdas(lambdaConfig, lambdaArns) {
   const targets = new Set(Array.isArray(lambdaArns) ? lambdaArns : [lambdaArns]);
   const res = Object.fromEntries(
-    Object.entries(lambdaConfig).filter(([key, value]) => {
+    Object.entries<any>(lambdaConfig).filter(([key, value]) => {
       if (key === 'PreTokenGenerationConfig' && value && targets.has(value.LambdaArn)) {
         return false;
       }

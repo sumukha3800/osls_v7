@@ -1,5 +1,6 @@
 import * as chai from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import path from 'node:path';
 import fs from 'node:fs';
 import {
@@ -90,7 +91,7 @@ describe('AwsDeployFunction', () => {
     });
 
     afterEach(() => {
-      LambdaClient.prototype.send.restore();
+      (LambdaClient.prototype.send as SinonStub).restore();
     });
 
     it('it should throw error if function is not provided', async () => {
@@ -201,7 +202,7 @@ describe('AwsDeployFunction', () => {
 
     afterEach(() => {
       awsDeployFunction.provider.getAccountInfo.restore();
-      IAMClient.prototype.send.restore();
+      (IAMClient.prototype.send as SinonStub).restore();
       serverless.service.resources = undefined;
     });
 
@@ -298,8 +299,8 @@ describe('AwsDeployFunction', () => {
     });
 
     afterEach(() => {
-      LambdaClient.prototype.send.restore();
-      Date.now.restore();
+      (LambdaClient.prototype.send as SinonStub).restore();
+      (Date.now as SinonStub).restore();
     });
 
     it('should time out while waiting for desired function state', async () => {
@@ -333,8 +334,8 @@ describe('AwsDeployFunction', () => {
     });
 
     afterEach(() => {
-      LambdaClient.prototype.send.restore();
-      Date.now.restore();
+      (LambdaClient.prototype.send as SinonStub).restore();
+      (Date.now as SinonStub).restore();
     });
 
     it('should time out retryable configuration update conflicts', async () => {
@@ -392,8 +393,8 @@ describe('AwsDeployFunction', () => {
     });
 
     afterEach(() => {
-      LambdaClient.prototype.send.restore();
-      fs.promises.readFile.restore();
+      (LambdaClient.prototype.send as SinonStub).restore();
+      (fs.promises.readFile as SinonStub).restore();
     });
 
     it('should deploy the function if the hashes are different', async () => {

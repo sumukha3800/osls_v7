@@ -207,7 +207,7 @@ class AwsCompileKafkaEvents {
         };
 
         kafkaResource.Properties.SourceAccessConfigurations = [];
-        Object.entries(event.kafka.accessConfigurations).forEach(
+        Object.entries<any>(event.kafka.accessConfigurations).forEach(
           ([accessConfigurationType, accessConfigurationValues]) => {
             let type;
             let prefix = '';

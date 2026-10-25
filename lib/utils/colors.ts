@@ -3,7 +3,20 @@ import CSS_KEYWORDS from './color-keywords.ts';
 const ESC = '\u001B[';
 const RESET = `${ESC}0m`;
 
-const toText = (value) => String(value);
+type Rgb = [number, number, number];
+
+// The parts of a TTY write stream used to detect color support
+export interface ColorStream {
+  isTTY?: boolean;
+  getColorDepth?: (env?: object) => number;
+}
+
+export interface ColorOptions {
+  stream?: ColorStream | null;
+  env?: Record<string, string | undefined>;
+}
+
+const toText = (value: unknown) => String(value);
 
 const wrap = (open) => (value) => `${open}${toText(value)}${RESET}`;
 
@@ -28,7 +41,10 @@ const parseForceColor = (env) => {
 
 const isColorDisabled = (env) => 'NO_COLOR' in env || 'NODE_DISABLE_COLORS' in env;
 
-const getColorLevel = ({ stream = process.stdout, env = process.env } = {}) => {
+const getColorLevel = ({
+  stream = process.stdout,
+  env = process.env,
+}: ColorOptions = {}): number => {
   const forced = parseForceColor(env);
   if (forced !== undefined) return forced;
 
@@ -46,7 +62,10 @@ const getColorLevel = ({ stream = process.stdout, env = process.env } = {}) => {
   return 0;
 };
 
-const createFormatter = (level, { basic, ansi256, rgb }) => {
+const createFormatter = (
+  level: number,
+  { basic, ansi256, rgb }: { basic?: number; ansi256?: number; rgb?: Rgb }
+) => {
   if (level >= 3 && rgb) {
     return wrap(`${ESC}38;2;${rgb[0]};${rgb[1]};${rgb[2]}m`);
   }
@@ -59,7 +78,7 @@ const createFormatter = (level, { basic, ansi256, rgb }) => {
   return toText;
 };
 
-const toAnsi256Index = ([red, green, blue]) => {
+const toAnsi256Index = ([red, green, blue]: Rgb) => {
   if (red === green && green === blue) {
     if (red < 8) return 16;
     if (red > 248) return 231;
@@ -74,10 +93,10 @@ const toAnsi256Index = ([red, green, blue]) => {
   );
 };
 
-const colorDistance = ([r1, g1, b1], [r2, g2, b2]) =>
+const colorDistance = ([r1, g1, b1]: Rgb, [r2, g2, b2]: Rgb) =>
   (r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2;
 
-const createColors = ({ stream = process.stdout, env = process.env } = {}) => {
+const createColors = ({ stream = process.stdout, env = process.env }: ColorOptions = {}) => {
   const level = getColorLevel({ stream, env });
 
   const plain = toText;
@@ -97,7 +116,7 @@ const createColors = ({ stream = process.stdout, env = process.env } = {}) => {
   const brandRed = createFormatter(level, { basic: 91, ansi256: 203, rgb: [253, 87, 80] });
   const warning = createFormatter(level, { basic: 33, ansi256: 214, rgb: [255, 165, 0] });
 
-  const basicPalette = [
+  const basicPalette: { rgb: Rgb; formatter: (value: unknown) => string }[] = [
     { rgb: [0, 0, 0], formatter: black },
     { rgb: [255, 0, 0], formatter: red },
     { rgb: [0, 170, 0], formatter: green },
@@ -122,7 +141,7 @@ const createColors = ({ stream = process.stdout, env = process.env } = {}) => {
 
   const keywordFormatters = new Map();
 
-  const resolveKeywordFormatter = (rgb) => {
+  const resolveKeywordFormatter = (rgb: Rgb) => {
     if (level >= 3) {
       return wrap(`${ESC}38;2;${rgb[0]};${rgb[1]};${rgb[2]}m`);
     }
@@ -158,7 +177,7 @@ const createColors = ({ stream = process.stdout, env = process.env } = {}) => {
     grey: gray,
     brandRed,
     warning,
-    colorize(text, colorName) {
+    colorize(text: unknown, colorName?: string) {
       if (!colorName) return plain(text);
 
       const normalizedColorName = normalizeColorName(colorName);

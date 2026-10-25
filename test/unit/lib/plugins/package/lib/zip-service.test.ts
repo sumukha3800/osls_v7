@@ -5,7 +5,9 @@ import { PassThrough } from 'node:stream';
 import JsZip from 'jszip';
 import glob from '../../../../../../lib/utils/glob.ts';
 import fs from 'node:fs';
+import type { FileHandle } from 'node:fs/promises';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import isObject from 'type/object/is.js';
 import Utils from '../../../../../../lib/classes/utils.ts';
 import { getTmpDirPath } from '../../../../../utils/fs.ts';
@@ -180,16 +182,19 @@ describe('zipService', () => {
         globSyncStub = sinon.stub(glob, 'sync');
         readFileAsyncStub = sinon.stub(fs.promises, 'readFile');
         closeFileStub = sinon.stub().resolves();
-        openFileAsyncStub = sinon.stub(fs.promises, 'open').callsFake(async () => ({
-          fd: nextFileDescriptor++,
-          close: closeFileStub,
-        }));
+        openFileAsyncStub = sinon.stub(fs.promises, 'open').callsFake(
+          async () =>
+            ({
+              fd: nextFileDescriptor++,
+              close: closeFileStub,
+            }) as unknown as FileHandle
+        );
       });
 
       afterEach(() => {
-        glob.sync.restore();
-        fs.promises.readFile.restore();
-        fs.promises.open.restore();
+        (glob.sync as SinonStub).restore();
+        (fs.promises.readFile as SinonStub).restore();
+        (fs.promises.open as SinonStub).restore();
       });
 
       it('does not add async helpers to core modules when loaded', async () => {
@@ -1033,7 +1038,7 @@ describe('zipService', () => {
           }),
           createReadStream: fileHandle.createReadStream.bind(fileHandle),
           close: fileHandle.close.bind(fileHandle),
-        };
+        } as unknown as FileHandle;
       });
 
       try {
@@ -1060,7 +1065,7 @@ describe('zipService', () => {
           }),
           createReadStream: fileHandle.createReadStream.bind(fileHandle),
           close: fileHandle.close.bind(fileHandle),
-        };
+        } as unknown as FileHandle;
       });
 
       try {
@@ -1091,7 +1096,7 @@ describe('zipService', () => {
           }),
           createReadStream: fileHandle.createReadStream.bind(fileHandle),
           close: fileHandle.close.bind(fileHandle),
-        };
+        } as unknown as FileHandle;
       });
 
       try {

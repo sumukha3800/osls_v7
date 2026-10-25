@@ -1,4 +1,5 @@
 import { CloudFormationClient, ListStackResourcesCommand } from '@aws-sdk/client-cloudformation';
+import type { ListStackResourcesCommandInput } from '@aws-sdk/client-cloudformation';
 import retry from '../../../aws/retry.ts';
 const { retryOnThrottlingError } = retry;
 
@@ -17,7 +18,7 @@ export default {
     let resourceCount = 0;
 
     do {
-      const input: Record<string, any> = { StackName: stackName };
+      const input: ListStackResourcesCommandInput = { StackName: stackName };
       if (nextToken) input.NextToken = nextToken;
       const result = await retryOnThrottlingError(
         () => cloudFormation.send(new ListStackResourcesCommand(input)),

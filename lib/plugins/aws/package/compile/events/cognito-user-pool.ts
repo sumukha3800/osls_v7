@@ -290,7 +290,9 @@ class AwsCompileCognitoUserPoolEvents {
       });
     }
 
-    const allCustomResourceLogicalIds = Array.from(new Set(Object.values(poolResources).flat()));
+    const allCustomResourceLogicalIds = Array.from(
+      new Set(Object.values<any>(poolResources).flat())
+    );
 
     allCustomResourceLogicalIds.forEach((currResourceLogicalId, idx) => {
       if (idx > 0) {

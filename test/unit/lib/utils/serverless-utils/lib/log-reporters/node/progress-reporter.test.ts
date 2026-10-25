@@ -16,7 +16,7 @@ describe('test/unit/lib/utils/serverless-utils/lib/log-reporters/node/progress-r
       progressAnimationPrefixFrames: ['.', 'o'],
       updateProgress: sinon.stub(),
     };
-    const progress = {};
+    const progress: Record<string, any> = {};
     const log = { info: sinon.stub() };
     const joinTextTokens = sinon.stub().returns('deploying\n');
     const style = {
@@ -53,7 +53,9 @@ describe('test/unit/lib/utils/serverless-utils/lib/log-reporters/node/progress-r
   it('logs main events once and clears the progress footer', async () => {
     const { load, handlers, cliProgressFooter, progress, log, joinTextTokens, style } =
       await loadProgressReporter();
-    const setIntervalStub = sinon.stub(global, 'setInterval').returns(123);
+    const setIntervalStub = sinon
+      .stub(global, 'setInterval')
+      .returns(123 as unknown as NodeJS.Timeout);
     const clearIntervalStub = sinon.stub(global, 'clearInterval');
     sinon.stub(Date, 'now').returns(1000);
 

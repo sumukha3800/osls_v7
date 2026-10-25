@@ -1197,7 +1197,8 @@ class AwsCompileFunctions {
     };
   }
 
-  cfOutputLatestVersionTemplate() {
+  // A CloudFormation output; `Value` is set by the caller
+  cfOutputLatestVersionTemplate(): { Description: string; Value: any } {
     return {
       Description: 'Current Lambda function version',
       Value: 'Value',

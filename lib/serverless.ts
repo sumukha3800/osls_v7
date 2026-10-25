@@ -25,6 +25,48 @@ import commmandsSchema from './cli/commands-schema/index.ts';
 import { parseEntries } from './configuration/variables/resolve-meta.ts';
 import validateStage from './utils/validate-stage.ts';
 import colors from './utils/colors.ts';
+import type { CommandSchema, CommandsSchema } from './cli/commands-schema/types.ts';
+
+// What the CLI passes to the constructor; every property is optional
+export interface ServerlessConfig {
+  // The service directory, when the command runs in a service context
+  serviceDir?: string | null;
+  // Required with `serviceDir`: the configuration file name relative to it
+  configurationFilename?: string;
+  // Required with `serviceDir`: the configuration, with variables resolved as far as possible
+  configuration?: Record<string, any>;
+  commands?: string[];
+  command?: string;
+  options?: Record<string, any>;
+  commandSchema?: CommandSchema;
+  commandsSchema?: CommandsSchema;
+  isContainerCommand?: boolean;
+  isHelpRequest?: boolean;
+  // Configuration paths (`\0` separated) of the variables left unresolved
+  variablesMeta?: Map<string, any>;
+  [key: string]: unknown;
+}
+
+export interface ProcessedInput {
+  command: string;
+  commands: string[];
+  options: Record<string, any>;
+  commandSchema: CommandSchema | undefined;
+  commandsSchema: CommandsSchema;
+  isContainerCommand: boolean;
+  isHelpRequest: boolean;
+}
+
+// Classes exposed to plugins through `serverless.classes`
+export interface ServerlessClasses {
+  CLI: typeof CLI;
+  YamlParser: typeof YamlParser;
+  Utils: typeof Utils;
+  Service: typeof Service;
+  Error: typeof ServerlessError;
+  PluginManager: typeof PluginManager;
+  ConfigSchemaHandler: typeof ConfigSchemaHandler;
+}
 
 // Compatibility aliases: third-party plugins (e.g. Bref) require or import `@serverless/utils`
 // entry points, which osls vendors under `lib/utils/serverless-utils`. The vendored modules
@@ -62,32 +104,40 @@ const isStackFromOldLocalFallback = RegExp.prototype.test.bind(
 );
 
 class Serverless {
-  declare _commandsSchema: any;
-  declare classes: any;
-  declare cli: any;
+  declare _commandsSchema: CommandsSchema;
+  declare classes: ServerlessClasses;
+  // Set by `init()`
+  declare cli: CLI;
   declare config: Config;
   declare configSchemaHandler: ConfigSchemaHandler;
-  declare configurationFilename: any;
-  declare configurationInput: any;
-  declare instanceId: any;
-  declare isConfigurationExtendable: any;
-  declare isStandaloneExecutable: any;
+  declare configurationFilename: string | undefined;
+  // The service configuration (user configuration, kept loosely typed)
+  declare configurationInput: Record<string, any> | undefined;
+  // Set by `init()`
+  declare instanceId: string;
+  // Set by the CLI before `init()`
+  declare invocationId?: string;
+  declare isConfigurationExtendable: boolean;
+  declare isStandaloneExecutable: boolean;
   declare pluginManager: PluginManager;
-  declare processedInput: any;
-  declare providers: any;
-  declare serverlessDirPath: any;
+  declare processedInput: ProcessedInput;
+  // Provider plugin instances by provider name (eg. `aws`)
+  declare providers: Record<string, any>;
+  declare serverlessDirPath: string;
   declare service: Service;
-  declare serviceDir: any;
-  declare serviceOutputs: any;
-  declare servicePluginOutputs: any;
-  declare triggeredDeprecations: any;
+  declare serviceDir: string | null | undefined;
+  // Set by `run()`: sections printed after a command, by section name
+  declare serviceOutputs: Map<string, string | string[]>;
+  declare servicePluginOutputs: Map<string, string | Iterable<string>>;
+  declare triggeredDeprecations: Set<string>;
   declare utils: Utils;
-  declare variables: any;
-  declare variablesMeta: any;
-  declare version: any;
+  // Compatibility shim for plugins that read `serverless.variables.service` or `.options`
+  declare variables: { service: Service; options?: Record<string, any> };
+  declare variablesMeta: Map<string, any>;
+  declare version: string;
   declare yamlParser: YamlParser;
 
-  constructor(config: Record<string, any> = {}) {
+  constructor(config: ServerlessConfig = {}) {
     if (!isPlainObject(config)) config = {};
 
     if (isStackFromOldLocalFallback(new Error().stack)) {
@@ -172,7 +222,7 @@ class Serverless {
 
     this.config = new Config(this, { serviceDir: config.serviceDir });
 
-    this.classes = {};
+    this.classes = {} as ServerlessClasses;
     this.classes.CLI = CLI;
     this.classes.YamlParser = YamlParser;
     this.classes.Utils = Utils;
@@ -240,7 +290,7 @@ class Serverless {
     await this.pluginManager.run(this.processedInput.commands);
   }
 
-  addServiceOutputSection(sectionName, content) {
+  addServiceOutputSection(sectionName: string, content: string | Iterable<string>) {
     sectionName = ensureString(sectionName, { name: 'sectionName' });
     if (typeof ensureValue(content, { name: 'content' }) !== 'string') {
       content = ensureIterable(content, {
@@ -257,11 +307,11 @@ class Serverless {
     this.servicePluginOutputs.set(sectionName, content);
   }
 
-  setProvider(name, provider) {
+  setProvider(name: string, provider: any) {
     this.providers[name] = provider;
   }
 
-  getProvider(name) {
+  getProvider(name: string) {
     return this.providers[name] ? this.providers[name] : false;
   }
 
@@ -270,16 +320,16 @@ class Serverless {
   }
 
   // Only for internal use
-  _logDeprecation(code, message) {
+  _logDeprecation(code: string, message: string) {
     return logDeprecation(code, message, { serviceConfig: this.configurationInput });
   }
 
   // To be used by external plugins
-  logDeprecation(code, message) {
+  logDeprecation(code: string, message: string) {
     return this._logDeprecation(`EXT_${ensureString(code)}`, ensureString(message));
   }
 
-  extendConfiguration(configurationPathKeys, value) {
+  extendConfiguration(configurationPathKeys: string[], value: unknown) {
     configurationPathKeys = ensureArray(configurationPathKeys, {
       ensureItem: ensureString,
     });

@@ -14,7 +14,7 @@ import esmock from 'esmock';
  * @returns an Error object that resembles the EXDEV errors are thrown
  */
 const createFakeExDevError = () => {
-  const fakeCrossDeviceError = new Error(
+  const fakeCrossDeviceError: NodeJS.ErrnoException & { dest?: string } = new Error(
     "Error: EXDEV: cross-device link not permitted, rename '/foo/bar' -> '/bar/baz'"
   );
   // This is the important property that safeMoveFile looks for
@@ -30,7 +30,7 @@ const createFakeExDevError = () => {
 };
 
 const createFakeEpermError = () => {
-  const error = new Error('EPERM: operation not permitted, rename');
+  const error: NodeJS.ErrnoException = new Error('EPERM: operation not permitted, rename');
   error.code = 'EPERM';
   return error;
 };
@@ -67,7 +67,7 @@ describe('test/unit/lib/utils/fs/safeMoveFile.test.ts', () => {
     await remove(destinationDir);
     await remove(sourceDir);
     // Reset stubbed methods
-    fsp.rename.restore();
+    (fsp.rename as sinon.SinonStub).restore();
   });
 
   /**

@@ -40,7 +40,7 @@ describe('EventBridgeEvents', () => {
       };
 
       const getRuleResourceEndingWith = (resources, ending) =>
-        Object.values(resources).find(
+        Object.values<Record<string, any>>(resources).find(
           (resource: Record<string, any>) =>
             resource.Type === 'AWS::Events::Rule' && resource.Properties.Name.endsWith(ending)
         );

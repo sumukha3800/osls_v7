@@ -1,5 +1,6 @@
 import Install from '../../../../lib/plugins/install.ts';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import download from '../../../../lib/utils/download-template-from-repo.ts';
 import path from 'node:path';
 import { ensureDirSync, getTmpDirPath } from '../../../utils/fs.ts';
@@ -59,7 +60,7 @@ describe('Install', () => {
     });
 
     afterEach(() => {
-      download.downloadTemplateFromRepo.restore();
+      (download.downloadTemplateFromRepo as SinonStub).restore();
     });
 
     it('should throw an error if the passed URL option is not a valid URL', async () => {

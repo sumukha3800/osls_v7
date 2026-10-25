@@ -21,7 +21,9 @@ describe('Integration test - Packaging - CloudFormation', () => {
     copyPathSync(fixturePaths.artifact, cwd);
     execSync(`${serverlessExec} package`, { cwd });
     const cfnTemplate = JSON.parse(
-      fs.readFileSync(path.join(cwd, '.serverless/cloudformation-template-update-stack.json'))
+      fs.readFileSync(
+        path.join(cwd, '.serverless/cloudformation-template-update-stack.json')
+      ) as unknown as string
     );
     expect(cfnTemplate.Resources.HelloLambdaFunction.Properties.Code.S3Key).to.match(
       /serverless\/aws-nodejs\/dev\/[^]*\/artifact.zip/
@@ -52,7 +54,9 @@ describe('Integration test - Packaging - CloudFormation', () => {
     copyPathSync(fixturePaths.regular, cwd);
     execSync(`${serverlessExec} package`, { cwd });
     const cfnTemplate = JSON.parse(
-      fs.readFileSync(path.join(cwd, '.serverless/cloudformation-template-update-stack.json'))
+      fs.readFileSync(
+        path.join(cwd, '.serverless/cloudformation-template-update-stack.json')
+      ) as unknown as string
     );
     expect(cfnTemplate.Resources.HelloLambdaFunction.Properties.Code.S3Key).to.match(
       /serverless\/aws-nodejs\/dev\/[^]*\/aws-nodejs.zip/
@@ -83,7 +87,9 @@ describe('Integration test - Packaging - CloudFormation', () => {
     copyPathSync(fixturePaths.individually, cwd);
     execSync(`${serverlessExec} package`, { cwd });
     const cfnTemplate = JSON.parse(
-      fs.readFileSync(path.join(cwd, '.serverless/cloudformation-template-update-stack.json'))
+      fs.readFileSync(
+        path.join(cwd, '.serverless/cloudformation-template-update-stack.json')
+      ) as unknown as string
     );
     expect(cfnTemplate.Resources.HelloLambdaFunction.Properties.Code.S3Key).to.match(
       /serverless\/aws-nodejs\/dev\/[^]*\/hello.zip/
@@ -117,7 +123,9 @@ describe('Integration test - Packaging - CloudFormation', () => {
     copyPathSync(fixturePaths.regular, cwd);
     execSync(`${serverlessExec} package`, { cwd });
     const cfnTemplate = JSON.parse(
-      fs.readFileSync(path.join(cwd, '.serverless/cloudformation-template-update-stack.json'))
+      fs.readFileSync(
+        path.join(cwd, '.serverless/cloudformation-template-update-stack.json')
+      ) as unknown as string
     );
     expect(cfnTemplate.Resources.CustomDashnameLambdaFunction.Properties.FunctionName).to.equal(
       'aws-nodejs-us-east-1-custom-name'

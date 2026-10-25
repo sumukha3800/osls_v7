@@ -4,7 +4,7 @@ export default {
   normalizeCloudFormationTemplate(template) {
     const normalizedTemplate = structuredClone(template);
 
-    Object.entries(normalizedTemplate.Resources).forEach(([key, value]) => {
+    Object.entries<any>(normalizedTemplate.Resources).forEach(([key, value]) => {
       if (key.startsWith('ApiGatewayDeployment')) {
         delete Object.assign(normalizedTemplate.Resources, {
           ApiGatewayDeployment: normalizedTemplate.Resources[key],

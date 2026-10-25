@@ -1,6 +1,7 @@
+import type { OptionsSchema } from '../types.ts';
 import service from './service.ts';
 
-const options = {
+const options: OptionsSchema = {
   'region': {
     usage: 'Region of the service',
     shortcut: 'r',

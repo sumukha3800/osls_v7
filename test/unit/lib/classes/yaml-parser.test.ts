@@ -3,6 +3,7 @@
  */
 
 import http from 'node:http';
+import type { AddressInfo } from 'node:net';
 
 import * as yaml from 'js-yaml';
 import path from 'node:path';
@@ -421,8 +422,8 @@ describe('YamlParser', () => {
         res.end('not found');
       });
 
-      await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-      const { port }: Record<string, any> = server.address();
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+      const { port } = server.address() as AddressInfo;
 
       serverless.utils.writeFileSync(tmpFilePath, {
         main: {
@@ -437,7 +438,7 @@ describe('YamlParser', () => {
 
         expect(result).to.have.nested.property('main.foo').to.equal('bar');
       } finally {
-        await new Promise((resolve, reject) =>
+        await new Promise<void>((resolve, reject) =>
           server.close((error) => {
             if (error) reject(error);
             else resolve();
@@ -457,11 +458,11 @@ describe('YamlParser', () => {
         }
       });
 
-    const listen = (server, host = '127.0.0.1') =>
-      new Promise((resolve) => server.listen(0, host, resolve));
+    const listen = (server: http.Server, host = '127.0.0.1') =>
+      new Promise<void>((resolve) => server.listen(0, host, resolve));
 
-    const close = (server) =>
-      new Promise((resolve, reject) =>
+    const close = (server: http.Server) =>
+      new Promise<void>((resolve, reject) =>
         server.close((error) => {
           if (error) reject(error);
           else resolve();
@@ -478,7 +479,7 @@ describe('YamlParser', () => {
       });
 
       await listen(server);
-      const { port }: Record<string, any> = server.address();
+      const { port } = server.address() as AddressInfo;
 
       serverless.utils.writeFileSync(tmpFilePath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -567,7 +568,7 @@ describe('YamlParser', () => {
       });
 
       await listen(server);
-      const { port }: Record<string, any> = server.address();
+      const { port } = server.address() as AddressInfo;
 
       serverless.utils.writeFileSync(tmpFilePath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -597,7 +598,7 @@ describe('YamlParser', () => {
       });
 
       await listen(server);
-      const { port }: Record<string, any> = server.address();
+      const { port } = server.address() as AddressInfo;
 
       serverless.utils.writeFileSync(tmpFilePath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -633,7 +634,7 @@ describe('YamlParser', () => {
       });
 
       await listen(server);
-      const { port }: Record<string, any> = server.address();
+      const { port } = server.address() as AddressInfo;
 
       serverless.utils.writeFileSync(tmpFilePath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -668,7 +669,7 @@ describe('YamlParser', () => {
       serverless.utils.writeFileSync(outsidePath, { foo: 'bar' });
 
       await listen(server);
-      const { port }: Record<string, any> = server.address();
+      const { port } = server.address() as AddressInfo;
 
       serverless.utils.writeFileSync(testPath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -704,7 +705,7 @@ describe('YamlParser', () => {
       serverless.utils.writeFileSync(outsidePath, { foo: 'bar' });
 
       await listen(server);
-      const { port }: Record<string, any> = server.address();
+      const { port } = server.address() as AddressInfo;
 
       serverless.utils.writeFileSync(testPath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -729,7 +730,7 @@ describe('YamlParser', () => {
 
   describe('#parse() - security hardening', () => {
     afterEach(() => {
-      delete Object.prototype.polluted;
+      delete (Object.prototype as { polluted?: unknown }).polluted;
     });
 
     it('preserves __proto__ in parsed root YAML as an own property without polluting prototype', async () => {
@@ -743,7 +744,7 @@ describe('YamlParser', () => {
       expect(result.foo).to.equal('bar');
       expect(Object.getPrototypeOf(result)).to.equal(Object.prototype);
       expect(result.polluted).to.equal(undefined);
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
     });
 
     it('preserves __proto__ in YAML resolved via external $ref', async () => {
@@ -760,7 +761,7 @@ describe('YamlParser', () => {
       expect(result.main.foo).to.equal('bar');
       expect(Object.getPrototypeOf(result.main)).to.equal(Object.prototype);
       expect(result.main.polluted).to.equal(undefined);
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
     });
 
     it('materializes __proto__ with pollution-robust property descriptors', async () => {
@@ -813,13 +814,13 @@ describe('YamlParser', () => {
         if (originalGetDescriptor) {
           Object.defineProperty(Object.prototype, 'get', originalGetDescriptor);
         } else {
-          delete Object.prototype.get;
+          delete (Object.prototype as { get?: unknown }).get;
         }
 
         if (originalSetDescriptor) {
           Object.defineProperty(Object.prototype, 'set', originalSetDescriptor);
         } else {
-          delete Object.prototype.set;
+          delete (Object.prototype as { set?: unknown }).set;
         }
       }
 
@@ -832,7 +833,7 @@ describe('YamlParser', () => {
         configurable: true,
       });
       expect(result.marker).to.equal(undefined);
-      expect({}.marker).to.equal(undefined);
+      expect(({} as { marker?: unknown }).marker).to.equal(undefined);
     });
 
     it('does not resolve JSON Pointers that target inherited prototype members (#/constructor)', async () => {
@@ -893,7 +894,7 @@ describe('YamlParser', () => {
       expect(result).to.deep.equal({
         main: { $ref: './ref.yml#/__proto__' },
       });
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
     });
 
     it('resolves an own __proto__ JSON pointer segment when the ref document has one', async () => {
@@ -907,7 +908,7 @@ describe('YamlParser', () => {
       const result = await serverless.yamlParser.parse(testPath);
 
       expect(result.main).to.deep.equal({ marker: 'value' });
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
     });
 
     it('rejects self-referential YAML anchor cycles with a clear error', async () => {

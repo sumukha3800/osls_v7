@@ -41,6 +41,7 @@ describe('test/unit/lib/aws/sso-login.test.ts', () => {
 
   class FakeSSOOIDCClient {
     declare config: any;
+    declare send: any;
     declare static instances: any;
     declare static send: any;
 
@@ -105,7 +106,10 @@ describe('test/unit/lib/aws/sso-login.test.ts', () => {
     });
   }
 
-  async function loadWrappedSsoProvider(provider, { requestHandler = {}, ...loadOptions } = {}) {
+  async function loadWrappedSsoProvider(
+    provider,
+    { requestHandler = {}, ...loadOptions }: Record<string, any> = {}
+  ) {
     const loaded = await loadSsoLogin({
       profiles: {
         dev: {

@@ -52,7 +52,7 @@ describe('downloadTemplateFromRepo', () => {
     });
 
     originalFetch = globalThis.fetch;
-    globalThis.fetch = async (url) => {
+    globalThis.fetch = async (url: string) => {
       if (url.indexOf('mybitbucket.server.ltd') > -1) {
         return fetchStub();
       }

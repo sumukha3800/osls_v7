@@ -42,7 +42,7 @@ describe('test/unit/lib/utils/to-cache-key.test.ts', () => {
     const agent = new HttpsProxyAgent('http://proxy.example.com:3128');
     const socket: Record<string, any> = { _httpMessage: {} };
     socket._httpMessage.agent = agent; // close the cycle
-    agent.sockets = { 'host:443:': [socket] };
+    (agent as { sockets: unknown }).sockets = { 'host:443:': [socket] };
 
     class Credentials {}
     const credentials = Object.assign(new Credentials(), {

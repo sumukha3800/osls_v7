@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import AwsInfo from '../../../../../../lib/plugins/aws/info/index.ts';
 import retry from '../../../../../../lib/aws/retry.ts';
 import {
@@ -58,8 +59,8 @@ describe('#getApiKeyValues()', () => {
   });
 
   afterEach(() => {
-    CloudFormationClient.prototype.send.restore();
-    APIGatewayClient.prototype.send.restore();
+    (CloudFormationClient.prototype.send as SinonStub).restore();
+    (APIGatewayClient.prototype.send as SinonStub).restore();
   });
 
   it('should add API Key values to this.gatheredData if API key names are available', async () => {

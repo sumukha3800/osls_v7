@@ -8,6 +8,7 @@ import {
   UpdateFunctionCodeCommand,
   UpdateFunctionConfigurationCommand,
 } from '@aws-sdk/client-lambda';
+import type { UpdateFunctionCodeCommandInput } from '@aws-sdk/client-lambda';
 
 import { IAMClient, GetRoleCommand } from '@aws-sdk/client-iam';
 import wait from '../../utils/sleep.ts';
@@ -457,7 +458,11 @@ class AwsDeployFunction {
       }
 
       const didVpcChange = () => {
-        const remoteConfigToCompare = {
+        const remoteConfigToCompare: {
+          Ipv6AllowedForDualStack: boolean;
+          SecurityGroupIds: string[] | Set<string>;
+          SubnetIds: string[] | Set<string>;
+        } = {
           Ipv6AllowedForDualStack: false,
           SecurityGroupIds: [],
           SubnetIds: [],
@@ -550,7 +555,7 @@ class AwsDeployFunction {
 
   async deployFunction() {
     const functionObject = this.serverless.service.getFunction(this.options.function);
-    const params: Record<string, any> = {
+    const params: UpdateFunctionCodeCommandInput = {
       FunctionName: this.options.functionObj.name,
     };
 

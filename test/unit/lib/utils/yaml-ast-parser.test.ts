@@ -24,7 +24,7 @@ describe('#yamlAstParser', () => {
       return expect(
         yamlAstParser.addNewArrayItem(yamlFilePath, pathInYaml, newItem)
       ).to.be.fulfilled.then(() => {
-        const yaml = readFileSync(yamlFilePath, 'utf8');
+        const yaml = readFileSync(yamlFilePath);
         expect(yaml).to.be.deep.equal(expectedResult);
       });
     };
@@ -196,7 +196,7 @@ describe('#yamlAstParser', () => {
       return expect(
         yamlAstParser.removeExistingArrayItem(yamlFilePath, pathInYaml, removeItem)
       ).to.be.fulfilled.then(() => {
-        const yaml = readFileSync(yamlFilePath, 'utf8');
+        const yaml = readFileSync(yamlFilePath);
         expect(yaml).to.be.deep.equal(expectedResult);
       });
     };

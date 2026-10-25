@@ -409,7 +409,7 @@ describe('test/unit/lib/serverless.test.ts', () => {
         'yes'
       );
 
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
       expect(extendableServerless.configurationInput.provider).to.deep.equal({
         name: 'aws',
       });

@@ -25,6 +25,7 @@ import {
   ListExportsCommand,
   ListStackResourcesCommand,
 } from '@aws-sdk/client-cloudformation';
+import type { ListStackResourcesCommandInput } from '@aws-sdk/client-cloudformation';
 import promiseLimit2 from 'ext/promise/limit.js';
 const promiseLimit = promiseLimit2.bind(Promise);
 
@@ -107,7 +108,7 @@ async function resolveCfRefValue(context, resourceLogicalId) {
   let nextToken;
 
   do {
-    const input: Record<string, any> = { StackName: stackName };
+    const input: ListStackResourcesCommandInput = { StackName: stackName };
     if (nextToken) input.NextToken = nextToken;
 
     const result = await cloudFormation.send(new ListStackResourcesCommand(input));
@@ -449,7 +450,7 @@ class AwsInvokeLocal {
 
   async getLayerPaths() {
     const layers = Object.fromEntries(
-      Object.entries(this.serverless.service.layers || {}).map(([key, value]) => {
+      Object.entries<any>(this.serverless.service.layers || {}).map(([key, value]) => {
         ensureValidLayerPath(key, value && value.path);
         return [this.provider.naming.getLambdaLayerLogicalId(key), value];
       })
@@ -1021,7 +1022,7 @@ class AwsInvokeLocal {
       writeText(JSON.stringify(result, null, 4));
     }
 
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       const callback = (err, result?) => {
         if (!hasResponded) {
           hasResponded = true;

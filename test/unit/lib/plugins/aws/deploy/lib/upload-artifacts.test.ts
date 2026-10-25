@@ -1,5 +1,7 @@
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import fs from 'node:fs';
+import type { ReadStream, Stats } from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { PassThrough } from 'node:stream';
@@ -15,6 +17,9 @@ import { createTmpDir, ensureFileSync, getTmpDirPath } from '../../../../../../u
 import runServerless from '../../../../../../utils/run-serverless.ts';
 
 const expect = chai.expect;
+
+// crypto.createHash is stubbed in beforeEach to return cryptoStub, whose digest is a sinon stub.
+type StubbedCreateHash = () => { update(): { digest: SinonStub } };
 
 describe('uploadArtifacts', () => {
   let serverless;
@@ -127,7 +132,7 @@ describe('uploadArtifacts', () => {
     beforeEach(() => {
       normalizeCloudFormationTemplateStub = sinon
         .stub(normalizeFiles, 'normalizeCloudFormationTemplate')
-        .returns();
+        .returns(undefined);
       uploadStub = sinon.stub(Upload.prototype, 'done').resolves();
     });
 
@@ -137,7 +142,10 @@ describe('uploadArtifacts', () => {
     });
 
     it('should upload the CloudFormation file to the S3 bucket', async () => {
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-cf-template');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-cf-template');
 
       return awsDeploy.uploadCloudFormationFile().then(() => {
         expect(normalizeCloudFormationTemplateStub).to.have.been.calledOnce;
@@ -161,7 +169,10 @@ describe('uploadArtifacts', () => {
     });
 
     it('should configure S3 transfer acceleration for CloudFormation file uploads', async () => {
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-cf-template');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-cf-template');
       awsDeploy.provider.options['aws-s3-accelerate'] = true;
 
       return awsDeploy.uploadCloudFormationFile().then(() => {
@@ -171,7 +182,10 @@ describe('uploadArtifacts', () => {
     });
 
     it('should upload the CloudFormation file to a bucket with SSE bucket policy', async () => {
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-cf-template');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-cf-template');
       awsDeploy.serverless.service.provider.deploymentBucketObject = {
         serverSideEncryption: 'AES256',
       };
@@ -194,7 +208,10 @@ describe('uploadArtifacts', () => {
     });
 
     it('should upload the CloudFormation file with KMS encryption options', async () => {
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-cf-template');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-cf-template');
       awsDeploy.serverless.service.provider.deploymentBucketObject = {
         serverSideEncryption: 'aws:kms',
         sseKMSKeyId: 'kms-key-id',
@@ -218,7 +235,10 @@ describe('uploadArtifacts', () => {
 
     it('should normalize CloudFormation upload errors', async () => {
       const error = createAwsError('AccessDenied');
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-cf-template');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-cf-template');
       uploadStub.rejects(error);
 
       await expectNormalizedUploadError(awsDeploy.uploadCloudFormationFile(), error);
@@ -228,7 +248,10 @@ describe('uploadArtifacts', () => {
       const error = Object.assign(new Error('forbidden'), {
         $metadata: { httpStatusCode: 403 },
       });
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-cf-template');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-cf-template');
       uploadStub.rejects(error);
 
       try {
@@ -256,7 +279,10 @@ describe('uploadArtifacts', () => {
 
     it('should upload the state file to the S3 bucket', async () => {
       const stateFileContent = writeStateFile({ service: { service: 'new-service' } });
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-state-file');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-state-file');
 
       await awsDeploy.uploadStateFile();
 
@@ -279,7 +305,10 @@ describe('uploadArtifacts', () => {
 
     it('should configure S3 transfer acceleration for state file uploads', async () => {
       writeStateFile({ service: { service: 'new-service' } });
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-state-file');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-state-file');
       awsDeploy.provider.options['aws-s3-accelerate'] = true;
 
       await awsDeploy.uploadStateFile();
@@ -290,7 +319,10 @@ describe('uploadArtifacts', () => {
 
     it('should upload the state file with KMS encryption options', async () => {
       const stateFileContent = writeStateFile({ service: { service: 'new-service' } });
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-state-file');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-state-file');
       awsDeploy.serverless.service.provider.deploymentBucketObject = {
         serverSideEncryption: 'aws:kms',
         sseKMSKeyId: 'kms-key-id',
@@ -315,7 +347,10 @@ describe('uploadArtifacts', () => {
     it('should normalize state file upload errors', async () => {
       const error = createAwsError('AccessDenied');
       writeStateFile({ service: { service: 'new-service' } });
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-state-file');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-state-file');
       uploadStub.rejects(error);
 
       await expectNormalizedUploadError(awsDeploy.uploadStateFile(), error);
@@ -327,7 +362,7 @@ describe('uploadArtifacts', () => {
     let uploadStub;
 
     beforeEach(() => {
-      readFileSyncStub = sinon.stub(fs, 'readFileSync').returns();
+      readFileSyncStub = sinon.stub(fs, 'readFileSync').returns(undefined);
       uploadStub = sinon.stub(Upload.prototype, 'done').resolves();
     });
 
@@ -396,7 +431,10 @@ describe('uploadArtifacts', () => {
     });
 
     it('should configure S3 transfer acceleration for .zip file uploads', async () => {
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-zip-file');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-zip-file');
       awsDeploy.provider.options['aws-s3-accelerate'] = true;
 
       const tmpDirPath = getTmpDirPath();
@@ -421,20 +459,20 @@ describe('uploadArtifacts', () => {
         .stub(fs, 'createReadStream')
         .onFirstCall()
         .returns({
-          on(eventName, listener) {
+          on(eventName: string, listener: (...args: unknown[]) => void) {
             if (eventName === 'data') listener(Buffer.from('artifact'));
             if (eventName === 'close') listener();
             return this;
           },
-        })
+        } as unknown as ReadStream)
         .onSecondCall()
         .returns({
           path: artifactFilePath,
-          on(eventName, listener) {
+          on(eventName: string, listener: (...args: unknown[]) => void) {
             if (eventName === 'error') listener(streamError);
             return this;
           },
-        });
+        } as unknown as ReadStream);
 
       await expect(
         awsDeploy.uploadZipFile({
@@ -513,7 +551,10 @@ describe('uploadArtifacts', () => {
 
     it('should normalize zip upload errors', async () => {
       const error = createAwsError('AccessDenied');
-      crypto.createHash().update().digest.onCall(0).returns('local-hash-zip-file');
+      (crypto.createHash as unknown as StubbedCreateHash)()
+        .update()
+        .digest.onCall(0)
+        .returns('local-hash-zip-file');
 
       const tmpDirPath = getTmpDirPath();
       const artifactFilePath = path.join(tmpDirPath, 'artifact.zip');
@@ -534,12 +575,12 @@ describe('uploadArtifacts', () => {
     let uploadZipFileStub;
 
     beforeEach(async () => {
-      sinon.stub(fs.promises, 'stat').resolves({ size: 1024 });
+      sinon.stub(fs.promises, 'stat').resolves({ size: 1024 } as Stats);
       uploadZipFileStub = sinon.stub(awsDeploy, 'uploadZipFile').resolves();
     });
 
     afterEach(async () => {
-      fs.promises.stat.restore();
+      (fs.promises.stat as SinonStub).restore();
       uploadZipFileStub.restore();
     });
 
@@ -641,10 +682,10 @@ describe('uploadArtifacts', () => {
       // There were observed race conditions where this temporary home folder was cleaned
       // before stream initialized fully, hence throwing uncaught ENOENT exception into the air.
       sinon.stub(fs, 'createReadStream').callsFake(() => {
-        const stream = new PassThrough();
+        const stream: PassThrough & { path?: string } = new PassThrough();
         stream.path = customResourcesFilePath;
         process.nextTick(() => stream.end());
-        return stream;
+        return stream as unknown as ReadStream;
       });
       serverless.serviceDir = serviceDirPath;
     });

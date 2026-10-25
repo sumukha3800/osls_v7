@@ -3,6 +3,7 @@ import {
   DescribeStackResourceCommand,
   ListStackResourcesCommand,
 } from '@aws-sdk/client-cloudformation';
+import type { ListStackResourcesCommandInput } from '@aws-sdk/client-cloudformation';
 
 import {
   ECRClient,
@@ -1801,7 +1802,8 @@ class AwsProvider {
         isIdentityExpired,
         doesIdentityRequireRefresh
       );
-      memoized.memoized = true;
+      // Marks the provider as memoized for code that inspects it
+      (memoized as typeof memoized & { memoized?: boolean }).memoized = true;
       this.awsSdkV3CredentialsProviders.set(cacheKey, memoized);
     }
 
@@ -2115,7 +2117,7 @@ class AwsProvider {
     const cloudFormation = await this.getCloudFormationClient();
 
     do {
-      const params: Record<string, any> = {
+      const params: ListStackResourcesCommandInput = {
         StackName: this.naming.getStackName(),
       };
       if (nextToken) params.NextToken = nextToken;

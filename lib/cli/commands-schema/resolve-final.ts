@@ -4,16 +4,30 @@ import awsServiceCommands from './aws-service.ts';
 import serviceOptions from './common-options/service.ts';
 import awsServiceOptions from './common-options/aws-service.ts';
 import ServerlessError from '../../serverless-error.ts';
+import type { CommandSchema, CommandsSchema, PluginCommandConfig } from './types.ts';
 
-export default (loadedPlugins, { providerName }) => {
-  const commands = new Map(providerName === 'aws' ? awsServiceCommands : serviceCommands);
+// Plugin instances; only the properties read here are described
+interface LoadedPlugin {
+  hooks?: Record<string, unknown>;
+  commands?: Record<string, PluginCommandConfig>;
+  [key: string]: any;
+}
+
+export default (
+  loadedPlugins: Iterable<LoadedPlugin>,
+  // `configuration` is accepted for callers that pass it, it is not used
+  { providerName }: { providerName?: string; configuration?: unknown }
+): CommandsSchema => {
+  const commands: CommandsSchema = new Map(
+    providerName === 'aws' ? awsServiceCommands : serviceCommands
+  );
 
   if (providerName !== 'aws') {
     // Recognize AWS provider commands adapted in context of other provider
     // Those commands do not have to be defined as "commands" in plugin.
     // It's good enough if hooks for command lifecycle events are setup
     // and our detection confirms on that.
-    const optionalServiceCommandsHooksMap = new Map(
+    const optionalServiceCommandsHooksMap = new Map<string, string>(
       Array.from(awsServiceCommands)
         .filter(([name]) => !serviceCommands.has(name))
         .map(([name, schema]) => {
@@ -24,7 +38,7 @@ export default (loadedPlugins, { providerName }) => {
               [`before:${lifecycleEventName}`, name],
               [lifecycleEventName, name],
               [`after:${lifecycleEventName}`, name],
-            ];
+            ] as [string, string][];
           });
         })
         .flat(2)
@@ -39,7 +53,7 @@ export default (loadedPlugins, { providerName }) => {
       for (const hookName of Object.keys(loadedPlugin.hooks)) {
         const awsCommandName = optionalServiceCommandsHooksMap.get(hookName);
         if (awsCommandName && !commands.has(awsCommandName)) {
-          const schema = Object.assign(
+          const schema: CommandSchema = Object.assign(
             mergePlainObjects({}, awsServiceCommands.get(awsCommandName)),
             {
               isExtension: true,
@@ -58,13 +72,17 @@ export default (loadedPlugins, { providerName }) => {
   const missingOptionTypes = [];
   const commonOptions = providerName === 'aws' ? awsServiceOptions : serviceOptions;
   commands.commonOptions = commonOptions;
-  const resolveCommands = (loadedPlugin, config, commandPrefix = '') => {
+  const resolveCommands = (
+    loadedPlugin: LoadedPlugin,
+    config: { commands?: Record<string, PluginCommandConfig> },
+    commandPrefix = ''
+  ) => {
     if (!config.commands) return;
     for (const [commandName, commandConfig] of Object.entries(config.commands)) {
       if (commandConfig.type === 'entrypoint') continue;
       const fullCommandName = `${commandPrefix}${commandName}`;
       if (commandConfig.type !== 'container') {
-        const schema = commands.has(fullCommandName)
+        const schema: CommandSchema = commands.has(fullCommandName)
           ? mergePlainObjects({}, commands.get(fullCommandName))
           : {
               usage: commandConfig.usage,

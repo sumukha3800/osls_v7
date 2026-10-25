@@ -72,7 +72,8 @@ function createDefaultGlobalConfig() {
 function getLocalConfig() {
   const localConfigPath = getLocalConfigPath();
   try {
-    return JSON.parse(fs.readFileSync(localConfigPath));
+    // JSON.parse converts the buffer to a string
+    return JSON.parse(fs.readFileSync(localConfigPath) as unknown as string);
   } catch (error) {
     if (error.code === 'ENOENT') {
       return {};
@@ -97,7 +98,8 @@ function getLocalConfig() {
 function getGlobalConfig() {
   const globalConfigPath = getGlobalConfigPath();
   try {
-    return JSON.parse(fs.readFileSync(globalConfigPath));
+    // JSON.parse converts the buffer to a string
+    return JSON.parse(fs.readFileSync(globalConfigPath) as unknown as string);
   } catch (error) {
     // If the file does not exist, we want to recreate default global configuration
     if (error.code !== 'ENOENT') {

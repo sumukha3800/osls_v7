@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import { ECRClient, DescribeRepositoriesCommand } from '@aws-sdk/client-ecr';
 import esmock from 'esmock';
 
@@ -36,7 +37,7 @@ describe('test/unit/lib/plugins/aws/lib/check-if-ecr-repository-exists.test.ts',
   });
 
   afterEach(() => {
-    ECRClient.prototype.send.restore();
+    (ECRClient.prototype.send as SinonStub).restore();
   });
 
   it('returns true when repository exists', async () => {

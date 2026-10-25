@@ -6,6 +6,7 @@ interface TypeEnsureOptions {
   ensureItem?: (value: unknown) => unknown;
   ensurePropertyValue?: (value: unknown) => unknown;
   allowedKeys?: readonly string[];
+  denyEmpty?: boolean;
   errorMessage?: string;
   errorCode?: string;
   isOptional?: boolean;
@@ -113,7 +114,16 @@ declare module 'memoizee/weak.js' {
 }
 
 declare module 'json-cycle' {
-  const jsonCycle: { decycle: (value: unknown) => any; retrocycle: (value: unknown) => any };
+  const jsonCycle: {
+    decycle: (value: unknown) => any;
+    retrocycle: (value: unknown) => any;
+    stringify: (
+      value: unknown,
+      replacer?: ((this: any, key: string, value: any) => any) | (number | string)[] | null,
+      space?: string | number
+    ) => string;
+    parse: (text: string, reviver?: (this: any, key: string, value: any) => any) => any;
+  };
   export default jsonCycle;
 }
 

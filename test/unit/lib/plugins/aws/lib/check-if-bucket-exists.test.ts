@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import { S3Client, HeadBucketCommand } from '@aws-sdk/client-s3';
 import checkIfBucketExists from '../../../../../../lib/plugins/aws/lib/check-if-bucket-exists.ts';
 
@@ -20,7 +21,7 @@ describe('test/unit/lib/plugins/aws/lib/check-if-bucket-exists.test.ts', () => {
   });
 
   afterEach(() => {
-    S3Client.prototype.send.restore();
+    (S3Client.prototype.send as SinonStub).restore();
   });
 
   it('returns true when HeadBucket succeeds', async () => {

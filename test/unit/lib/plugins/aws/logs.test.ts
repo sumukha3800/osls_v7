@@ -1,4 +1,5 @@
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import AwsLogs from '../../../../../lib/plugins/aws/logs.ts';
 import ServerlessError from '../../../../../lib/serverless-error.ts';
 import {
@@ -60,8 +61,8 @@ describe('AwsLogs', () => {
   });
 
   afterEach(() => {
-    if (CloudWatchLogsClient.prototype.send.restore) {
-      CloudWatchLogsClient.prototype.send.restore();
+    if ((CloudWatchLogsClient.prototype.send as SinonStub).restore) {
+      (CloudWatchLogsClient.prototype.send as SinonStub).restore();
     }
   });
 
@@ -308,7 +309,9 @@ describe('AwsLogs', () => {
 
       await awsLogs.showLogs(logStreamNamesMock);
 
-      expect(filterLogEventsStub.firstCall.args[0].input.startTime).to.equal(1469694264000);
+      expect(
+        (filterLogEventsStub.firstCall.args[0] as FilterLogEventsCommand).input.startTime
+      ).to.equal(1469694264000);
     });
 
     it('should call filterLogEvents API with epoch milliseconds start time', async () => {
@@ -327,7 +330,9 @@ describe('AwsLogs', () => {
 
       await awsLogs.showLogs(logStreamNamesMock);
 
-      expect(filterLogEventsStub.firstCall.args[0].input.startTime).to.equal(1469694264000);
+      expect(
+        (filterLogEventsStub.firstCall.args[0] as FilterLogEventsCommand).input.startTime
+      ).to.equal(1469694264000);
     });
 
     it('should throw on a malformed start time', async () => {
@@ -493,8 +498,12 @@ describe('AwsLogs', () => {
         .getCalls()
         .filter((call) => call.args[0] instanceof FilterLogEventsCommand);
       expect(filterCalls).to.have.length(2);
-      expect(filterCalls[0].args[0].input.startTime).to.equal(fakeTime - 10 * 1000);
-      expect(filterCalls[1].args[0].input.startTime).to.equal(lastEventTimestamp + 1);
+      expect((filterCalls[0].args[0] as FilterLogEventsCommand).input.startTime).to.equal(
+        fakeTime - 10 * 1000
+      );
+      expect((filterCalls[1].args[0] as FilterLogEventsCommand).input.startTime).to.equal(
+        lastEventTimestamp + 1
+      );
     });
 
     it('reuses one CloudWatch Logs client across tail polling', async () => {

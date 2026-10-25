@@ -1,4 +1,5 @@
 import http from 'node:http';
+import type { AddressInfo } from 'node:net';
 import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
@@ -126,12 +127,12 @@ describe('serverless-utils/download', () => {
       res.end();
     });
 
-    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-    baseUrl = `http://127.0.0.1:${server.address().port}`;
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   });
 
   after(async () => {
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       server.close((error) => {
         if (error) {
           reject(error);
@@ -285,31 +286,37 @@ describe('serverless-utils/download', () => {
       res.end('redirected payload');
     });
 
-    await new Promise((resolve) => redirectedServer.listen(0, '127.0.0.1', resolve));
+    await new Promise<void>((resolve) => redirectedServer.listen(0, '127.0.0.1', resolve));
 
     const redirectingServer = http.createServer((req, res) => {
       initialAuthorization = req.headers.authorization;
       res.statusCode = 302;
-      res.setHeader('Location', `http://127.0.0.1:${redirectedServer.address().port}/final`);
+      res.setHeader(
+        'Location',
+        `http://127.0.0.1:${(redirectedServer.address() as AddressInfo).port}/final`
+      );
       res.end();
     });
 
-    await new Promise((resolve) => redirectingServer.listen(0, '127.0.0.1', resolve));
+    await new Promise<void>((resolve) => redirectingServer.listen(0, '127.0.0.1', resolve));
 
     try {
-      const result = await download(`http://127.0.0.1:${redirectingServer.address().port}/start`, {
-        responseType: 'text',
-        username: 'user',
-        password: 'pass',
-        allowedAuthRedirectHostnames: ['127.0.0.1'],
-      });
+      const result = await download(
+        `http://127.0.0.1:${(redirectingServer.address() as AddressInfo).port}/start`,
+        {
+          responseType: 'text',
+          username: 'user',
+          password: 'pass',
+          allowedAuthRedirectHostnames: ['127.0.0.1'],
+        }
+      );
 
       expect(result).to.equal('redirected payload');
       expect(initialAuthorization).to.equal('Basic dXNlcjpwYXNz');
       expect(redirectedAuthorization).to.equal('Basic dXNlcjpwYXNz');
     } finally {
       await Promise.all([
-        new Promise((resolve, reject) => {
+        new Promise<void>((resolve, reject) => {
           redirectingServer.close((error) => {
             if (error) {
               reject(error);
@@ -319,7 +326,7 @@ describe('serverless-utils/download', () => {
             resolve();
           });
         }),
-        new Promise((resolve, reject) => {
+        new Promise<void>((resolve, reject) => {
           redirectedServer.close((error) => {
             if (error) {
               reject(error);
@@ -343,31 +350,37 @@ describe('serverless-utils/download', () => {
       res.end('redirected payload');
     });
 
-    await new Promise((resolve) => redirectedServer.listen(0, '127.0.0.1', resolve));
+    await new Promise<void>((resolve) => redirectedServer.listen(0, '127.0.0.1', resolve));
 
     const redirectingServer = http.createServer((req, res) => {
       initialAuthorization = req.headers.authorization;
       res.statusCode = 302;
-      res.setHeader('Location', `http://127.0.0.1:${redirectedServer.address().port}/final`);
+      res.setHeader(
+        'Location',
+        `http://127.0.0.1:${(redirectedServer.address() as AddressInfo).port}/final`
+      );
       res.end();
     });
 
-    await new Promise((resolve) => redirectingServer.listen(0, '127.0.0.1', resolve));
+    await new Promise<void>((resolve) => redirectingServer.listen(0, '127.0.0.1', resolve));
 
     try {
-      const result = await download(`http://127.0.0.1:${redirectingServer.address().port}/start`, {
-        responseType: 'text',
-        headers: {
-          Authorization: '\tBearer token\t',
-        },
-      });
+      const result = await download(
+        `http://127.0.0.1:${(redirectingServer.address() as AddressInfo).port}/start`,
+        {
+          responseType: 'text',
+          headers: {
+            Authorization: '\tBearer token\t',
+          },
+        }
+      );
 
       expect(result).to.equal('redirected payload');
       expect(initialAuthorization).to.equal('Bearer token');
       expect(redirectedAuthorization).to.equal(undefined);
     } finally {
       await Promise.all([
-        new Promise((resolve, reject) => {
+        new Promise<void>((resolve, reject) => {
           redirectingServer.close((error) => {
             if (error) {
               reject(error);
@@ -377,7 +390,7 @@ describe('serverless-utils/download', () => {
             resolve();
           });
         }),
-        new Promise((resolve, reject) => {
+        new Promise<void>((resolve, reject) => {
           redirectedServer.close((error) => {
             if (error) {
               reject(error);
@@ -406,7 +419,7 @@ describe('serverless-utils/download', () => {
       },
     };
 
-    globalThis.fetch = async (url) => {
+    globalThis.fetch = (async (url) => {
       if (String(url) === 'http://example.com/start') {
         events.push('fetch-redirect');
         return {
@@ -432,7 +445,7 @@ describe('serverless-utils/download', () => {
       }
 
       throw new Error(`Unexpected fetch URL: ${String(url)}`);
-    };
+    }) as typeof fetch;
 
     try {
       const result = await download('http://example.com/start', { responseType: 'text' });

@@ -50,7 +50,7 @@ async function nodeReadableStreamToString(stream, encoding) {
   return Buffer.concat(chunks).toString(encoding);
 }
 
-async function s3BodyToString(body?, { encoding = 'utf8' } = {}) {
+async function s3BodyToString(body?, { encoding = 'utf8' }: { encoding?: BufferEncoding } = {}) {
   if (body == null) {
     return '';
   }

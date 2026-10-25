@@ -9,6 +9,7 @@ import {
   DescribeLogStreamsCommand,
   FilterLogEventsCommand,
 } from '@aws-sdk/client-cloudwatch-logs';
+import type { DescribeLogStreamsCommandInput } from '@aws-sdk/client-cloudwatch-logs';
 
 class AwsLogs {
   declare cloudWatchLogsClientPromise: any;
@@ -52,7 +53,7 @@ class AwsLogs {
   }
 
   async getLogStreams() {
-    const params = {
+    const params: DescribeLogStreamsCommandInput = {
       logGroupName: this.options.logGroupName,
       descending: true,
       limit: 50,

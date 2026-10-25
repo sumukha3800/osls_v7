@@ -1,9 +1,11 @@
 import http from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { promises as fsp } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import AdmZip from 'adm-zip';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import ServerlessError from '../../../../../lib/serverless-error.ts';
 import { ensureDir, getTmpDirPath, remove } from '../../../../utils/fs.ts';
 import runServerless from '../../../../utils/run-serverless.ts';
@@ -17,7 +19,7 @@ const loadCreate = async ({
   dirExistsSyncStub,
   untildifyStub,
 }: Record<string, any> = {}) => {
-  const noticeStub = sinon.stub();
+  const noticeStub: SinonStub & { success?: SinonStub } = sinon.stub();
   noticeStub.success = sinon.stub();
   const copyDirContentsSyncStub = sinon.stub();
   const renameServiceStub = sinon.stub();
@@ -226,8 +228,8 @@ describe('test/unit/lib/plugins/create/create.test.ts', () => {
         res.end();
       });
 
-      await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-      const baseUrl = `http://127.0.0.1:${server.address().port}`;
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+      const baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
       const requestedUrls = [];
       globalThis.fetch = async (uri, options) => {
         const stringUri = String(uri);
@@ -259,7 +261,7 @@ describe('test/unit/lib/plugins/create/create.test.ts', () => {
         expect(requests).to.deep.equal(['/archive.zip']);
       } finally {
         globalThis.fetch = originalFetch;
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           server.close((error) => {
             if (error) {
               reject(error);
