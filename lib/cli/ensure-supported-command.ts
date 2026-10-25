@@ -1,0 +1,69 @@
+import { distance as getDistance } from 'fastest-levenshtein';
+import resolveInput from './resolve-input.ts';
+import ServerlessError from '../serverless-error.ts';
+
+const getCommandSuggestion = (command, commandsSchema) => {
+  let suggestion;
+  let minValue = 0;
+  for (const correctCommand of commandsSchema.keys()) {
+    const distance = getDistance(command, correctCommand);
+    if (minValue === 0) {
+      suggestion = correctCommand;
+      minValue = distance;
+    }
+
+    if (minValue > distance) {
+      suggestion = correctCommand;
+      minValue = distance;
+    }
+  }
+  if (minValue >= 3) return '';
+  return ` Did you mean "${suggestion}"?`;
+};
+
+export default (configuration = null, resolvedInput = resolveInput()) => {
+  const { command, options, commandSchema, commandsSchema, isContainerCommand, isHelpRequest } =
+    resolvedInput;
+
+  if (!commandSchema && !isContainerCommand) {
+    throw new ServerlessError(
+      `osls command "${command}" not found.` +
+        `${getCommandSuggestion(command, commandsSchema)} ` +
+        'Run "serverless help" for a list of all available commands.',
+      'UNRECOGNIZED_CLI_COMMAND'
+    );
+  }
+  if (isHelpRequest) return;
+  const supportedOptions = new Set(Object.keys((commandSchema && commandSchema.options) || {}));
+  const unrecognizedOptions = Object.keys(options).filter(
+    (optionName) => !supportedOptions.has(optionName)
+  );
+  if (unrecognizedOptions.length) {
+    throw new ServerlessError(
+      `Detected unrecognized CLI options: "--${unrecognizedOptions.join('", "--')}".\n`,
+      'UNSUPPORTED_CLI_OPTIONS'
+    );
+  }
+  if (isContainerCommand) return;
+  if (commandSchema.serviceDependencyMode === 'required' && !configuration) {
+    throw new ServerlessError(
+      'This command can only be run in a service directory. ' +
+        "Make sure to reference a valid config file in the current working directory if you're using a custom config file",
+      'MISSING_SERVICE_CONTEXT'
+    );
+  }
+  const missingOptions = [];
+  for (const [optionName, { required }] of Object.entries(commandSchema.options || {})) {
+    if (!required) continue;
+    if (options[optionName] == null) missingOptions.push(optionName);
+  }
+
+  if (missingOptions.length) {
+    throw new ServerlessError(
+      `osls command "${command}" requires "--${missingOptions.join('", "--')}" option${
+        missingOptions.length > 1 ? 's' : ''
+      }. Run "serverless ${command} --help" for more info`,
+      'MISSING_REQUIRED_CLI_OPTION'
+    );
+  }
+};

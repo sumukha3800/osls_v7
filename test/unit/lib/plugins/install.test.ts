@@ -1,0 +1,123 @@
+import Install from '../../../../lib/plugins/install.ts';
+import * as sinon from 'sinon';
+import download from '../../../../lib/utils/download-template-from-repo.ts';
+import path from 'node:path';
+import { ensureDirSync, getTmpDirPath } from '../../../utils/fs.ts';
+import { expect } from 'chai';
+
+describe('Install', () => {
+  let install;
+  let serverless;
+  let cwd;
+
+  let serviceDir;
+
+  beforeEach(() => {
+    const tmpDir = getTmpDirPath();
+    cwd = process.cwd();
+
+    ensureDirSync(tmpDir);
+    process.chdir(tmpDir);
+
+    serviceDir = tmpDir;
+
+    serverless = {};
+    install = new Install(serverless);
+  });
+
+  afterEach(() => {
+    // change back to the old cwd
+    process.chdir(cwd);
+  });
+
+  describe('#constructor()', () => {
+    let installStub;
+
+    beforeEach(() => {
+      installStub = sinon.stub(install, 'install').resolves();
+    });
+
+    afterEach(() => {
+      install.install.restore();
+    });
+
+    it('should have commands', () => expect(install.commands).to.be.not.empty);
+
+    it('should have hooks', () => expect(install.hooks).to.be.not.empty);
+
+    it('should run promise chain in order for "install:install" hook', async () =>
+      install.hooks['install:install']().then(() => {
+        expect(installStub.calledOnce).to.be.equal(true);
+      }));
+  });
+
+  describe('#install()', () => {
+    let downloadStub;
+
+    beforeEach(() => {
+      downloadStub = sinon.stub(download, 'downloadTemplateFromRepo');
+    });
+
+    afterEach(() => {
+      download.downloadTemplateFromRepo.restore();
+    });
+
+    it('should throw an error if the passed URL option is not a valid URL', async () => {
+      install.options = { url: 'invalidUrl' };
+
+      try {
+        await install.install();
+      } catch (e) {
+        expect(e).to.be.instanceOf(Error);
+      }
+    });
+
+    it('should throw an error if the passed URL is not a valid GitHub URL', async () => {
+      install.options = { url: 'http://no-github-url.com/foo/bar' };
+
+      try {
+        await install.install();
+      } catch (e) {
+        expect(e).to.be.instanceOf(Error);
+      }
+    });
+
+    it('should throw an error if a directory with the same service name is already present', async () => {
+      install.options = { url: 'https://github.com/johndoe/existing-service' };
+
+      const serviceDirName = path.join(serviceDir, 'existing-service');
+      ensureDirSync(serviceDirName);
+
+      try {
+        await install.install();
+      } catch (e) {
+        expect(e).to.be.instanceOf(Error);
+      }
+    });
+
+    it('should succeed if template can be downloaded and installed', async () => {
+      install.options = { url: 'https://github.com/johndoe/remote-service' };
+      downloadStub.resolves('remote-service');
+
+      return install.install().then(() => {
+        expect(downloadStub).to.have.been.calledOnceWithExactly(
+          'https://github.com/johndoe/remote-service',
+          undefined
+        );
+      });
+    });
+
+    it('should succeed and print out the desired service name', async () => {
+      install.options = { url: 'https://github.com/johndoe/remote-service' };
+      install.options.name = 'remote';
+      downloadStub.resolves('remote-service');
+
+      return install.install().then(() => {
+        expect(downloadStub).to.have.been.calledOnceWithExactly(
+          'https://github.com/johndoe/remote-service',
+          'remote'
+        );
+      });
+    });
+  });
+});

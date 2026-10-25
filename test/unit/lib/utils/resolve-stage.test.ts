@@ -1,0 +1,71 @@
+import * as chai from 'chai';
+import resolveStage from '../../../../lib/utils/resolve-stage.ts';
+
+const expect = chai.expect;
+
+describe('test/unit/lib/utils/resolve-stage.test.ts', () => {
+  it('should return `stage` from options first if it is present', () => {
+    const result = resolveStage({
+      configuration: { provider: { stage: 'fromprovider' } },
+      options: { stage: 'fromoptions' },
+    });
+    expect(result).to.equal('fromoptions');
+  });
+
+  it('should return `stage` from configuration if stage is not passed in options', () => {
+    const result = resolveStage({
+      configuration: { provider: { stage: 'fromprovider' } },
+      options: {},
+    });
+    expect(result).to.equal('fromprovider');
+  });
+
+  it('should return default stage if both options and configuration do not have it defined', () => {
+    const result = resolveStage({ configuration: {}, options: {} });
+    expect(result).to.equal('dev');
+  });
+
+  it('should reject invalid `stage` from options', () => {
+    expect(() =>
+      resolveStage({
+        configuration: { provider: { stage: 'prod' } },
+        options: { stage: 'foo/bar' },
+      })
+    )
+      .to.throw()
+      .and.have.property('code', 'INVALID_STAGE');
+  });
+
+  it('should reject invalid `stage` from configuration', () => {
+    expect(() =>
+      resolveStage({
+        configuration: { provider: { stage: 'feature.prod' } },
+        options: {},
+      })
+    )
+      .to.throw()
+      .and.have.property('code', 'INVALID_STAGE');
+  });
+
+  it('should reject empty `stage` from options instead of falling back', () => {
+    expect(() =>
+      resolveStage({
+        configuration: { provider: { stage: 'prod' } },
+        options: { stage: '' },
+      })
+    )
+      .to.throw()
+      .and.have.property('code', 'INVALID_STAGE');
+  });
+
+  it('should ignore inherited stage values', () => {
+    const options = Object.create({ stage: 'foo/bar' });
+
+    const result = resolveStage({
+      configuration: { provider: { stage: 'prod' } },
+      options,
+    });
+
+    expect(result).to.equal('prod');
+  });
+});

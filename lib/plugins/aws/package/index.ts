@@ -1,0 +1,137 @@
+import path from 'node:path';
+import mergeCustomProviderResources from './lib/merge-custom-provider-resources.ts';
+import stripNullPropsFromTemplateResources from './lib/strip-null-props-from-template-resources.ts';
+import generateArtifactDirectoryName from './lib/generate-artifact-directory-name.ts';
+import generateCoreTemplate from './lib/generate-core-template.ts';
+import saveServiceState from './lib/save-service-state.ts';
+import saveCompiledTemplate from './lib/save-compiled-template.ts';
+import mergeIamTemplates from './lib/merge-iam-templates.ts';
+import addExportNameForOutputs from './lib/add-export-name-for-outputs.ts';
+import validateTemplate from './lib/validate-template.ts';
+import { log, style, progress } from '../../../utils/serverless-utils/log.ts';
+
+const mainProgress = progress.get('main');
+
+class AwsPackage {
+  constructor(serverless, options) {
+    this.serverless = serverless;
+    this.options = options;
+    this.servicePath = this.serverless.serviceDir || '';
+    this.packagePath =
+      this.options.package ||
+      this.serverless.service.package.path ||
+      path.join(this.servicePath || '.', '.serverless');
+    this.provider = this.serverless.getProvider('aws');
+
+    Object.assign(
+      this,
+      generateCoreTemplate,
+      mergeIamTemplates,
+      generateArtifactDirectoryName,
+      addExportNameForOutputs,
+      mergeCustomProviderResources,
+      stripNullPropsFromTemplateResources,
+      saveServiceState,
+      saveCompiledTemplate,
+      validateTemplate
+    );
+
+    // Define inner lifecycles
+    this.commands = {
+      aws: {
+        type: 'entrypoint',
+        commands: {
+          package: {
+            commands: {
+              finalize: {
+                lifecycleEvents: [
+                  'addExportNameForOutputs',
+                  'mergeCustomProviderResources',
+                  'stripNullPropsFromTemplateResources',
+                  'saveServiceState',
+                ],
+              },
+            },
+          },
+        },
+      },
+    };
+
+    this.hooks = {
+      'initialize': () => {
+        // TODO: When addressing https://github.com/serverless/serverless/issues/8666
+        //       unify with this.serverless.service.package.artifactDirectoryName
+        // Assign here, so it's accessible in context of all commands
+        this.serverless.service.package.artifactsS3KeyDirname = `${this.provider.getDeploymentPrefix()}/${
+          this.serverless.service.service
+        }/${this.provider.getStage()}/code-artifacts`;
+        if (this.serverless.processedInput.commands.join(' ') === 'package') {
+          log.notice();
+          log.notice(
+            `Packaging ${this.serverless.service.service} for stage ${this.serverless
+              .getProvider('aws')
+              .getStage()} ${style.aside(`(${this.serverless.getProvider('aws').getRegion()})`)}`
+          );
+          log.info(); // Ensure gap between verbose logging
+        }
+      },
+      'before:package:cleanup': () => mainProgress.notice('Packaging', { isMainEvent: true }),
+      /**
+       * Outer lifecycle hooks
+       */
+      'package:cleanup': async () => {
+        await this.serverless.pluginManager.spawn('aws:common:validate');
+        await this.serverless.pluginManager.spawn('aws:common:cleanupTempDir');
+      },
+
+      'package:initialize': async () => {
+        return this.generateCoreTemplate();
+      },
+
+      'package:setupProviderConfiguration': () => this.mergeIamTemplates(),
+
+      'before:package:compileFunctions': async () => this.generateArtifactDirectoryName(),
+
+      'before:package:compileLayers': async () => this.generateArtifactDirectoryName(),
+
+      'package:finalize': async () => this.serverless.pluginManager.spawn('aws:package:finalize'),
+
+      /**
+       * Inner lifecycle hooks
+       */
+
+      // Package finalize inner lifecycle
+      'aws:package:finalize:addExportNameForOutputs': () => {
+        this.addExportNameForOutputs();
+      },
+
+      'aws:package:finalize:mergeCustomProviderResources': async () =>
+        this.mergeCustomProviderResources(),
+
+      'aws:package:finalize:stripNullPropsFromTemplateResources': () =>
+        this.stripNullPropsFromTemplateResources(),
+
+      'aws:package:finalize:saveServiceState': async () => {
+        this.validateTemplate();
+        await this.saveCompiledTemplate();
+        await this.saveServiceState();
+        return this.serverless.pluginManager.spawn('aws:common:moveArtifactsToPackage');
+      },
+
+      'finalize': () => {
+        if (this.serverless.processedInput.commands.join(' ') === 'package') {
+          log.notice();
+          log.notice.success(
+            `Service packaged ${style.aside(
+              `(${Math.floor(
+                (Date.now() - this.serverless.pluginManager.commandRunStartTime) / 1000
+              )}s)`
+            )}`
+          );
+        }
+      },
+    };
+  }
+}
+
+export default AwsPackage;
