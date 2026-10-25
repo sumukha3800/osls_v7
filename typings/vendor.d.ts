@@ -1,6 +1,9 @@
 // Types for runtime dependencies that ship none and have no DefinitelyTyped package.
 // Only the entry points osls uses are declared.
 
+// `type` ships declarations (ts-types/, through `typesVersions`), but they are CommonJS files with
+// `export default`: a default import gets a non-callable namespace under `nodenext`. These ambient
+// declarations take precedence over them
 interface TypeEnsureOptions {
   default?: unknown;
   ensureItem?: (value: unknown) => unknown;
