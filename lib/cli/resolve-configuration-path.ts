@@ -27,7 +27,7 @@ export default async (options: Record<string, any> = {}) => {
     const stats = await (async () => {
       try {
         return await fsp.stat(customConfigPath);
-      } catch (error) {
+      } catch (error: any) {
         if (error.code === 'ENOENT') {
           throw new ServerlessError(
             `'Invalid "--config" value: Cannot find "${customConfigName}" in service folder`,

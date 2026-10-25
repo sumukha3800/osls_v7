@@ -1,9 +1,16 @@
 import isPlainObject from 'type/plain-object/is.js';
 import ensurePlainObject from 'type/plain-object/ensure.js';
-import parse from './parse.ts';
+import parse, { type ValueMeta } from './parse.ts';
 import humanizePropertyPath from './humanize-property-path-keys.ts';
 
-const parseEntries = (entries, parentPropertyPathKeys, map) => {
+// Object keys and array indexes, joined with "\0" into the property path keys of `map`
+type PathKey = string | number;
+
+const parseEntries = (
+  entries: Iterable<[PathKey, unknown]>,
+  parentPropertyPathKeys: PathKey[],
+  map: Map<string, ValueMeta>
+) => {
   for (const [key, value] of entries) {
     if (isPlainObject(value)) {
       parseEntries(Object.entries(value), parentPropertyPathKeys.concat(key), map);
@@ -17,7 +24,7 @@ const parseEntries = (entries, parentPropertyPathKeys, map) => {
       const variables = (() => {
         try {
           return parse(value);
-        } catch (error) {
+        } catch (error: any) {
           const propertyPathTokens = parentPropertyPathKeys.concat(key);
           error.message = `Variable syntax error at "${humanizePropertyPath(
             propertyPathTokens
@@ -32,7 +39,7 @@ const parseEntries = (entries, parentPropertyPathKeys, map) => {
   return map;
 };
 
-const resolveMeta = (configuration) => {
+const resolveMeta = (configuration: Record<string, any>) => {
   ensurePlainObject(configuration);
 
   return parseEntries(Object.entries(configuration), [], new Map());

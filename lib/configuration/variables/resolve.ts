@@ -15,20 +15,50 @@ import ServerlessError from '../../serverless-error.ts';
 import { methodDescriptor } from '../../utils/property-descriptors.ts';
 import { canFollowProperty, hasOwn, safeSet } from '../../utils/safe-object.ts';
 import humanizePropertyPath from './humanize-property-path-keys.ts';
-import parse from './parse.ts';
+import parse, { type ValueMeta, type VariableMeta, type VariableSourceMeta } from './parse.ts';
 import { parseEntries } from './resolve-meta.ts';
 import VariableSourceResolutionError from './source-resolution-error.ts';
+import type { CliOptions, VariableSourceResolverContext } from '../../plugin-types.ts';
+
+// Sources also come from plugins: they are validated at runtime, and so is what they return (see
+// `resolveSource`, which types the context they get)
+interface ResolverSource {
+  resolve: (context: any) => unknown;
+}
+
+// `servicePath` is the legacy name of `serviceDir`
+type ResolverSourceContext = VariableSourceResolverContext & { servicePath: string };
+
+interface SourceResult {
+  value: unknown;
+  // With a `null` value: the source is not fulfilled yet, resolution is retried in a later pass
+  isPending?: boolean;
+  // Reported when no source resolves the variable
+  eventualErrorMessage?: string;
+}
+
+export interface ResolverConfiguration {
+  serviceDir: string;
+  configuration: Record<string, any>;
+  // Values with variables by property path (keys joined with "\0"). Resolved ones are removed
+  variablesMeta: Map<string, ValueMeta>;
+  sources: Record<string, ResolverSource>;
+  options: CliOptions;
+  fulfilledSources: Set<string>;
+  propertyPathsToResolve?: Set<string> | null;
+  isPropertyDeferred?: (propertyPath: string) => boolean;
+}
 
 const objPropertyIsEnumerable = Object.prototype.propertyIsEnumerable;
 const variableProcessingErrorNames = new Set(['ServerlessError', 'VariableSourceResolutionError']);
 
 let lastResolutionBatchId = 0;
 
-const isWriteTarget = (value) =>
+const isWriteTarget = (value: unknown): value is object =>
   value != null && (typeof value === 'object' || typeof value === 'function');
 
-const getOwnPathTarget = (source, pathKeys) => {
-  let current = source;
+const getOwnPathTarget = (source: unknown, pathKeys: string[]) => {
+  let current: any = source;
 
   for (const key of pathKeys) {
     if (!hasOwn(current, key)) return undefined;
@@ -38,19 +68,20 @@ const getOwnPathTarget = (source, pathKeys) => {
   return current;
 };
 
-const resolveSourceValuesVariables = (sourceValues) => {
+const resolveSourceValuesVariables = (sourceValues: string[]) => {
   // Value is a result of concatenation of string values coming from multiple sources.
   // Parse variables in each string part individually - it's to avoid accidental
   // resolution of variable-like notation which may surface after joining two values.
   // Also that way we do not accidentally re-parse an escaped variables notation
   let baseIndex = 0;
-  let resolvedValueVariables = null;
+  let resolvedValueVariables: VariableMeta[] | null = null;
   for (const sourceValue of sourceValues) {
     const sourceValueVariables = parse(sourceValue);
     if (sourceValueVariables) {
       for (const sourceValueVariable of sourceValueVariables) {
         if (sourceValueVariable.end) {
-          sourceValueVariable.start += baseIndex;
+          // Variables with an `end` also have a `start`
+          sourceValueVariable.start! += baseIndex;
           sourceValueVariable.end += baseIndex;
         } else {
           sourceValueVariable.start = baseIndex;
@@ -66,17 +97,22 @@ const resolveSourceValuesVariables = (sourceValues) => {
 };
 
 class VariablesResolver {
-  declare configuration: any;
-  declare fulfilledSources: any;
-  declare isPropertyDeferred: any;
-  declare options: any;
-  declare propertyDependenciesMap: any;
-  declare propertyResolutionNestDepthMap: any;
-  declare resolveProperty: any;
-  declare resolveSource: any;
-  declare serviceDir: any;
-  declare sources: any;
-  declare variablesMeta: any;
+  declare configuration: Record<string, any>;
+  declare fulfilledSources: Set<string>;
+  declare isPropertyDeferred: (propertyPath: string) => boolean;
+  declare options: CliOptions;
+  declare propertyDependenciesMap: Map<string, Set<string>>;
+  declare propertyResolutionNestDepthMap: Map<string, number>;
+  // Memoized methods, defined on the prototype below
+  declare resolveProperty: (resolutionBatchId: number, propertyPath: string) => Promise<void>;
+  declare resolveSource: (
+    resolutionBatchId: number,
+    propertyPath: string,
+    sourceData: VariableSourceMeta
+  ) => Promise<SourceResult>;
+  declare serviceDir: string;
+  declare sources: Record<string, ResolverSource>;
+  declare variablesMeta: Map<string, ValueMeta>;
 
   constructor({
     serviceDir,
@@ -87,7 +123,7 @@ class VariablesResolver {
     fulfilledSources,
     propertyPathsToResolve,
     isPropertyDeferred,
-  }) {
+  }: ResolverConfiguration) {
     this.serviceDir = serviceDir;
     this.configuration = configuration;
     this.variablesMeta = variablesMeta;
@@ -136,10 +172,11 @@ class VariablesResolver {
       })
     ).then(() => {}) as any;
   }
-  async resolveVariables(resolutionBatchId, propertyPath, valueMeta) {
+  async resolveVariables(resolutionBatchId: number, propertyPath: string, valueMeta: ValueMeta) {
     // Resolve all variables configured in given string value.
+    // (callers pass values that hold variables)
     await Promise.all(
-      valueMeta.variables.map(async (variableMeta) => {
+      valueMeta.variables!.map(async (variableMeta) => {
         if (!variableMeta.sources) {
           // Variable was already resolved in previous resolution phase
           return;
@@ -177,9 +214,10 @@ class VariablesResolver {
     // String value is either constructed from more than one variable
     // or is partially constructed with a variable.
     // In such case, end value is always a string, reconstructed below
-    const sourceValues = [];
-    const rawValue = valueMeta.value;
-    let lastIndex = 0;
+    const sourceValues: string[] = [];
+    // Values with variables are strings
+    const rawValue = valueMeta.value as string;
+    let lastIndex: number | undefined = 0;
     for (const { start, end, value } of valueMeta.variables) {
       const stringValue = coerceString(value);
       if (stringValue == null) {
@@ -201,13 +239,18 @@ class VariablesResolver {
     delete valueMeta.variables;
   }
 
-  async resolveVariable(resolutionBatchId, propertyPath, variableMeta) {
+  async resolveVariable(
+    resolutionBatchId: number,
+    propertyPath: string,
+    variableMeta: VariableMeta
+  ) {
     // Resolve a single variable, which could be configured with multiple
     // (first-choice, and fallback) sources
 
     // Work on a copy, as with multiple resolution batches, there's a rare possibility of same
     // variable being resolved multiple times at once
-    const sources = Array.from(variableMeta.sources);
+    // (callers pass variables that have sources)
+    const sources = Array.from(variableMeta.sources!);
     let sourceData: Record<string, any> = sources[0];
     do {
       const sourceMeta = this.sources[sourceData.type];
@@ -222,7 +265,7 @@ class VariablesResolver {
           propertyPath,
           sourceData
         );
-      } catch (error) {
+      } catch (error: any) {
         /* istanbul ignore next */
         if (
           !error ||
@@ -281,7 +324,11 @@ class VariablesResolver {
     variableMeta.value = sourceData.value;
   }
 
-  async resolveVariableSource(resolutionBatchId, propertyPath, sourceData) {
+  async resolveVariableSource(
+    resolutionBatchId: number,
+    propertyPath: string,
+    sourceData: VariableSourceMeta
+  ): Promise<SourceResult> {
     // Resolve variables in source dependencies (params and address) and resolve the source
     if (sourceData.params) {
       // Ensure to have all eventual variables in params resolved
@@ -339,7 +386,12 @@ class VariablesResolver {
     );
   }
 
-  async resolveInternalResult(resolutionBatchId, propertyPath, valueMeta, nestTracker = 10) {
+  async resolveInternalResult(
+    resolutionBatchId: number,
+    propertyPath: string,
+    valueMeta: ValueMeta,
+    nestTracker = 10
+  ) {
     if (valueMeta.error) throw valueMeta.error;
     if (valueMeta.variables) {
       throw new ServerlessError('Cannot resolve variable', 'MISSING_VARIABLE_DEPENDENCY');
@@ -357,7 +409,7 @@ class VariablesResolver {
         try {
           if (valueMeta.sourceValues) return resolveSourceValuesVariables(valueMeta.sourceValues);
           return parse(valueMeta.value);
-        } catch (error) {
+        } catch (error: any) {
           error.message = `Cannot resolve variable at "${humanizePropertyPath(
             propertyPath.split('\0')
           )}": Approached variable syntax error in resolved value (${error.code})`;
@@ -398,7 +450,7 @@ class VariablesResolver {
     }
   }
 
-  validateCrossPropertyDependency(dependentPropertyPath, dependencyPropertyPath) {
+  validateCrossPropertyDependency(dependentPropertyPath: string, dependencyPropertyPath: string) {
     if (dependentPropertyPath === dependencyPropertyPath) {
       throw new ServerlessError(
         `Circular reference. "${humanizePropertyPath(
@@ -421,20 +473,20 @@ class VariablesResolver {
       this.validateCrossPropertyDependency(dependentPropertyPath, dependencyDependency);
     }
   }
-  registerCrossPropertyDependency(dependentPropertyPath, dependencyPropertyPath) {
+  registerCrossPropertyDependency(dependentPropertyPath: string, dependencyPropertyPath: string) {
     this.validateCrossPropertyDependency(dependentPropertyPath, dependencyPropertyPath);
     if (!this.propertyDependenciesMap.has(dependentPropertyPath)) {
       this.propertyDependenciesMap.set(dependentPropertyPath, new Set());
     }
-    this.propertyDependenciesMap.get(dependentPropertyPath).add(dependencyPropertyPath);
+    this.propertyDependenciesMap.get(dependentPropertyPath)!.add(dependencyPropertyPath);
   }
 
   async resolveDependentProperty(
-    resolutionBatchId,
-    dependentPropertyPath,
-    dependencyPropertyPathKeys
+    resolutionBatchId: number,
+    dependentPropertyPath: string,
+    dependencyPropertyPathKeys: string[]
   ) {
-    let value = this.configuration;
+    let value: any = this.configuration;
     for (const [index, key] of dependencyPropertyPathKeys.entries()) {
       if (value == null) {
         value = undefined;
@@ -456,7 +508,7 @@ class VariablesResolver {
           break;
         }
         value = value[key];
-      } catch (error) {
+      } catch (error: any) {
         throw new ServerlessError(
           `Cannot resolve "${humanizePropertyPath(
             dependencyPropertyPathKeys
@@ -470,7 +522,7 @@ class VariablesResolver {
       ? `${dependencyPropertyPathKeys.join('\0')}\0`
       : '';
     await Promise.all(
-      Array.from(this.variablesMeta.keys()).map(async (propertyPath: Record<string, any>) => {
+      Array.from(this.variablesMeta.keys()).map(async (propertyPath) => {
         if (!propertyPath.startsWith(depPropertyNestPath)) return;
         this.registerCrossPropertyDependency(dependentPropertyPath, propertyPath);
         await this.resolveProperty(resolutionBatchId, propertyPath);
@@ -488,8 +540,13 @@ Object.defineProperties(
   VariablesResolver.prototype,
   memoizeMethods({
     resolveProperty: methodDescriptor(
-      async function self(resolutionBatchId, propertyPath) {
-        const valueMeta = this.variablesMeta.get(propertyPath);
+      async function self(
+        this: VariablesResolver,
+        resolutionBatchId: number,
+        propertyPath: string
+      ) {
+        // Called for registered properties only
+        const valueMeta = this.variablesMeta.get(propertyPath)!;
         if (!valueMeta.variables) {
           // Lack of `.variables` means that there was an attempt to resolve property in previous pass
           // but it errored.
@@ -515,13 +572,13 @@ Object.defineProperties(
         const propertyPathKeys = propertyPath.split('\0');
         const { value, sourceValues } = valueMeta;
 
-        let propertyVariablesMeta;
+        let propertyVariablesMeta: Map<string, ValueMeta> | undefined;
         if (typeof value === 'string') {
           const valueVariables = (() => {
             try {
               if (sourceValues) return resolveSourceValuesVariables(sourceValues);
               return parse(value);
-            } catch (error) {
+            } catch (error: any) {
               error.message = `Cannot resolve variable at "${humanizePropertyPath(
                 propertyPathKeys
               )}": Approached variable syntax error in resolved value (${error.code})`;
@@ -601,13 +658,20 @@ Object.defineProperties(
       }
     ),
     resolveSource: methodDescriptor(
-      async function (resolutionBatchId, propertyPath, sourceData) {
+      async function (
+        this: VariablesResolver,
+        resolutionBatchId: number,
+        propertyPath: string,
+        sourceData: VariableSourceMeta
+      ) {
         // Resolve value from variables source, and ensure it's a typical JSON value.
-        const result = await this.sources[sourceData.type].resolve({
+        // `resolveVariable` passes sources that have a `type`. The result is validated below
+        const result = (await this.sources[sourceData.type!].resolve({
           params: sourceData.params && sourceData.params.map((param) => param.value),
-          address: sourceData.address && sourceData.address.value,
+          // Sources validate the address, which may resolve to a non-string value
+          address: sourceData.address && (sourceData.address.value as string | undefined),
           options: this.options,
-          isSourceFulfilled: this.fulfilledSources.has(sourceData.type),
+          isSourceFulfilled: this.fulfilledSources.has(sourceData.type!),
           serviceDir: this.serviceDir,
           // TODO: Remove `servicePath` with next major
           servicePath: this.serviceDir,
@@ -654,7 +718,7 @@ Object.defineProperties(
             await this.resolveInternalResult(resolutionBatchId, propertyPath, meta);
             return meta.value;
           },
-        });
+        } satisfies ResolverSourceContext)) as SourceResult;
         ensurePlainObject(result, {
           errorMessage: `Unexpected "${sourceData.type}" source result: %v`,
           Error: VariableSourceResolutionError,
@@ -693,7 +757,11 @@ Object.defineProperties(
         return result;
       },
       {
-        normalizer: ([resolutionBatchId, , { type, params, address }]) => {
+        normalizer: ([resolutionBatchId, , { type, params, address }]: [
+          number,
+          string,
+          VariableSourceMeta,
+        ]) => {
           return [
             resolutionBatchId,
             type,
@@ -707,10 +775,10 @@ Object.defineProperties(
   })
 );
 
-export default async (data) => {
+export default async (data: ResolverConfiguration) => {
   // Input sanity check
   // Note: this function is considered private, if there's a crash here, it signals an internal bug
-  data = { ...ensurePlainObject(data) };
+  data = { ...ensurePlainObject(data) } as ResolverConfiguration;
   data.serviceDir = path.resolve(ensureString(data.serviceDir));
   ensurePlainObject(data.configuration);
   ensureMap(data.variablesMeta);

@@ -1,4 +1,4 @@
-import spawn from '../lib/utils/spawn.ts';
+import spawn, { type SpawnError } from '../lib/utils/spawn.ts';
 import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 import isPlainObject from 'type/plain-object/is.js';
@@ -15,7 +15,20 @@ const { getServerlessFilePath, parsePluginInstallSpec, validate } = pluginManage
 
 const mainProgress = progress.get('main');
 
-export default async ({ configuration, serviceDir, configurationFilename, options }) => {
+// What `scripts/serverless.ts` passes to standalone commands; `null` values outside a service
+interface CommandContext {
+  configuration: Record<string, any> | null;
+  serviceDir: string | null;
+  configurationFilename: string | null;
+  options: Record<string, any>;
+}
+
+export default async ({
+  configuration,
+  serviceDir,
+  configurationFilename,
+  options,
+}: CommandContext) => {
   const commandRunStartTime = Date.now();
   validate({ serviceDir });
 
@@ -38,11 +51,11 @@ export default async ({ configuration, serviceDir, configurationFilename, option
     { isMainEvent: true }
   );
   await installPlugin(context);
-  // Check if plugin is already added
+  // Check if plugin is already added (`validate()` ensured a service, hence a configuration)
+  const { plugins } = configuration!;
   const pluginAlreadyPresentInConfig =
-    (Array.isArray(configuration.plugins && configuration.plugins.modules) &&
-      configuration.plugins.modules.includes(pluginName)) ||
-    (Array.isArray(configuration.plugins) && configuration.plugins.includes(pluginName));
+    (Array.isArray(plugins && plugins.modules) && plugins.modules.includes(pluginName)) ||
+    (Array.isArray(plugins) && plugins.includes(pluginName));
   if (!pluginAlreadyPresentInConfig) {
     await addPluginToServerlessFile(context);
   }
@@ -55,18 +68,32 @@ export default async ({ configuration, serviceDir, configurationFilename, option
   );
 };
 
-const installPlugin = async ({ serviceDir, installSpec, allowInstallScripts }) => {
+const installPlugin = async ({
+  serviceDir,
+  installSpec,
+  allowInstallScripts,
+}: {
+  serviceDir: string | null;
+  installSpec: string;
+  allowInstallScripts: boolean;
+}) => {
   await npmInstall(installSpec, { serviceDir, allowInstallScripts });
 };
 
-const addPluginToServerlessFile = async ({ configurationFilePath, pluginName }) => {
+const addPluginToServerlessFile = async ({
+  configurationFilePath,
+  pluginName,
+}: {
+  configurationFilePath: string;
+  pluginName: string;
+}) => {
   const fileExtension = path.extname(configurationFilePath);
   if (fileExtension === '.js' || fileExtension === '.ts') {
     requestManualUpdate(configurationFilePath);
     return;
   }
 
-  const checkIsArrayPluginsObject = (pluginsObject) =>
+  const checkIsArrayPluginsObject = (pluginsObject: unknown) =>
     pluginsObject == null || Array.isArray(pluginsObject);
   // pluginsObject type determined based on the value loaded during the serverless init.
   if (fileExtension === '.json') {
@@ -99,13 +126,10 @@ const addPluginToServerlessFile = async ({ configurationFilePath, pluginName }) 
     return;
   }
 
-  const serverlessFileObj: Record<string, any> = yaml.load(
-    await fsp.readFile(configurationFilePath, 'utf8'),
-    {
-      filename: configurationFilePath,
-      schema: cloudformationSchema,
-    }
-  );
+  const serverlessFileObj = yaml.load(await fsp.readFile(configurationFilePath, 'utf8'), {
+    filename: configurationFilePath,
+    schema: cloudformationSchema,
+  }) as Record<string, any>;
   if (serverlessFileObj.plugins != null) {
     // Plugins section can be behind variables, opt-out in such case
     if (isPlainObject(serverlessFileObj.plugins)) {
@@ -128,7 +152,10 @@ const addPluginToServerlessFile = async ({ configurationFilePath, pluginName }) 
   );
 };
 
-const npmInstall = async (name, { serviceDir, allowInstallScripts }) => {
+const npmInstall = async (
+  name: string,
+  { serviceDir, allowInstallScripts }: { serviceDir: string | null; allowInstallScripts: boolean }
+) => {
   const { command, args } = await npmCommandDeferred;
   const installArgs = ['install', '--save-dev'];
 
@@ -142,12 +169,12 @@ const npmInstall = async (name, { serviceDir, allowInstallScripts }) => {
       stdio: 'pipe',
     });
   } catch (error) {
-    log.error(String(error.stderrBuffer));
+    log.error(String((error as SpawnError).stderrBuffer));
     throw error;
   }
 };
 
-const requestManualUpdate = (configurationFilePath) => {
+const requestManualUpdate = (configurationFilePath: string) => {
   log.notice();
   log.notice.skip(
     `Can't automatically add plugin into "${path.basename(

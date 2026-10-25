@@ -4,7 +4,7 @@ import paramRegExp from './param-reg-exp.ts';
 const isParamName = RegExp.prototype.test.bind(paramRegExp);
 
 export default (
-  args,
+  args: string[],
   { boolean = new Set(), alias = new Map(), string = new Set(), multiple = new Set() }
 ) => {
   const result = Object.create(null);
@@ -20,7 +20,8 @@ export default (
       result._.push(arg);
       continue;
     }
-    const { fullName, aliasNames, value } = paramMatch.groups;
+    // paramRegExp defines named groups
+    const { fullName, aliasNames, value } = paramMatch.groups!;
     const isBoolean =
       value == null && (!args[i + 1] || args[i + 1] === '--' || isParamName(args[i + 1]));
 

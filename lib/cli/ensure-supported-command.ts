@@ -1,8 +1,9 @@
 import { distance as getDistance } from 'fastest-levenshtein';
 import resolveInput from './resolve-input.ts';
 import ServerlessError from '../serverless-error.ts';
+import type { CommandsSchema } from './commands-schema/types.ts';
 
-const getCommandSuggestion = (command, commandsSchema) => {
+const getCommandSuggestion = (command: string, commandsSchema: CommandsSchema) => {
   let suggestion;
   let minValue = 0;
   for (const correctCommand of commandsSchema.keys()) {
@@ -21,7 +22,10 @@ const getCommandSuggestion = (command, commandsSchema) => {
   return ` Did you mean "${suggestion}"?`;
 };
 
-export default (configuration = null, resolvedInput = resolveInput()) => {
+export default (
+  configuration: Record<string, any> | null = null,
+  resolvedInput = resolveInput()
+) => {
   const { command, options, commandSchema, commandsSchema, isContainerCommand, isHelpRequest } =
     resolvedInput;
 
@@ -45,7 +49,8 @@ export default (configuration = null, resolvedInput = resolveInput()) => {
     );
   }
   if (isContainerCommand) return;
-  if (commandSchema.serviceDependencyMode === 'required' && !configuration) {
+  // Without a schema, the command is a container command (handled above)
+  if (commandSchema!.serviceDependencyMode === 'required' && !configuration) {
     throw new ServerlessError(
       'This command can only be run in a service directory. ' +
         "Make sure to reference a valid config file in the current working directory if you're using a custom config file",
@@ -53,7 +58,7 @@ export default (configuration = null, resolvedInput = resolveInput()) => {
     );
   }
   const missingOptions = [];
-  for (const [optionName, { required }] of Object.entries(commandSchema.options || {})) {
+  for (const [optionName, { required }] of Object.entries(commandSchema!.options || {})) {
     if (!required) continue;
     if (options[optionName] == null) missingOptions.push(optionName);
   }

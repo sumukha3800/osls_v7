@@ -11,20 +11,20 @@ import { log } from '../utils/serverless-utils/log.ts';
 
 // Inner SSO/OIDC/STS clients created during credential resolution inherit the same
 // proxy, CA, and timeout configuration as regular clients
-let sharedRequestHandler;
+let sharedRequestHandler: NodeHttpHandler | undefined;
 
 function getCredentialsRequestHandler() {
   if (!sharedRequestHandler) sharedRequestHandler = new NodeHttpHandler(buildHttpOptions());
   return sharedRequestHandler;
 }
 
-function hasEnvironmentCredentials(prefix) {
+function hasEnvironmentCredentials(prefix: string) {
   return Boolean(
     process.env[`${prefix}_ACCESS_KEY_ID`] && process.env[`${prefix}_SECRET_ACCESS_KEY`]
   );
 }
 
-function fromPrefixedEnv(prefix) {
+function fromPrefixedEnv(prefix: string) {
   return async () => {
     const accessKeyId = process.env[`${prefix}_ACCESS_KEY_ID`];
     const secretAccessKey = process.env[`${prefix}_SECRET_ACCESS_KEY`];
@@ -68,7 +68,7 @@ function promptMfaCode(mfaSerial: string) {
   });
 }
 
-function expandHomeDirPath(filePath) {
+function expandHomeDirPath(filePath: string) {
   return filePath.startsWith('~/') ? path.join(os.homedir(), filePath.slice(2)) : filePath;
 }
 
@@ -84,7 +84,7 @@ function getSharedConfigFilepath() {
   );
 }
 
-function fromProfile(profile) {
+function fromProfile(profile: string) {
   maybeWarnIdentityDivergence(profile);
   const requestHandler = getCredentialsRequestHandler();
   const filepath = getSharedCredentialsFilepath();
@@ -106,10 +106,10 @@ function fromProfile(profile) {
   });
 }
 
-function getIniSectionNames(filePath) {
+function getIniSectionNames(filePath: string) {
   try {
     const contents = fs.readFileSync(filePath, 'utf8');
-    const sectionNames = new Set();
+    const sectionNames = new Set<string>();
 
     for (const line of contents.split(/\r?\n/)) {
       const trimmedLine = line.split(/(^|\s)[;#]/)[0].trim();
@@ -119,17 +119,17 @@ function getIniSectionNames(filePath) {
     }
 
     return sectionNames;
-  } catch (error) {
-    if (error && error.code === 'ENOENT') return new Set();
+  } catch (error: any) {
+    if (error && error.code === 'ENOENT') return new Set<string>();
     throw error;
   }
 }
 
-function isDefaultConfigProfileSection(sectionName) {
+function isDefaultConfigProfileSection(sectionName: string) {
   return isConfigProfileSection(sectionName, 'default');
 }
 
-function isConfigProfileSection(sectionName, profile) {
+function isConfigProfileSection(sectionName: string, profile: string) {
   if (sectionName === profile) return true;
   if (!sectionName.startsWith('profile')) return false;
   const rest = sectionName.slice('profile'.length);
@@ -138,7 +138,7 @@ function isConfigProfileSection(sectionName, profile) {
   return name === profile || name === `"${profile}"` || name === `'${profile}'`;
 }
 
-function doesProfileExist(profile) {
+function doesProfileExist(profile: string) {
   if (getIniSectionNames(getSharedCredentialsFilepath()).has(profile)) return true;
 
   for (const sectionName of getIniSectionNames(getSharedConfigFilepath())) {
@@ -148,7 +148,11 @@ function doesProfileExist(profile) {
   return false;
 }
 
-function doesIniSectionHaveKey(filePath, sectionMatcher, keyName) {
+function doesIniSectionHaveKey(
+  filePath: string,
+  sectionMatcher: (sectionName: string) => boolean,
+  keyName: string
+) {
   try {
     const contents = fs.readFileSync(filePath, 'utf8');
     let inSection = false;
@@ -171,9 +175,9 @@ function doesIniSectionHaveKey(filePath, sectionMatcher, keyName) {
   }
 }
 
-const warnedDivergenceProfiles = new Set();
+const warnedDivergenceProfiles = new Set<string>();
 
-function maybeWarnIdentityDivergence(profile) {
+function maybeWarnIdentityDivergence(profile: string) {
   if (warnedDivergenceProfiles.has(profile)) return;
   warnedDivergenceProfiles.add(profile);
 
@@ -212,9 +216,9 @@ function doesImplicitDefaultProfileExist() {
 
 function fromImplicitDefaultProfileWithFallback() {
   const profileProvider = fromProfile('default');
-  let fallbackProvider;
+  let fallbackProvider: ReturnType<typeof fromNodeProviderChain> | undefined;
 
-  return async (providerOptions) => {
+  return async (providerOptions?: Parameters<typeof profileProvider>[0]) => {
     try {
       return await profileProvider(providerOptions);
     } catch (error) {
@@ -271,7 +275,7 @@ function getAwsSdkV3CredentialsProvider({
   if (cliProfile) return fromProfile(cliProfile);
   if (profile) return fromProfile(profile);
   if (stageUpper && process.env[`AWS_${stageUpper}_PROFILE`]) {
-    return fromProfile(process.env[`AWS_${stageUpper}_PROFILE`]);
+    return fromProfile(process.env[`AWS_${stageUpper}_PROFILE`]!);
   }
   if (stageUpper && hasEnvironmentCredentials(`AWS_${stageUpper}`)) {
     return fromPrefixedEnv(`AWS_${stageUpper}`);

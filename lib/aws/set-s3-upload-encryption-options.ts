@@ -1,4 +1,7 @@
-export default (putParams, deploymentBucketOptions) => {
+export default <T extends Record<string, any>>(
+  putParams: T,
+  deploymentBucketOptions: Record<string, any>
+): T => {
   const encryptionFields = [
     ['serverSideEncryption', 'ServerSideEncryption'],
     ['sseCustomerAlgorithim', 'SSECustomerAlgorithm'],
@@ -7,7 +10,7 @@ export default (putParams, deploymentBucketOptions) => {
     ['sseKMSKeyId', 'SSEKMSKeyId'],
   ];
 
-  const params = putParams;
+  const params: Record<string, any> = putParams;
 
   encryptionFields.forEach((element) => {
     if (deploymentBucketOptions[element[0]]) {
@@ -15,5 +18,5 @@ export default (putParams, deploymentBucketOptions) => {
     }
   });
 
-  return params;
+  return params as T;
 };

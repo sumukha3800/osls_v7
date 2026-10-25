@@ -1,17 +1,23 @@
 import ensureString from 'type/string/ensure.js';
 import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
 import ServerlessError from '../../../../serverless-error.ts';
-import createCachedAwsVariableSourceCommandSender from './create-cached-aws-variable-source-command-sender.ts';
+import createCachedAwsVariableSourceCommandSender, {
+  type AwsProviderHost,
+} from './create-cached-aws-variable-source-command-sender.ts';
+import type { VariableSourceResolverContext } from '../../../../plugin-types.ts';
 import { isSsmParameterNotFoundError } from '../../../../aws/aws-sdk-v3-error.ts';
 
-export default (serverlessInstance) => {
+export default (serverlessInstance: AwsProviderHost) => {
   const sender = createCachedAwsVariableSourceCommandSender({
     getProvider: () => serverlessInstance.getProvider('aws'),
     Client: SSMClient,
   });
 
   return {
-    resolve: async ({ address, params }) => {
+    resolve: async ({
+      address,
+      params,
+    }: Pick<VariableSourceResolverContext, 'address' | 'params'>) => {
       // ssm(region = null):param-path
       if (!address) {
         throw new ServerlessError(
@@ -29,7 +35,7 @@ export default (serverlessInstance) => {
       const cleanedParams = params
         ? params.filter((param) => param !== 'raw' && param !== 'noDecrypt')
         : [];
-      const region = cleanedParams[0];
+      const region = cleanedParams[0] as string | null | undefined;
 
       const result = await (async () => {
         try {

@@ -1,6 +1,6 @@
 import ServerlessError from '../serverless-error.ts';
 
-function chunkToBuffer(chunk, encoding) {
+function chunkToBuffer(chunk: any, encoding: BufferEncoding) {
   if (typeof chunk === 'string') {
     return Buffer.from(chunk, encoding);
   }
@@ -20,7 +20,7 @@ function chunkToBuffer(chunk, encoding) {
   return Buffer.from(chunk);
 }
 
-async function webReadableStreamToString(stream, encoding) {
+async function webReadableStreamToString(stream: ReadableStream, encoding: BufferEncoding) {
   const chunks = [];
   const reader = stream.getReader();
 
@@ -40,7 +40,10 @@ async function webReadableStreamToString(stream, encoding) {
   return Buffer.concat(chunks).toString(encoding);
 }
 
-async function nodeReadableStreamToString(stream, encoding) {
+async function nodeReadableStreamToString(
+  stream: AsyncIterable<unknown>,
+  encoding: BufferEncoding
+) {
   const chunks = [];
 
   for await (const chunk of stream) {
@@ -50,7 +53,10 @@ async function nodeReadableStreamToString(stream, encoding) {
   return Buffer.concat(chunks).toString(encoding);
 }
 
-async function s3BodyToString(body?, { encoding = 'utf8' }: { encoding?: BufferEncoding } = {}) {
+async function s3BodyToString(
+  body?: any,
+  { encoding = 'utf8' }: { encoding?: BufferEncoding } = {}
+) {
   if (body == null) {
     return '';
   }

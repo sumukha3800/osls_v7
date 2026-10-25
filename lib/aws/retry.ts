@@ -3,14 +3,25 @@ import { log } from '../utils/serverless-utils/log.ts';
 import { isAwsThrottlingError, isTransientNetworkError } from './aws-sdk-v3-error.ts';
 
 // Jitter so processes throttled together do not retry in lockstep (4 to 7 s by default, as in v3)
-const jitteredDelay = (delayMs) => Math.round(delayMs * (0.8 + Math.random() * 0.6));
+const jitteredDelay = (delayMs: number) => Math.round(delayMs * (0.8 + Math.random() * 0.6));
 
 const createRetry =
-  (isRetryable, { defaultMaxRetries, defaultDelayMs, reason }) =>
+  (
+    isRetryable: (error: unknown) => boolean,
+    {
+      defaultMaxRetries,
+      defaultDelayMs,
+      reason,
+    }: { defaultMaxRetries: number; defaultDelayMs: number; reason: string }
+  ) =>
   async (
-    task,
-    { name = 'AWS request', maxRetries = defaultMaxRetries, delayMs = defaultDelayMs } = {}
-  ) => {
+    task: () => Promise<any>,
+    {
+      name = 'AWS request',
+      maxRetries = defaultMaxRetries,
+      delayMs = defaultDelayMs,
+    }: { name?: string; maxRetries?: number; delayMs?: number } = {}
+  ): Promise<any> => {
     for (let attempt = 0; ; attempt++) {
       try {
         return await task();

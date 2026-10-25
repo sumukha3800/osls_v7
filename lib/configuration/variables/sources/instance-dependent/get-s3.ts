@@ -2,12 +2,15 @@ import ensureString from 'type/string/ensure.js';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import ServerlessError from '../../../../serverless-error.ts';
 import s3BodyToString from '../../../../aws/s3-body-to-string.ts';
-import createCachedAwsVariableSourceCommandSender from './create-cached-aws-variable-source-command-sender.ts';
+import createCachedAwsVariableSourceCommandSender, {
+  type AwsProviderHost,
+} from './create-cached-aws-variable-source-command-sender.ts';
+import type { VariableSourceResolverContext } from '../../../../plugin-types.ts';
 import { isS3GetObjectNoSuchKeyError } from '../../../../aws/aws-sdk-v3-error.ts';
 import retry from '../../../../aws/retry.ts';
 const { retryOnTransientNetworkError } = retry;
 
-export default (serverlessInstance) => {
+export default (serverlessInstance: AwsProviderHost) => {
   const sender = createCachedAwsVariableSourceCommandSender({
     getProvider: () => serverlessInstance.getProvider('aws'),
     Client: S3Client,
@@ -17,7 +20,7 @@ export default (serverlessInstance) => {
   });
 
   return {
-    resolve: async ({ address }) => {
+    resolve: async ({ address }: Pick<VariableSourceResolverContext, 'address'>) => {
       // s3:bucketName/key
       if (!address) {
         throw new ServerlessError(

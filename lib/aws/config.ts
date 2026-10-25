@@ -118,7 +118,7 @@ function getProxyUrl() {
  * @returns {Array} Array of CA certificates
  */
 function getCACertificates() {
-  let caCerts = [];
+  let caCerts: Array<string | Buffer> = [];
 
   // Get certificates from environment variable
   const ca = process.env.ca || process.env.HTTPS_CA || process.env.https_ca;

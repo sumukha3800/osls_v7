@@ -16,7 +16,13 @@
     "lib/serverless-error.ts",
     "lib/classes/**/*.ts",
     "lib/plugins/aws/provider.ts",
-    "lib/utils/serverless-utils/**/*.ts"
+    "lib/utils/serverless-utils/**/*.ts",
+    "lib/configuration/**/*.ts",
+    "lib/aws/**/*.ts",
+    "lib/cli/**/*.ts",
+    "bin/**/*.ts",
+    "commands/**/*.ts",
+    "scripts/**/*.ts"
   ],
   "exclude": []
 }

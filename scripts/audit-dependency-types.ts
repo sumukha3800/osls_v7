@@ -95,7 +95,7 @@ const checkPackage = async (packageName: string, mode: (typeof modes)[number]) =
   try {
     await runTsc(tscPath, ['-p', tsconfigPath], { shell: process.platform === 'win32' });
     return [];
-  } catch (error) {
+  } catch (error: any) {
     if (!error.stdout) throw error;
     return (error.stdout as string)
       .split('\n')

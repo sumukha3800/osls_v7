@@ -23,9 +23,9 @@ const GUIDES_NAV = path.join(GUIDES_DIR, 'README.md');
 //   test      -> advertised in schema but unimplemented; drop once removed
 const PAGELESS_COMMAND_ALLOWLIST = new Set(['', 'help', 'config', 'test']);
 
-const slug = (commandName) => commandName.trim().split(/\s+/).filter(Boolean).join('-');
+const slug = (commandName: string) => commandName.trim().split(/\s+/).filter(Boolean).join('-');
 
-const mdBasenames = (dir) =>
+const mdBasenames = (dir: string) =>
   new Set(
     fs
       .readdirSync(dir, { withFileTypes: true })
@@ -34,10 +34,10 @@ const mdBasenames = (dir) =>
   );
 
 // Basenames of every relative .md link target in a nav file (null if the file is missing).
-const linkedBasenames = (navFile) => {
+const linkedBasenames = (navFile: string) => {
   if (!fs.existsSync(navFile)) return null;
   const md = fs.readFileSync(navFile, 'utf8');
-  const targets = new Set();
+  const targets = new Set<string>();
   const re = /\]\(([^)]+)\)/g;
   let m;
   while ((m = re.exec(md))) {
@@ -50,7 +50,7 @@ const linkedBasenames = (navFile) => {
   return targets;
 };
 
-function checkCommands(errors) {
+function checkCommands(errors: string[]) {
   const existingPages = mdBasenames(CLI_DIR);
   const navLinks = linkedBasenames(CLI_NAV);
 
@@ -93,7 +93,7 @@ function checkCommands(errors) {
   }
 }
 
-function checkGuides(errors) {
+function checkGuides(errors: string[]) {
   const navLinks = linkedBasenames(GUIDES_NAV);
   if (navLinks === null) {
     errors.push(
@@ -111,7 +111,7 @@ function checkGuides(errors) {
 }
 
 function main() {
-  const errors = [];
+  const errors: string[] = [];
   checkCommands(errors);
   checkGuides(errors);
 

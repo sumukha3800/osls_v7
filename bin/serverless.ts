@@ -18,7 +18,7 @@ if (!isSupportedNodeVersion(process.version)) {
   process.exit(1);
 }
 
-const crashAsync = (error) => {
+const crashAsync = (error: unknown) => {
   process.nextTick(() => {
     throw error;
   });

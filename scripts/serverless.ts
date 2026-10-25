@@ -9,18 +9,25 @@ import paramRegExp from '../lib/cli/param-reg-exp.ts';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import clear from 'ext/object/clear.js';
+import type { default as ServerlessInstance, ServerlessConfig } from '../lib/serverless.ts';
+import type { ResolvedInput } from '../lib/cli/resolve-input.ts';
+import type { CommandSchema } from '../lib/cli/commands-schema/types.ts';
+import type { ResolverConfiguration } from '../lib/configuration/variables/resolve.ts';
 
 Error.stackTraceLimit = Infinity;
 
 const processLog = log.get('process');
 
-let command;
-let isHelpRequest;
-let options;
-let commandSchema;
-let serviceDir = null;
-let configuration = null;
-let serverless;
+// Assigned by `setCliInput()` before any use
+let command!: string;
+let isHelpRequest!: boolean;
+let options!: Record<string, any>;
+let commandSchema: CommandSchema | undefined;
+let serviceDir: string | null = null;
+let configuration: Record<string, any> | null = null;
+let serverless: ServerlessInstance | undefined;
+
+// What `resolveVariables` takes: the variable sources are dynamic
 
 // Inquirer async operations do not keep node process alive
 // We need to issue a keep alive timer so process does not die
@@ -103,9 +110,9 @@ process.once('uncaughtException', (error) => {
 
     const resolveInput = (await import('../lib/cli/resolve-input.ts')).default;
 
-    let commands;
-    let cliInput;
-    const setCliInput = (resolvedInput) => {
+    let commands!: string[];
+    let cliInput!: ResolvedInput & { isContainerCommand: boolean; isHelpRequest: boolean };
+    const setCliInput = (resolvedInput: ResolvedInput) => {
       cliInput = {
         ...resolvedInput,
         isContainerCommand: Boolean(resolvedInput.isContainerCommand),
@@ -149,32 +156,33 @@ process.once('uncaughtException', (error) => {
     ).default;
     const filterSupportedOptions = (await import('../lib/cli/filter-supported-options.ts')).default;
 
-    let configurationPath = null;
-    let providerName;
-    let variablesMeta;
-    let resolverConfiguration;
+    let configurationPath: string | null = null;
+    let providerName: string | undefined;
+    let variablesMeta: Map<string, any> | null | undefined;
+    let resolverConfiguration: ResolverConfiguration | undefined;
 
     // Some callers also pass `{ shouldSilentlyReturnIfLegacyMode }`, which is not used
     const ensureResolvedProperty: (
       propertyPath: string,
       options?: { shouldSilentlyReturnIfLegacyMode?: boolean }
     ) => boolean = (propertyPath) => {
-      if (isPropertyResolved(variablesMeta, propertyPath)) return true;
+      // Only called while variables are being resolved, when `variablesMeta` is set
+      if (isPropertyResolved(variablesMeta!, propertyPath)) return true;
       variablesMeta = null;
       if (isHelpRequest) return false;
       const humanizedPropertyPath = humanizePropertyPathKeys(propertyPath.split('\0'));
       throw new ServerlessError(
         `Cannot resolve ${path.basename(
-          configurationPath
+          configurationPath!
         )}: "${humanizedPropertyPath}" property is not accessible ` +
           '(configured behind variables which cannot be resolved at this stage)',
         'INACCESSIBLE_CONFIGURATION_PROPERTY'
       );
     };
     const eventuallyReportVariableResolutionErrorsForCliInput = (
-      serviceConfigurationPath,
-      serviceConfiguration,
-      serviceVariablesMeta
+      serviceConfigurationPath: string | null,
+      serviceConfiguration: Record<string, any>,
+      serviceVariablesMeta: Map<string, any>
     ) =>
       eventuallyReportVariableResolutionErrors(
         serviceConfigurationPath,
@@ -198,8 +206,9 @@ process.once('uncaughtException', (error) => {
       const readConfiguration = (await import('../lib/configuration/read.ts')).default;
       const resolveProviderName = (await import('../lib/configuration/resolve-provider-name.ts'))
         .default;
-      const resolveProviderNameForCliInput = (serviceConfiguration) =>
-        resolveProviderName(serviceConfiguration, { isHelpRequest });
+      // `null` (unresolvable provider on a help request) is handled like an unknown provider
+      const resolveProviderNameForCliInput = (serviceConfiguration: Record<string, any>) =>
+        resolveProviderName(serviceConfiguration, { isHelpRequest }) ?? undefined;
 
       // Resolve eventual service configuration path
       configurationPath = await resolveConfigurationPath({ options: { ...options } });
@@ -233,7 +242,7 @@ process.once('uncaughtException', (error) => {
             await import('../lib/configuration/variables/resolve-meta.ts')
           ).default;
 
-          variablesMeta = resolveVariablesMeta(configuration);
+          variablesMeta = resolveVariablesMeta(configuration) as Map<string, any>;
 
           if (
             eventuallyReportVariableResolutionErrorsForCliInput(
@@ -267,7 +276,7 @@ process.once('uncaughtException', (error) => {
             );
           }
 
-          let envVarNamesNeededForDotenvResolution;
+          let envVarNamesNeededForDotenvResolution: Set<string> | undefined;
           if (variablesMeta.size) {
             processLog.debug('resolve variables in core properties');
             // Some properties are configured with variables
@@ -275,7 +284,8 @@ process.once('uncaughtException', (error) => {
             // Resolve eventual variables in `provider.stage` and `useDotEnv`
             // (required for reliable .env resolution)
             resolverConfiguration = {
-              serviceDir,
+              // Set with the configuration
+              serviceDir: serviceDir!,
               configuration,
               variablesMeta,
               sources: {
@@ -388,7 +398,7 @@ process.once('uncaughtException', (error) => {
 
               if (!ensureResolvedProperty('useDotenv')) return;
 
-              envVarNamesNeededForDotenvResolution = envSource.missingEnvVariables;
+              envVarNamesNeededForDotenvResolution = envSource.missingEnvVariables as Set<string>;
             }
           }
 
@@ -412,7 +422,7 @@ process.once('uncaughtException', (error) => {
             }
             if (!isPropertyResolved(variablesMeta, 'provider\0name')) {
               processLog.debug('resolve variables in "provider.name"');
-              await resolveVariables(resolverConfiguration);
+              await resolveVariables(resolverConfiguration!);
               if (
                 eventuallyReportVariableResolutionErrorsForCliInput(
                   configurationPath,
@@ -427,6 +437,7 @@ process.once('uncaughtException', (error) => {
           }
 
           if (!variablesMeta.size) return; // No properties configured with variables
+          // Properties configured with variables remain, so `resolverConfiguration` is set up
 
           if (!providerName) {
             if (!ensureResolvedProperty('provider\0name')) return;
@@ -442,7 +453,7 @@ process.once('uncaughtException', (error) => {
                 resolveInput((await import('../lib/cli/commands-schema/aws-service.ts')).default)
               );
               if (commandSchema) {
-                resolverConfiguration.options = filterSupportedOptions(options, {
+                resolverConfiguration!.options = filterSupportedOptions(options, {
                   commandSchema,
                   providerName,
                 });
@@ -454,13 +465,13 @@ process.once('uncaughtException', (error) => {
             // We do not need full config resolved, we just need to know what
             // provider is service setup with, and with what eventual plugins osls is extended
             // as that influences what CLI commands and options could be used,
-            resolverConfiguration.propertyPathsToResolve.add('plugins');
+            resolverConfiguration!.propertyPathsToResolve!.add('plugins');
           } else {
             processLog.debug('resolve variables in all properties');
-            delete resolverConfiguration.propertyPathsToResolve;
+            delete resolverConfiguration!.propertyPathsToResolve;
           }
 
-          await resolveVariables(resolverConfiguration);
+          await resolveVariables(resolverConfiguration!);
           if (
             eventuallyReportVariableResolutionErrorsForCliInput(
               configurationPath,
@@ -512,7 +523,7 @@ process.once('uncaughtException', (error) => {
       (await import('../lib/cli/ensure-supported-command.ts')).default(null, cliInput);
     }
 
-    const configurationFilename = configuration && configurationPath.slice(serviceDir.length + 1);
+    const configurationFilename = configuration && configurationPath!.slice(serviceDir!.length + 1);
 
     // Names of the commands which are configured independently in root `commands` folder
     // and not in Serverless class internals
@@ -529,7 +540,7 @@ process.once('uncaughtException', (error) => {
         if (configuration)
           (await import('../lib/cli/ensure-supported-command.ts')).default(configuration, cliInput);
         await (
-          await notIntegratedCommands.get(command)()
+          await notIntegratedCommands.get(command)!()
         ).default({
           configuration,
           serviceDir,
@@ -542,13 +553,15 @@ process.once('uncaughtException', (error) => {
     }
 
     processLog.debug('construct Serverless instance');
+    // The constructor accepts `null` for these: `configuration` and `configurationFilename` are
+    // `null` outside a service, `variablesMeta` after failed variables resolution
     serverless = new Serverless({
       configuration,
       serviceDir,
       configurationFilename,
       ...cliInput,
       variablesMeta,
-    });
+    } as ServerlessConfig);
 
     try {
       serverless.invocationId = randomUUID();
@@ -601,7 +614,8 @@ process.once('uncaughtException', (error) => {
           // the plugins with ones.
           // In this case we need to ensure `resolverConfiguration` which initially was not setup
           resolverConfiguration = {
-            serviceDir,
+            // Set with the configuration
+            serviceDir: serviceDir!,
             configuration,
             variablesMeta,
             sources: {
@@ -714,7 +728,7 @@ process.once('uncaughtException', (error) => {
         // configuration. Errored entries (e.g. syntax errors in resolved objects) are kept to be
         // reported below. Must not run while a resolution pass is in progress
         for (const propertyPath of Array.from(variablesMeta.keys())) {
-          if (!resolverConfiguration.isPropertyDeferred(propertyPath)) continue;
+          if (!resolverConfiguration.isPropertyDeferred!(propertyPath)) continue;
           if (variablesMeta.get(propertyPath).error) continue;
           variablesMeta.delete(propertyPath);
         }

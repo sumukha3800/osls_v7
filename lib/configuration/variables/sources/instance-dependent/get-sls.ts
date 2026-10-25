@@ -2,10 +2,18 @@ import ensureString from 'type/string/ensure.js';
 import ServerlessError from '../../../../serverless-error.ts';
 import { hasOwn } from '../../../../utils/safe-object.ts';
 import validateStage from '../../../../utils/validate-stage.ts';
+import type { VariableSourceResolverContext } from '../../../../plugin-types.ts';
 
-export default (serverlessInstance?) => {
+export default (serverlessInstance?: { instanceId: string }) => {
   return {
-    resolve: async ({ address, resolveConfigurationProperty, options }) => {
+    resolve: async ({
+      address,
+      resolveConfigurationProperty,
+      options,
+    }: Pick<
+      VariableSourceResolverContext,
+      'address' | 'resolveConfigurationProperty' | 'options'
+    >) => {
       if (!address) {
         throw new ServerlessError(
           'Missing address argument in variable "sls" source',

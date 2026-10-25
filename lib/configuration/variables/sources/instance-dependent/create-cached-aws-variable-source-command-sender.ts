@@ -5,15 +5,31 @@ const promiseLimit = promiseLimit2.bind(Promise);
 
 const maxConcurrentVariableSourceCommands = 2;
 
-function normalizeRegion(region) {
+// `undefined` falls back to the provider region
+type Region = string | null | undefined;
+
+// What the sources need from the `Serverless` instance
+export interface AwsProviderHost {
+  getProvider: (name: 'aws') => any;
+}
+
+function normalizeRegion(region: Region) {
   return region === undefined ? null : region;
 }
 
-function getCommandName(Command) {
+function getCommandName(Command: { name: string }) {
   return Command.name || 'Command';
 }
 
-function createCacheKey({ commandName, region, input }) {
+function createCacheKey({
+  commandName,
+  region,
+  input,
+}: {
+  commandName: string;
+  region: Region;
+  input: unknown;
+}) {
   return JSON.stringify({
     command: commandName,
     region: normalizeRegion(region),
@@ -25,7 +41,7 @@ interface TransformResultInput {
   result: any;
   commandName: string;
   input: unknown;
-  region: string | undefined;
+  region: Region;
   effectiveRegion: string | null;
 }
 
@@ -44,21 +60,21 @@ function createCachedAwsVariableSourceCommandSender({
   clientOptions,
   transformResult = ({ result }) => result,
 }: CommandSenderOptions) {
-  const clients = new Map();
-  const requests = new Map();
+  const clients = new Map<string, Promise<{ send: (command: any) => Promise<any> }>>();
+  const requests = new Map<string, Promise<any>>();
   const sendQueue = promiseLimit(maxConcurrentVariableSourceCommands, async (task) => task());
-  let provider;
+  let provider: ReturnType<CommandSenderOptions['getProvider']>;
 
   function resolveProvider() {
     if (!provider) provider = getProvider();
     return provider;
   }
 
-  function getEffectiveRegion(region) {
+  function getEffectiveRegion(region: Region): string | null {
     return region === undefined ? resolveProvider().getRegion() : region;
   }
 
-  async function getClient(region) {
+  async function getClient(region: string | null) {
     const cacheKey = JSON.stringify({ region: normalizeRegion(region) });
 
     if (!clients.has(cacheKey)) {
@@ -76,11 +92,16 @@ function createCachedAwsVariableSourceCommandSender({
       );
     }
 
-    return clients.get(cacheKey);
+    return clients.get(cacheKey)!;
   }
 
-  async function send(Command, input, options = {}) {
-    const { region }: Record<string, any> = options;
+  // Resolves with the result of `transformResult()`
+  async function send(
+    Command: new (input: any) => unknown,
+    input: unknown,
+    options: { region?: Region } = {}
+  ): Promise<any> {
+    const { region } = options;
     const effectiveRegion = getEffectiveRegion(region);
     const commandName = getCommandName(Command);
     const cacheKey = createCacheKey({

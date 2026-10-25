@@ -1,8 +1,9 @@
 import ensureString from 'type/string/ensure.js';
 import ServerlessError from '../../../serverless-error.ts';
+import type { VariableSourceResolverContext } from '../../../plugin-types.ts';
 
 export default {
-  resolve: ({ address, options, isSourceFulfilled }) => {
+  resolve: ({ address, options, isSourceFulfilled }: VariableSourceResolverContext) => {
     address = ensureString(address, {
       isOptional: true,
       Error: ServerlessError,

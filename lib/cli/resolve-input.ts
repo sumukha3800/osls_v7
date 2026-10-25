@@ -59,7 +59,7 @@ const resolveInput = function (
   const commandSchema = commandsSchema.get(command);
   const options = parseArgs(
     argv.slice(firstParamIndex === -1 ? Infinity : firstParamIndex),
-    resolveArgsSchema(commandSchema ? commandSchema.options : commandsSchema.commonOptions)
+    resolveArgsSchema((commandSchema ? commandSchema.options : commandsSchema.commonOptions)!)
   );
   delete options._;
 

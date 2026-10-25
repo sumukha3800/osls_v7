@@ -14,7 +14,7 @@ const ensureMinimalPackageJson = async () => {
   return fsp.writeFile(path.join(process.cwd(), 'package.json'), '{}');
 };
 
-const resolveAbsoluteModulePath = (contextDirname, modulePath) => {
+const resolveAbsoluteModulePath = (contextDirname: string, modulePath: string) => {
   try {
     return resolveFrom(contextDirname, modulePath);
   } catch {
@@ -36,7 +36,7 @@ const resolveGlobalNpmPath = async () => {
 };
 
 // The compose CLI starts when its bin module is evaluated
-const runComposeBin = (binPath) => import(pathToFileURL(binPath).href);
+const runComposeBin = (binPath: string) => import(pathToFileURL(binPath).href);
 
 export default async () => {
   // 1. If installed locally in service node_modules, run it
@@ -93,7 +93,9 @@ export default async () => {
       const cliProgressFooter = createProgressFooter();
       cliProgressFooter.shouldAddProgressAnimationPrefix = true;
       cliProgressFooter.progressAnimationPrefixFrames =
-        cliProgressFooter.progressAnimationPrefixFrames.map((frame) => `\x1b[91m${frame}\x1b[39m`);
+        cliProgressFooter.progressAnimationPrefixFrames.map(
+          (frame: string) => `\x1b[91m${frame}\x1b[39m`
+        );
 
       cliProgressFooter.updateProgress('Installing osls compose CLI');
 
@@ -177,6 +179,7 @@ export default async () => {
   if (hasInstalledCompose) {
     // Try to run local compose
     const installedLocalNpmPath = resolveAbsoluteModulePath(process.cwd(), relativeBinPath);
-    await runComposeBin(installedLocalNpmPath);
+    // Resolvable once the installation succeeded
+    await runComposeBin(installedLocalNpmPath!);
   }
 };

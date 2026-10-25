@@ -4,19 +4,19 @@ import path from 'node:path';
 import ServerlessError from '../serverless-error.ts';
 import validateStage from '../utils/validate-stage.ts';
 
-const isMissingFileError = (error) => error.code === 'ENOENT';
+const isMissingFileError = (error: NodeJS.ErrnoException) => error.code === 'ENOENT';
 
-const throwDotenvError = (error, filePath) => {
+const throwDotenvError = (error: Error, filePath: string) => {
   const errorMessage = `Failed to load environment variables from "${filePath}": ${error}`;
   throw new ServerlessError(errorMessage, 'DOTENV_LOAD_ERROR');
 };
 
-const loadDotenvFrom = (envFilePath) => {
+const loadDotenvFrom = (envFilePath: string) => {
   const config = dotenv.config({ path: envFilePath, quiet: true });
   return dotenvExpand.expand(config);
 };
 
-export default (stage) => {
+export default (stage: string) => {
   stage = validateStage(stage);
   const defaultEnvFilePath = path.join(process.cwd(), '.env');
   const stageEnvFilePath = path.join(process.cwd(), `.env.${stage}`);
