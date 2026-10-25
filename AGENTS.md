@@ -10,8 +10,8 @@ fork is written in TypeScript 7, ships as ES modules only, and supports Node.js 
 - `scripts/serverless.ts`: CLI bootstrap (input, config loading, variables, `Serverless` instance).
 - `lib/serverless.ts`: the `Serverless` class. Core classes in `lib/classes/`, plugins in
   `lib/plugins/` (AWS provider in `lib/plugins/aws/`), config loading in `lib/configuration/`.
-- `types/index.d.ts`: the package's type entry: re-exports the configuration types and the
-  `Serverless` default export. `types/aws.d.ts` (`AWS`) is generated from the configuration schema
+- `types/index.d.ts`: the package's type entry: re-exports the configuration types, the plugin
+  API types (`lib/plugin-types.ts`, `Service` types) and the `Serverless` default export. `types/aws.d.ts` (`AWS`) is generated from the configuration schema
   by `pnpm run generate-types`: never edit it by hand; regenerate it after any schema change.
 - `dist/` (generated, ignored): the published package root, built by `scripts/build.ts`.
 
@@ -43,6 +43,15 @@ fork is written in TypeScript 7, ships as ES modules only, and supports Node.js 
 - `pnpm test`: all unit tests. One file:
   `node_modules/.bin/mocha --config test/mocha/config.json test/unit/path/to/file.test.ts`
 - `pnpm run lint`, `pnpm run prettier-check`.
+- `pnpm run generate-types`: regenerates `types/aws.d.ts` from the configuration schema
+  (`--check` fails when it is out of date, as CI does).
+- `pnpm run typecheck:consumers` (after `pnpm run build`): type checks the TypeScript 7 projects of
+  `test/typescript-consumers` (ES modules, CommonJS, bundler) and every published declaration
+  against `dist/`, `strict` and `skipLibCheck: false`, with only runtime dependencies installed.
+  Public API changes belong in those projects, with `@ts-expect-error` checks against `any`.
+- `pnpm run audit:types`: type checks every dependency's declarations under TypeScript 7; known
+  upstream failures and untyped packages are listed in `scripts/audit-dependency-types.ts`.
+- `pnpm audit --audit-level high`: security audit, as CI runs it.
 - Run the CLI from sources: `node bin/serverless.ts <command>`.
 
 ## Tests

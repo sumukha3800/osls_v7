@@ -47,6 +47,9 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Type check TypeScript consumer projects
+        run: pnpm run typecheck:consumers
+
       - name: Verify package contents
         run: npm pack ./dist --dry-run
 
