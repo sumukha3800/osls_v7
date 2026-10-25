@@ -9,6 +9,12 @@ import sinonChai from 'sinon-chai';
 chai.use(chaiAsPromised);
 chai.use(sinonChai);
 
+// Tests never use the developer's AWS configuration (profiles, region, credentials): it would
+// change credential provider resolution and cache keys between runs
+for (const name of Object.keys(process.env)) {
+  if (name.startsWith('AWS_')) delete process.env[name];
+}
+
 process.env.SLS_DEPRECATION_NOTIFICATION_MODE ??= 'error';
 process.env.SLS_TELEMETRY_DISABLED = '1';
 process.env.LOG_TIME ??= 'abs';
