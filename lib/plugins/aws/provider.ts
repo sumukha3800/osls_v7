@@ -25,6 +25,8 @@ import path from 'node:path';
 import spawnExt from '../../utils/spawn.ts';
 import ServerlessError from '../../serverless-error.ts';
 import { buildClientConfig } from '../../aws/config.ts';
+import type Serverless from '../../serverless.ts';
+import type { CliOptions } from '../../plugin-types.ts';
 import {
   getAwsSdkV3CredentialsProvider,
   getAwsSdkV3CredentialsProviderCacheKey,
@@ -167,11 +169,11 @@ class AwsProvider {
   declare hooks: any;
   declare limitEcrRequests: any;
   declare naming: any;
-  declare options: any;
+  declare options: CliOptions;
   declare provider: any;
-  declare serverless: any;
+  declare serverless: Serverless;
 
-  constructor(serverless, options?) {
+  constructor(serverless: Serverless, options?: CliOptions) {
     this.naming = { provider: this };
     this.options = options;
     this.provider = this; // only load plugin in an AWS service context
@@ -1853,7 +1855,7 @@ class AwsProvider {
     return this.firstValue(values);
   }
 
-  getRegion() {
+  getRegion(): string {
     const defaultRegion = 'us-east-1';
     const regionSourceValue = this.getRegionSourceValue();
     return regionSourceValue.value || defaultRegion;
@@ -2016,7 +2018,7 @@ class AwsProvider {
   }
 
   getStageSourceValue() {
-    const sources = [
+    const sources: [Record<string, any>, string][] = [
       [this.options, 'stage'],
       [this.serverless.config, 'stage'],
       [this.serverless.service.provider, 'stage'],

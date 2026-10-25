@@ -7,6 +7,7 @@ import resolveAjvValidate from './resolve-ajv-validate.ts';
 import { log, style } from '../../utils/serverless-utils/log.ts';
 import { setByPath } from '../../utils/object-path.ts';
 import type Serverless from '../../serverless.ts';
+import type { JsonSchema, ProviderSchemaParts } from '../../plugin-types.ts';
 
 const FUNCTION_NAME_PATTERN = '^[a-zA-Z0-9-_]+$';
 const ERROR_PREFIX = 'Configuration error';
@@ -142,7 +143,7 @@ class ConfigSchemaHandler {
     }
   }
 
-  defineTopLevelProperty(name, subSchema) {
+  defineTopLevelProperty(name: string, subSchema: JsonSchema) {
     if (this.schema.properties[name]) {
       throw new ServerlessError(
         `Top-level property '${name}' already have a definition - this property might have already been defined by osls or one other plugin`,
@@ -152,7 +153,7 @@ class ConfigSchemaHandler {
     this.schema.properties[name] = subSchema;
   }
 
-  defineProvider(name, options: Record<string, any> = {}) {
+  defineProvider(name: string, options: ProviderSchemaParts = {}) {
     const currentProvider = this.serverless.service.provider.name;
     if (currentProvider !== name) {
       return;
@@ -213,7 +214,7 @@ class ConfigSchemaHandler {
     }
   }
 
-  defineCustomProperties(configSchemaParts) {
+  defineCustomProperties(configSchemaParts: JsonSchema) {
     try {
       addPropertiesToSchema(this.schema.properties.custom, configSchemaParts);
     } catch (error) {
@@ -227,7 +228,7 @@ class ConfigSchemaHandler {
     }
   }
 
-  defineFunctionEvent(providerName, name, configSchema) {
+  defineFunctionEvent(providerName: string, name: string, configSchema: JsonSchema) {
     if (this.serverless.service.provider.name !== providerName) {
       return;
     }
@@ -257,7 +258,7 @@ class ConfigSchemaHandler {
     });
   }
 
-  defineFunctionEventProperties(providerName, name, configSchema) {
+  defineFunctionEventProperties(providerName: string, name: string, configSchema: JsonSchema) {
     if (this.serverless.service.provider.name !== providerName) {
       return;
     }
@@ -304,7 +305,7 @@ class ConfigSchemaHandler {
     }
   }
 
-  defineFunctionProperties(providerName, configSchema) {
+  defineFunctionProperties(providerName: string, configSchema: JsonSchema) {
     if (this.serverless.service.provider.name !== providerName) {
       return;
     }

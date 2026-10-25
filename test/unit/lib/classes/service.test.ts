@@ -259,8 +259,9 @@ describe('Service', () => {
         .to.throw()
         .and.have.property('code', 'LAYER_MISSING_IN_SERVICE');
 
-      service.functions.constructor = { handler: 'handler.run' };
-      service.layers.constructor = { path: 'layer' };
+      // `constructor` is a property of `Object.prototype` in the types too
+      (service.functions as any).constructor = { handler: 'handler.run' };
+      (service.layers as any).constructor = { path: 'layer' };
 
       expect(service.getFunction('constructor')).to.equal(service.functions.constructor);
       expect(service.getLayer('constructor')).to.equal(service.layers.constructor);

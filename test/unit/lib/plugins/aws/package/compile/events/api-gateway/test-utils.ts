@@ -7,7 +7,8 @@ function createApiGatewayCompilerContext(config: Record<string, any> = {}) {
   const providerConfig = config.provider || {};
   const functions = config.functions || {};
 
-  const serverless: Record<string, any> = {
+  // A partial stand-in for the Serverless instance
+  const serverless: any = {
     config: {},
     serviceDir: null,
     cli: { log() {} },

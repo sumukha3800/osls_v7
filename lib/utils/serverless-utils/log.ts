@@ -6,6 +6,7 @@ import globalState from './lib/global-state.ts';
 import getOutputReporter, { type OutputWriter } from './lib/log/get-output-reporter.ts';
 import getProgressReporter, { type ProgressReporter } from './lib/log/get-progress-reporter.ts';
 import logModule from 'log';
+import type { Logger } from '../../plugin-types.ts';
 
 const log = (() => {
   if (!globalState.log) globalState.log = logModule.get('serverless').notice;
@@ -42,7 +43,7 @@ const progress: Record<string, any> = getProgressReporter('serverless');
 progress.clear = () => {};
 
 interface PluginWriters {
-  log: any;
+  log: Logger;
   writeText: OutputWriter;
   progress: ProgressReporter;
 }
