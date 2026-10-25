@@ -135,7 +135,7 @@ describe('mergePlainObjects', () => {
   });
 
   it('does not stack-overflow on a self-cyclic source object', () => {
-    const source = { a: 1 };
+    const source: Record<string, any> = { a: 1 };
     source.self = source;
 
     const result = mergePlainObjects({}, source);
@@ -145,7 +145,7 @@ describe('mergePlainObjects', () => {
   });
 
   it('does not stack-overflow on cross-referencing source objects', () => {
-    const a = { name: 'a' };
+    const a: Record<string, any> = { name: 'a' };
     const b = { name: 'b', peer: a };
     a.peer = b;
 
@@ -176,7 +176,7 @@ describe('mergePlainObjects', () => {
     });
 
     try {
-      const target = {};
+      const target: Record<string, any> = {};
 
       mergePlainObjects(target, { branch: { safe: true } });
 
@@ -199,10 +199,10 @@ describe('mergePlainObjects', () => {
   });
 
   it('does not recurse forever when both target and source already contain the same cycle shape', () => {
-    const target = {};
+    const target: Record<string, any> = {};
     target.self = target;
 
-    const source = {};
+    const source: Record<string, any> = {};
     source.self = source;
 
     mergePlainObjects(target, source);

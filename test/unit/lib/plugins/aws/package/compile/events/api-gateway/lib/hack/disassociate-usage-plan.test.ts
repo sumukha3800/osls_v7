@@ -382,6 +382,8 @@ describe('#disassociateUsagePlan()', () => {
     const apiGatewayClients = [];
     const cloudFormationClients = [];
     class FakeCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -390,6 +392,8 @@ describe('#disassociateUsagePlan()', () => {
     class FakeUpdateUsagePlanCommand extends FakeCommand {}
     class FakeDescribeStackResourceCommand extends FakeCommand {}
     class FakeAPIGatewayClient {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         apiGatewayClients.push(this);
@@ -402,6 +406,8 @@ describe('#disassociateUsagePlan()', () => {
       }
     }
     class FakeCloudFormationClient {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         cloudFormationClients.push(this);

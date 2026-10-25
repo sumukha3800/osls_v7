@@ -12,6 +12,11 @@ const renameService = renameService2.renameService;
 const mainProgress = progress.get('main');
 
 class Create {
+  declare commands: any;
+  declare hooks: any;
+  declare options: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

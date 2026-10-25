@@ -15,7 +15,7 @@ import ensureExists from '../../utils/ensure-exists.ts';
 import ServerlessError from '../../serverless-error.ts';
 import ajvPackageJson from 'ajv/package.json' with { type: 'json' };
 import ajvFormatsPackageJson from 'ajv-formats/package.json' with { type: 'json' };
-const Ajv = ajvModule.default;
+const Ajv: Record<string, any> = ajvModule.default;
 const standaloneCode = standaloneModule.default;
 const ajvVersion = ajvPackageJson.version;
 const ajvFormatsVersion = ajvFormatsPackageJson.version;

@@ -1856,10 +1856,11 @@ describe('lib/plugins/aws/package/compile/events/cognito-user-pool.test.ts', () 
         });
 
         const customResources = Object.values(cfTemplate.Resources).filter(
-          (resource) => resource.Type === 'Custom::CognitoUserPool'
+          (resource: Record<string, any>) => resource.Type === 'Custom::CognitoUserPool'
         );
-        const v2Resource = customResources.find(
-          (resource) => resource.Properties.UserPoolName === 'PreTokenGenerationV2PoolExisting'
+        const v2Resource: Record<string, any> = customResources.find(
+          (resource: Record<string, any>) =>
+            resource.Properties.UserPoolName === 'PreTokenGenerationV2PoolExisting'
         );
 
         expect(v2Resource.Properties.UserPoolConfigs[0]).to.deep.include({

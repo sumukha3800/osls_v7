@@ -3,7 +3,7 @@ import ServerlessError from '../../../../serverless-error.ts';
 import { hasOwn } from '../../../../utils/safe-object.ts';
 import validateStage from '../../../../utils/validate-stage.ts';
 
-export default (serverlessInstance) => {
+export default (serverlessInstance?) => {
   return {
     resolve: async ({ address, resolveConfigurationProperty, options }) => {
       if (!address) {

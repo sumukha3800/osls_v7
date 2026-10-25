@@ -18,6 +18,8 @@ describe('test/unit/lib/utils/to-cache-key.test.ts', () => {
 
   it('keys non-plain instances by reference identity, without traversing them', () => {
     class Credentials {
+      declare accessKeyId: any;
+
       constructor(id) {
         this.accessKeyId = id;
         Object.defineProperty(this, 'boom', {
@@ -38,7 +40,7 @@ describe('test/unit/lib/utils/to-cache-key.test.ts', () => {
 
   it('does not throw on the proxy-agent socket cycle', () => {
     const agent = new HttpsProxyAgent('http://proxy.example.com:3128');
-    const socket = { _httpMessage: {} };
+    const socket: Record<string, any> = { _httpMessage: {} };
     socket._httpMessage.agent = agent; // close the cycle
     agent.sockets = { 'host:443:': [socket] };
 
@@ -53,7 +55,7 @@ describe('test/unit/lib/utils/to-cache-key.test.ts', () => {
   });
 
   it('neutralises cycles among plain objects instead of throwing', () => {
-    const node = { name: 'a' };
+    const node: Record<string, any> = { name: 'a' };
     node.self = node;
     expect(() => toCacheKey(node)).to.not.throw();
   });

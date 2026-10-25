@@ -10,6 +10,10 @@ const METHOD_SCHEDULER = 'scheduler';
 const METHOD_EVENT_BUS = 'eventBus';
 
 class AwsCompileScheduledEvents {
+  declare hooks: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');
@@ -357,7 +361,7 @@ class AwsCompileScheduledEvents {
   }
 
   formatInputTransformer(inputTransformer) {
-    const cfmOutput = {
+    const cfmOutput: Record<string, any> = {
       // InputTemplate is required
       InputTemplate: inputTransformer.inputTemplate,
     };

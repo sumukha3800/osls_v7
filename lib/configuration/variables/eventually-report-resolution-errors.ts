@@ -3,7 +3,12 @@ import { log } from '../../utils/serverless-utils/log.ts';
 import ServerlessError from '../../serverless-error.ts';
 import resolveCliInput from '../../cli/resolve-input.ts';
 
-export default (configurationPath, configuration, variablesMeta, options = {}) => {
+export default (
+  configurationPath,
+  configuration,
+  variablesMeta,
+  options: Record<string, any> = {}
+) => {
   if (!options) options = {};
   const isHelpRequest =
     options.isHelpRequest == null ? resolveCliInput().isHelpRequest : options.isHelpRequest;

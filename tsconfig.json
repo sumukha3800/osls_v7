@@ -27,6 +27,7 @@
     "scripts/**/*.ts",
     "test/**/*.ts",
     "types/**/*.d.ts",
+    "typings/**/*.d.ts",
     "prettier.config.ts",
     "eslint.config.ts"
   ],

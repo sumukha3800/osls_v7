@@ -438,11 +438,15 @@ describe('checkForChanges', () => {
       const lambdaClients = [];
       const sentInputs = [];
       class FakeGetFunctionCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
       }
       class FakeLambdaClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           lambdaClients.push(this);
@@ -574,11 +578,15 @@ describe('checkForChanges', () => {
       const paginatorClients = [];
       const sentInputs = [];
       class FakeHeadObjectCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
       }
       class FakeS3Client {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           s3Clients.push(this);
@@ -755,7 +763,9 @@ describe('checkForChanges', () => {
         { Metadata: { filesha256: 'remote-hash-cf-template' } },
         { Metadata: { filesha256: 'remote-hash-zip-file-1' } },
         {
-          Metadata: {/* no filesha256 available */},
+          Metadata: {
+            /* no filesha256 available */
+          },
         }, // will be translated to ''
       ];
 
@@ -1118,7 +1128,7 @@ const getDeploymentObjectBasenames = async (serverless) => {
   return Array.from(new Set(artifactNames));
 };
 
-const createDeploymentObjects = (serverless, artifactNames, options = {}) => {
+const createDeploymentObjects = (serverless, artifactNames, options: Record<string, any> = {}) => {
   const deploymentBase = getDeploymentBase(serverless);
   const directory = options.directory || checkForChangesDeploymentDirectory;
   const lastModified = options.lastModified || remoteArtifactLastModified;
@@ -1129,7 +1139,10 @@ const createDeploymentObjects = (serverless, artifactNames, options = {}) => {
   }));
 };
 
-const generateMatchingListObjectsResponse = async (serverless, options = {}) => {
+const generateMatchingListObjectsResponse = async (
+  serverless,
+  options: Record<string, any> = {}
+) => {
   const deploymentBase = getDeploymentBase(serverless);
   const artifactNames = options.artifactNames || (await getDeploymentObjectBasenames(serverless));
 
@@ -1265,7 +1278,10 @@ const generateMatchingRemoteState = async (serverless) => {
   };
 };
 
-const createCheckForChangesAwsSdkV3StubMap = (getServerless, overrides = {}) => ({
+const createCheckForChangesAwsSdkV3StubMap = (
+  getServerless,
+  overrides: Record<string, any> = {}
+) => ({
   CloudFormation: {
     ...commonAwsSdkV3StubMap.CloudFormation,
     ...overrides.CloudFormation,
@@ -1293,14 +1309,14 @@ const runCheckForChanges = async ({
   awsSdkV3StubMap,
   awsSdkV3StubMapOverrides,
   lastLifecycleHookName = 'aws:deploy:deploy:checkForChanges',
-} = {}) => {
+}: Record<string, any> = {}) => {
   let serverless;
   const getServerless = () => serverless;
   const resolvedAwsSdkV3StubMapOverrides =
     typeof awsSdkV3StubMapOverrides === 'function'
       ? awsSdkV3StubMapOverrides(getServerless)
       : awsSdkV3StubMapOverrides;
-  const runOptions = {
+  const runOptions: Record<string, any> = {
     command: 'deploy',
     options,
     lastLifecycleHookName: lastLifecycleHookName || undefined,
@@ -2073,6 +2089,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
       const cloudWatchLogsClients = [];
       const cloudFormationClients = [];
       class FakeCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
@@ -2084,6 +2102,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
       const logicalResourceId = awsDeploy.provider.naming.getCloudWatchLogLogicalId('Fn1', 1);
       const filterName = `${stackName}-${logicalResourceId}-xxxxx`;
       class FakeCloudWatchLogsClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           cloudWatchLogsClients.push(this);
@@ -2105,6 +2125,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
         }
       }
       class FakeCloudFormationClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           cloudFormationClients.push(this);
@@ -2158,6 +2180,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
       const cloudWatchLogsClients = [];
       const cloudFormationClients = [];
       class FakeCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
@@ -2169,6 +2193,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
       const logicalResourceId = 'Fn1LogSubscriptionFilter';
       const filterName = `${stackName}-${logicalResourceId}-xxxxx`;
       class FakeCloudWatchLogsClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           cloudWatchLogsClients.push(this);
@@ -2190,6 +2216,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
         }
       }
       class FakeCloudFormationClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           cloudFormationClients.push(this);

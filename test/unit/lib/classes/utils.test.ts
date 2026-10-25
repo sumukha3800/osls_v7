@@ -7,7 +7,7 @@ import { expect } from 'chai';
 import { getTmpFilePath, getTmpDirPath, removeSync } from '../../../utils/fs.ts';
 
 const createHarness = () => {
-  const serverlessLike = {};
+  const serverlessLike: Record<string, any> = {};
   serverlessLike.utils = new Utils(serverlessLike);
   serverlessLike.yamlParser = new YamlParser(serverlessLike);
   return serverlessLike;

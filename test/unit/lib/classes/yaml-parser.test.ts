@@ -15,13 +15,13 @@ import { getTmpFilePath, getTmpDirPath } from '../../../utils/fs.ts';
 import { expect } from 'chai';
 
 const createHarness = () => {
-  const serverlessLike = {};
+  const serverlessLike: Record<string, any> = {};
   serverlessLike.utils = new Utils(serverlessLike);
   serverlessLike.yamlParser = new YamlParser(serverlessLike);
   return serverlessLike;
 };
 
-const serverless = createHarness();
+const serverless: Record<string, any> = createHarness();
 
 describe('YamlParser', () => {
   describe('#parse()', () => {
@@ -422,7 +422,7 @@ describe('YamlParser', () => {
       });
 
       await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-      const { port } = server.address();
+      const { port }: Record<string, any> = server.address();
 
       serverless.utils.writeFileSync(tmpFilePath, {
         main: {
@@ -478,7 +478,7 @@ describe('YamlParser', () => {
       });
 
       await listen(server);
-      const { port } = server.address();
+      const { port }: Record<string, any> = server.address();
 
       serverless.utils.writeFileSync(tmpFilePath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -567,7 +567,7 @@ describe('YamlParser', () => {
       });
 
       await listen(server);
-      const { port } = server.address();
+      const { port }: Record<string, any> = server.address();
 
       serverless.utils.writeFileSync(tmpFilePath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -597,7 +597,7 @@ describe('YamlParser', () => {
       });
 
       await listen(server);
-      const { port } = server.address();
+      const { port }: Record<string, any> = server.address();
 
       serverless.utils.writeFileSync(tmpFilePath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -633,7 +633,7 @@ describe('YamlParser', () => {
       });
 
       await listen(server);
-      const { port } = server.address();
+      const { port }: Record<string, any> = server.address();
 
       serverless.utils.writeFileSync(tmpFilePath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -668,7 +668,7 @@ describe('YamlParser', () => {
       serverless.utils.writeFileSync(outsidePath, { foo: 'bar' });
 
       await listen(server);
-      const { port } = server.address();
+      const { port }: Record<string, any> = server.address();
 
       serverless.utils.writeFileSync(testPath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },
@@ -704,7 +704,7 @@ describe('YamlParser', () => {
       serverless.utils.writeFileSync(outsidePath, { foo: 'bar' });
 
       await listen(server);
-      const { port } = server.address();
+      const { port }: Record<string, any> = server.address();
 
       serverless.utils.writeFileSync(testPath, {
         main: { $ref: `http://127.0.0.1:${port}/ref.yml` },

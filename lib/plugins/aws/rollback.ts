@@ -36,6 +36,15 @@ function getS3Client(context) {
 }
 
 class AwsRollback {
+  declare bucketName: any;
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare setBucketName: any;
+  declare updateStack: any;
+  declare validate: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

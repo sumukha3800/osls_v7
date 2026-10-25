@@ -39,7 +39,7 @@ const expandPattern = (pattern, cwd, expandDirectories) => {
 };
 
 const normalizeOptions = (options = {}) => {
-  const globOptions = { ...options };
+  const globOptions: Record<string, any> = { ...options };
   const expandDirectories =
     globOptions.expandDirectories !== undefined ? globOptions.expandDirectories : true;
 

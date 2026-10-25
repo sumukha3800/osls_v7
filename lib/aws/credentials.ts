@@ -229,7 +229,7 @@ function fromImplicitDefaultProfileWithFallback() {
   };
 }
 
-function getAwsSdkV3CredentialsProviderCacheKey({ provider, profile } = {}) {
+function getAwsSdkV3CredentialsProviderCacheKey({ provider, profile }: Record<string, any> = {}) {
   const stage = provider && provider.getStage ? provider.getStage() : null;
   const stageUpper = stage ? stage.toUpperCase() : null;
   const providerProfile =
@@ -255,7 +255,8 @@ function getAwsSdkV3CredentialsProviderCacheKey({ provider, profile } = {}) {
 
 // Named through the providers it returns, so declarations stay portable
 type AwsSdkV3CredentialsProvider =
-  ReturnType<typeof fromIni> | ReturnType<typeof fromNodeProviderChain>;
+  | ReturnType<typeof fromIni>
+  | ReturnType<typeof fromNodeProviderChain>;
 
 function getAwsSdkV3CredentialsProvider({
   provider,

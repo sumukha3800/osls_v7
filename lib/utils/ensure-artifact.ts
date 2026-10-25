@@ -24,7 +24,7 @@ const ensureArtifact = (
 };
 
 ensureArtifact.clear = ensureArtifactInCache.clear;
-ensureArtifact.delete = (filename, options = {}) => {
+ensureArtifact.delete = (filename, options: Record<string, any> = {}) => {
   const homeDir = options.homeDir || os.homedir();
   const artifactVersion = options.artifactVersion || version;
   const cachePath = path.resolve(homeDir, '.serverless/artifacts', artifactVersion);

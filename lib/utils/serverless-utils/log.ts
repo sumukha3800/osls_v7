@@ -36,7 +36,7 @@ const defaultLogLevelIndex = logLevels.indexOf('notice');
 
 const writeText = getOutputReporter('serverless').get('text');
 
-const progress = getProgressReporter('serverless');
+const progress: Record<string, any> = getProgressReporter('serverless');
 // Method intended to clear and close indefinitely any progress writing
 // Overridden with intended logic in reporter
 progress.clear = () => {};
@@ -76,7 +76,7 @@ const style = (() => {
   return globalState.logStyle;
 })();
 
-const logApi = { log, writeText, progress, getPluginWriters, style };
+const logApi: Record<string, any> = { log, writeText, progress, getPluginWriters, style };
 
 // The log level and interactivity are set up by the log reporter after this module loads,
 // so they are exposed as (non-enumerable) getters on the default export

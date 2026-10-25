@@ -3,7 +3,7 @@ export default {
     const stackName = this.provider.naming.getStackName();
     const changeSetName = this.provider.naming.getStackChangeSetName();
 
-    const executeChangeSetParams = {
+    const executeChangeSetParams: Record<string, any> = {
       StackName: stackName,
       ChangeSetName: changeSetName,
     };

@@ -100,7 +100,7 @@ export default {
 };
 
 function getLogGroupResource(service, stage, provider) {
-  const resource = {
+  const resource: Record<string, any> = {
     Type: 'AWS::Logs::LogGroup',
     Properties: {
       LogGroupName: `/aws/api-gateway/${service}-${stage}`,

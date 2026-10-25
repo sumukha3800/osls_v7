@@ -63,7 +63,7 @@ function createCachedAwsVariableSourceCommandSender({
   }
 
   async function send(Command, input, options = {}) {
-    const { region } = options;
+    const { region }: Record<string, any> = options;
     const effectiveRegion = getEffectiveRegion(region);
     const commandName = getCommandName(Command);
     const cacheKey = createCacheKey({

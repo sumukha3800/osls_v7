@@ -61,7 +61,7 @@ const runInvokeLocal = async ({
   cwd,
   env,
   modulesCacheStub,
-} = {}) => {
+}: Record<string, any> = {}) => {
   const result = await runServerless({
     ...(cwd ? { cwd } : { fixture: 'invocation', configExt }),
     command: 'invoke local',

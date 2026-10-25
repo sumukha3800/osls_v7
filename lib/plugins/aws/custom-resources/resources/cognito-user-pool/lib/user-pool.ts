@@ -40,13 +40,13 @@ function getUpdateConfigFromCurrentSetup(currentSetup) {
 async function findUserPoolByName(config) {
   const { userPoolName, region } = config;
 
-  const payload = {
+  const payload: Record<string, any> = {
     MaxResults: 60,
   };
 
   cognito.config.region = () => region;
 
-  async function recursiveFind(nextToken) {
+  async function recursiveFind(nextToken?) {
     if (nextToken) payload.NextToken = nextToken;
     return cognito.send(new ListUserPoolsCommand(payload)).then((result) => {
       const matches = result.UserPools.filter((pool) => pool.Name === userPoolName);

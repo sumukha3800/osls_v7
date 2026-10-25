@@ -8,7 +8,7 @@ describe('test/unit/lib/configuration/variables/defer-irrelevant-stage-params.te
     params = { dev: {}, prod: {}, default: {} },
     provider,
     options,
-  } = {}) => deferIrrelevantStageParams({ params, provider }, { options });
+  }: Record<string, any> = {}) => deferIrrelevantStageParams({ params, provider }, { options });
 
   it('should defer params of not effective stages', () => {
     const isPropertyDeferred = buildPredicate({ options: { stage: 'dev' } });

@@ -130,6 +130,19 @@ class TerminateHookChain extends Error {
 let isRegisteringExternalPlugins = false;
 
 class PluginManager {
+  declare aliases: any;
+  declare cliCommands: any;
+  declare cliOptions: any;
+  declare commandRunStartTime: any;
+  declare commands: any;
+  declare deprecatedEvents: any;
+  declare externalPlugins: any;
+  declare hooks: any;
+  declare localPluginsPaths: any;
+  declare pluginIndependentCommands: any;
+  declare plugins: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
 
@@ -396,7 +409,7 @@ class PluginManager {
     aliasTarget.command = command;
   }
 
-  loadCommand(pluginName, details, key, isEntryPoint) {
+  loadCommand(pluginName, details, key, isEntryPoint?) {
     const commandIsEntryPoint = details.type === 'entrypoint' || isEntryPoint;
     log.get('lifecycle:command:register').debug(key);
     // Check if there is already an alias for the same path as the command
@@ -475,11 +488,11 @@ class PluginManager {
       if (commands) {
         Object.entries(commands).forEach(([name, command]) => {
           if (command.type !== 'entrypoint') {
-            const { commands: childCommands, ...publicCommand } = command;
+            const { commands: childCommands, ...publicCommand }: Record<string, any> = command;
             target[name] = publicCommand;
             if (
               Object.values(childCommands || {}).some(
-                (childCommand) => childCommand.type !== 'entrypoint'
+                (childCommand: Record<string, any>) => childCommand.type !== 'entrypoint'
               )
             ) {
               target[name].commands = {};
@@ -493,7 +506,7 @@ class PluginManager {
     stack.length = 0;
     stack.push({ aliases: this.aliases, target: result });
     while (stack.length) {
-      const currentAlias = stack.pop();
+      const currentAlias: Record<string, any> = stack.pop();
       const aliases = currentAlias.aliases;
       const target = currentAlias.target;
       if (aliases) {
@@ -536,7 +549,7 @@ class PluginManager {
    * @param allowEntryPoints {undefined|boolean} Allow entrypoint commands to be returned
    * @returns {Object} Command
    */
-  getCommand(commandsArray, allowEntryPoints) {
+  getCommand(commandsArray, allowEntryPoints?) {
     // Check if the command references an alias
     const aliasCommandTarget = this.getAliasCommandTarget(commandsArray);
     const commandOrAlias = aliasCommandTarget ? aliasCommandTarget.split(':') : commandsArray;
@@ -607,7 +620,7 @@ class PluginManager {
     }
   }
 
-  async invoke(commandsArray, allowEntryPoints) {
+  async invoke(commandsArray, allowEntryPoints?) {
     const command = this.getCommand(commandsArray, allowEntryPoints);
     if (command.type === 'container') {
       renderCommandHelp(commandsArray.join(' '), this.serverless.processedInput);

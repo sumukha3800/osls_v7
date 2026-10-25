@@ -19,6 +19,8 @@ describe('test/unit/lib/aws/config.test.ts', () => {
     }
 
     class FakeHttpsAgent {
+      declare options: any;
+
       constructor(options) {
         this.options = options;
       }

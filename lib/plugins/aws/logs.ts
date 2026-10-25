@@ -11,7 +11,14 @@ import {
 } from '@aws-sdk/client-cloudwatch-logs';
 
 class AwsLogs {
-  constructor(serverless, options) {
+  declare cloudWatchLogsClientPromise: any;
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare validate: any;
+
+  constructor(serverless, options?) {
     this.serverless = serverless;
     this.options = options || {};
     this.provider = this.serverless.getProvider('aws');
@@ -70,7 +77,7 @@ class AwsLogs {
       }
     }
 
-    const params = {
+    const params: Record<string, any> = {
       logGroupName: this.options.logGroupName,
       interleaved: true,
       logStreamNames,

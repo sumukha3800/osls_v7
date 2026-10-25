@@ -1,6 +1,6 @@
 import inquirer from './index.ts';
 
-export default async (message, options = {}) => {
+export default async (message, options: Record<string, any> = {}) => {
   const name = options.name || 'isConfirmed';
 
   return (

@@ -30,7 +30,7 @@ const loadRunCompose = async ({
   inquirerStub,
   progressFooterFactoryStub,
   fsStub,
-} = {}) => {
+}: Record<string, any> = {}) => {
   const runComposeModule = await esmock.p('../../../../lib/cli/run-compose.ts', {
     '../../../../lib/utils/spawn.ts': spawnStub,
     '../../../../lib/utils/serverless-utils/inquirer/index.ts': inquirerStub,

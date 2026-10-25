@@ -10,7 +10,7 @@ import { getTmpFilePath } from '../../../../utils/fs.ts';
 import { expect } from 'chai';
 
 const createHarness = () => {
-  const serverlessLike = {};
+  const serverlessLike: Record<string, any> = {};
   serverlessLike.utils = new Utils(serverlessLike);
   serverlessLike.yamlParser = new YamlParser(serverlessLike);
   return serverlessLike;
@@ -49,7 +49,7 @@ describe('#writeFile()', function () {
 
   it('should be able to write an object with circular references', async () => {
     const tmpFilePath = getTmpFilePath('anything.json');
-    const bar = {};
+    const bar: Record<string, any> = {};
     bar.foo = bar;
     const expected = '{\n  "foo": {\n    "$ref": "$"\n  }\n}';
 

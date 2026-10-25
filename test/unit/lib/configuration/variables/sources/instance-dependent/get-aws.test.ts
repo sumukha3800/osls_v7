@@ -15,6 +15,8 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/get-a
   let credentials;
 
   class GetCallerIdentityCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
@@ -30,6 +32,8 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/get-a
     }));
 
     class STSClient {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         clientInstances.push(this);
@@ -58,7 +62,12 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/get-a
     }),
   });
 
-  const initializeServerless = async ({ configExt, options, custom, handler } = {}) => {
+  const initializeServerless = async ({
+    configExt,
+    options,
+    custom,
+    handler,
+  }: Record<string, any> = {}) => {
     configuration = {
       service: 'foo',
       provider: {

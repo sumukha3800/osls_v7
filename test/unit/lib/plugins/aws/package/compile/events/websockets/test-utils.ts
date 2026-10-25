@@ -2,13 +2,13 @@ import AwsProvider from '../../../../../../../../../lib/plugins/aws/provider.ts'
 import AwsCompileWebsocketsEvents from '../../../../../../../../../lib/plugins/aws/package/compile/events/websockets/index.ts';
 import { createTmpDir } from '../../../../../../../../utils/fs.ts';
 
-function createWebsocketsCompilerContext(config = {}) {
+function createWebsocketsCompilerContext(config: Record<string, any> = {}) {
   const options = { stage: 'dev', region: 'us-east-1', ...config.options };
   const providers = new Map();
   const providerConfig = config.provider || {};
   const functions = config.functions || {};
 
-  const serverless = {
+  const serverless: Record<string, any> = {
     config: {},
     serviceDir: config.serviceDir || createTmpDir(),
     cli: { log() {} },

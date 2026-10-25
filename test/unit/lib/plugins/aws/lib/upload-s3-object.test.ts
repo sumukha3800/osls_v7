@@ -17,6 +17,8 @@ describe('test/unit/lib/plugins/aws/lib/upload-s3-object.test.ts', () => {
       await esmock('../../../../../../lib/plugins/aws/lib/upload-s3-object.ts', {
         '@aws-sdk/client-s3': {
           S3Client: class S3Client {
+            declare config: any;
+
             constructor(config) {
               this.config = config;
               s3Clients.push(this);
@@ -40,7 +42,7 @@ describe('test/unit/lib/plugins/aws/lib/upload-s3-object.test.ts', () => {
 
   function createProvider({ accelerate = false } = {}) {
     const credentials = sinon.stub().resolves({ accessKeyId: 'key', secretAccessKey: 'secret' });
-    const provider = {
+    const provider: Record<string, any> = {
       isS3TransferAccelerationEnabled: sinon.stub().returns(accelerate),
       getAwsSdkV3Config: sinon.stub().callsFake(async (options) => ({
         region: 'us-east-1',
@@ -53,7 +55,7 @@ describe('test/unit/lib/plugins/aws/lib/upload-s3-object.test.ts', () => {
   }
 
   it('passes provider config, credentials, params, and upload options', async () => {
-    const provider = createProvider();
+    const provider: Record<string, any> = createProvider();
     const params = { Bucket: 'bucket', Key: 'key', Body: 'body' };
 
     await expect(uploadS3Object(provider, params)).to.eventually.deep.equal({ ETag: 'etag' });

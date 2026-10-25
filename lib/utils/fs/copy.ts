@@ -37,14 +37,14 @@ const copyDereferenced = async (sourcePath, destinationPath, options) => {
   await copyFile(sourcePath, destinationPath, options);
 };
 
-export default async (sourcePath, destinationPath, options = {}) => {
+export default async (sourcePath, destinationPath, options: Record<string, any> = {}) => {
   await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
   if (options.dereference) {
     // Native fs.cp can preserve nested symlinks despite dereference on supported Node releases.
     await copyDereferenced(sourcePath, destinationPath, options);
     return;
   }
-  const copyOptions = {
+  const copyOptions: Record<string, any> = {
     dereference: Boolean(options.dereference),
     force: options.force !== false,
     recursive: true,

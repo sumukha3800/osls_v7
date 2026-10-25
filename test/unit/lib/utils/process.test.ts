@@ -36,7 +36,7 @@ describe('test/unit/lib/utils/process.test.ts', () => {
   it('creates env from whitelist and variables', () => {
     process.env = { KEEP: 'yes', SKIP: 'no' };
 
-    const env = createEnv({
+    const env: Record<string, any> = createEnv({
       whitelist: ['KEEP', 'MISSING'],
       variables: { ADDED: '42' },
     });
@@ -52,7 +52,7 @@ describe('test/unit/lib/utils/process.test.ts', () => {
     variables.__proto__ = 'proto-value';
     variables.toString = 'string-value';
 
-    const env = createEnv({ variables });
+    const env: Record<string, any> = createEnv({ variables });
 
     expect(Object.prototype.hasOwnProperty.call(env, '__proto__')).to.equal(true);
     expect(Object.prototype.hasOwnProperty.call(env, 'toString')).to.equal(true);
@@ -67,7 +67,7 @@ describe('test/unit/lib/utils/process.test.ts', () => {
   it('copies current env when asCopy is true', () => {
     process.env = { COPIED: 'yes' };
 
-    const env = createEnv({ asCopy: true });
+    const env: Record<string, any> = createEnv({ asCopy: true });
 
     expect(env.COPIED).to.equal('yes');
   });

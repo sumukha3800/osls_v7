@@ -28,7 +28,7 @@ let serverless;
 const keepAliveTimer = setTimeout(() => {}, 60 * 60 * 1000);
 
 let hasBeenFinalized = false;
-const finalize = async ({ error, shouldBeSync } = {}) => {
+const finalize = async ({ error, shouldBeSync }: Record<string, any> = {}) => {
   processLog.debug('finalize %o', { error, shouldBeSync });
   if (hasBeenFinalized) {
     if (error) {

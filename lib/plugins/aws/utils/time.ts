@@ -34,7 +34,7 @@ const MONTH_NAMES = [
 
 const pad = (number, width = 2) => String(number).padStart(width, '0');
 
-const utcMsFromParts = (year, month, day, hour, minute, second, fraction) => {
+const utcMsFromParts = (year, month, day, hour?, minute?, second?, fraction?) => {
   const [numericYear, numericMonth, numericDay, numericHour, numericMinute, numericSecond] = [
     year,
     month,

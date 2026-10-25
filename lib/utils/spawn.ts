@@ -73,7 +73,7 @@ export default (command, args = [], options = {}) => {
 
   const normalizedCommand = String(command);
   const normalizedArgs = args.map(String);
-  const { shouldCloseStdin, input, ...spawnOptions } = options;
+  const { shouldCloseStdin, input, ...spawnOptions }: Record<string, any> = options;
 
   const child = spawn(normalizedCommand, normalizedArgs, spawnOptions);
   const result = {

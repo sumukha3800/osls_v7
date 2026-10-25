@@ -181,11 +181,15 @@ describe('monitorStack', () => {
       const cloudFormationClients = [];
       let sendCount = 0;
       class FakeDescribeStackEventsCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
       }
       class FakeCloudFormationClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           cloudFormationClients.push(this);

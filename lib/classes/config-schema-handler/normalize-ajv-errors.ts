@@ -48,7 +48,7 @@ const filterIrreleventEventConfigurationErrors = (resultErrorsSet) => {
       // 3.4 If there are no event type configuration errors for intended event type
       if (
         !Array.from(resultErrorsSet).some(
-          (error) =>
+          (error: Record<string, any>) =>
             error.instancePath.startsWith(instancePath) && error.instancePath !== instancePath
         )
       ) {
@@ -122,7 +122,7 @@ const filterIrrelevantAnyOfErrors = (resultErrorsSet) => {
         }
         return currentInstancePath;
       })
-    ).forEach((instancePathOneOfPathErrors) => {
+    ).forEach((instancePathOneOfPathErrors: Record<string, any>) => {
       // 2.2.1.If just one error, set was already filtered by event configuration errors filter
       if (instancePathOneOfPathErrors.length === 1) return;
       // 2.2.2 Group by anyOf variant
@@ -147,7 +147,7 @@ const filterIrrelevantAnyOfErrors = (resultErrorsSet) => {
         // 2.2.5 If errors reported for more than one variant
         // 2.2.5.1 Filter variants where value type was not met
         instancePathOneOfPathVariants = instancePathOneOfPathVariants.filter(
-          (instancePathOneOfPathVariantErrors) => {
+          (instancePathOneOfPathVariantErrors: Record<string, any>) => {
             if (instancePathOneOfPathVariantErrors.length !== 1) return true;
             if (instancePathOneOfPathVariantErrors[0].keyword !== 'type') return true;
             if (
@@ -180,7 +180,7 @@ const filterIrrelevantAnyOfErrors = (resultErrorsSet) => {
           }
 
           instancePathOneOfPathVariants = instancePathOneOfPathVariants.filter(
-            (instancePathAnyOfPathVariantErrors) => {
+            (instancePathAnyOfPathVariantErrors: Record<string, any>) => {
               if (
                 instancePathAnyOfPathVariantErrors.deepestInstancePathSize ===
                 deepestInstancePathSize

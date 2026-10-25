@@ -1,6 +1,10 @@
 import resolveLambdaTarget from '../../../utils/resolve-lambda-target.ts';
 
 class AwsCompileRabbitMQEvents {
+  declare hooks: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');
@@ -129,7 +133,7 @@ class AwsCompileRabbitMQEvents {
           });
         }
 
-        const mqResource = {
+        const mqResource: Record<string, any> = {
           Type: 'AWS::Lambda::EventSourceMapping',
           DependsOn: dependsOn,
           Properties: {

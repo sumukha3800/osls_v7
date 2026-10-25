@@ -4,19 +4,23 @@ import createCachedAwsVariableSourceCommandSender from '../../../../../../../lib
 
 describe('test/unit/lib/configuration/variables/sources/instance-dependent/create-cached-aws-variable-source-command-sender.test.ts', () => {
   class TestCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
   }
 
   class OtherCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
   }
 
   function createDeferred() {
-    const deferred = {};
+    const deferred: Record<string, any> = {};
     deferred.promise = new Promise((resolve, reject) => {
       deferred.resolve = resolve;
       deferred.reject = reject;
@@ -32,6 +36,10 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/creat
     const instances = [];
 
     class TestClient {
+      declare config: any;
+      declare static instances: any;
+      declare send: any;
+
       constructor(config) {
         this.config = config;
         this.send = send;
@@ -384,7 +392,7 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/creat
     const send = sinon.stub().resolves({ ok: true });
     const transformResults = [];
     const transformResult = sinon.stub().callsFake(() => {
-      const deferred = createDeferred();
+      const deferred: Record<string, any> = createDeferred();
       transformResults.push(deferred);
       return deferred.promise;
     });
@@ -422,7 +430,7 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/creat
   it('does not duplicate identical queued commands', async () => {
     const provider = createProvider();
     const getProvider = sinon.stub().returns(provider);
-    const deferred = createDeferred();
+    const deferred: Record<string, any> = createDeferred();
     const send = sinon.stub().returns(deferred.promise);
     const TestClient = createClient({ send });
     const sender = createCachedAwsVariableSourceCommandSender({
@@ -450,7 +458,7 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/creat
     const getProvider = sinon.stub().returns(provider);
     const transformResults = [];
     const transformResult = sinon.stub().callsFake(() => {
-      const deferred = createDeferred();
+      const deferred: Record<string, any> = createDeferred();
       transformResults.push(deferred);
       return deferred.promise;
     });

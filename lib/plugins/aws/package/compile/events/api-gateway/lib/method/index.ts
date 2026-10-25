@@ -22,7 +22,7 @@ export default {
       const apiGatewayPermission = this.provider.naming.getLambdaApiGatewayPermissionLogicalId(
         event.functionName
       );
-      const template = {
+      const template: Record<string, any> = {
         Type: 'AWS::ApiGateway::Method',
         Properties: {
           HttpMethod: event.http.method.toUpperCase(),

@@ -68,7 +68,7 @@ export default {
     }
 
     // create log-specific resources
-    const logProperties = {
+    const logProperties: Record<string, any> = {
       DefaultRouteSettings: {
         DataTraceEnabled: fullExecutionData,
         LoggingLevel: level,
@@ -93,7 +93,7 @@ export default {
 };
 
 function getLogGroupResource(service, stage, provider) {
-  const resource = {
+  const resource: Record<string, any> = {
     Type: 'AWS::Logs::LogGroup',
     Properties: {
       LogGroupName: `/aws/websocket/${service}-${stage}`,

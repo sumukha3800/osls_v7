@@ -19,7 +19,14 @@ import {
 const mainProgress = progress.get('main');
 
 class AwsRollbackFunction {
-  constructor(serverless, options) {
+  declare hooks: any;
+  declare lambdaClientPromise: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare validate: any;
+
+  constructor(serverless, options?) {
     this.serverless = serverless;
     this.options = options || {};
     this.provider = this.serverless.getProvider('aws');

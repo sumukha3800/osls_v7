@@ -108,6 +108,8 @@ describe('cleanupS3Bucket', () => {
   it('reuses one S3 client across cleanup list and delete steps', async () => {
     const s3Clients = [];
     class FakeCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -115,6 +117,8 @@ describe('cleanupS3Bucket', () => {
     class FakeListObjectsV2Command extends FakeCommand {}
     class FakeDeleteObjectsCommand extends FakeCommand {}
     class FakeS3Client {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         s3Clients.push(this);

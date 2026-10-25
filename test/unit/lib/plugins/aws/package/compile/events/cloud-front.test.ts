@@ -54,7 +54,7 @@ function createDefaultCompiledCloudFormationTemplate() {
   };
 }
 
-function createAwsCompileCloudFrontEvents(config = {}) {
+function createAwsCompileCloudFrontEvents(config: Record<string, any> = {}) {
   const providerConfig = config.provider || {};
   const { awsCompileEvents } = createAwsEventCompilerContext(AwsCompileCloudFrontEvents, {
     ...config,

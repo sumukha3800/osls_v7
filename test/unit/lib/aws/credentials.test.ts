@@ -43,6 +43,9 @@ describe('test/unit/lib/aws/credentials.test.ts', () => {
   }
 
   class FakeNodeHttpHandler {
+    declare static instances: any;
+    declare options: any;
+
     constructor(options) {
       this.options = options;
       FakeNodeHttpHandler.instances.push(this);
@@ -91,10 +94,10 @@ describe('test/unit/lib/aws/credentials.test.ts', () => {
     return (await esmock('../../../../lib/aws/credentials.ts', stubs)).default;
   }
 
-  function createFakeReadline({ answer } = {}) {
+  function createFakeReadline({ answer }: Record<string, any> = {}) {
     return {
       createInterface: () => {
-        const handlers = {};
+        const handlers: Record<string, any> = {};
         return {
           question: (prompt, callback) => {
             if (answer !== undefined) {

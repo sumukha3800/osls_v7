@@ -3,6 +3,9 @@ import { outputFileSync } from './fs.ts';
 
 // mock to test functionality bound to a serverless plugin
 class ServerlessPlugin {
+  declare options: any;
+  declare serverless: any;
+
   constructor(serverless, options, testSubject) {
     this.options = options;
     this.serverless = serverless;

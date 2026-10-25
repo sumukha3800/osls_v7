@@ -99,10 +99,13 @@ const addPluginToServerlessFile = async ({ configurationFilePath, pluginName }) 
     return;
   }
 
-  const serverlessFileObj = yaml.load(await fsp.readFile(configurationFilePath, 'utf8'), {
-    filename: configurationFilePath,
-    schema: cloudformationSchema,
-  });
+  const serverlessFileObj: Record<string, any> = yaml.load(
+    await fsp.readFile(configurationFilePath, 'utf8'),
+    {
+      filename: configurationFilePath,
+      schema: cloudformationSchema,
+    }
+  );
   if (serverlessFileObj.plugins != null) {
     // Plugins section can be behind variables, opt-out in such case
     if (isPlainObject(serverlessFileObj.plugins)) {

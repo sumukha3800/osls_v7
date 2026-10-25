@@ -14,7 +14,7 @@ describe('removeStack', () => {
 
   let removeStackStub;
 
-  const createRemoveStackContext = (overrides = {}) => {
+  const createRemoveStackContext = (overrides: Record<string, any> = {}) => {
     const provider = {
       naming: { getStackName: sinon.stub().returns(stackName) },
       getAwsSdkV3Config: sinon.stub().resolves({ region: 'us-east-1' }),

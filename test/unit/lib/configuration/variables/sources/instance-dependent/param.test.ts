@@ -20,7 +20,7 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/param
     stage,
     resolverOptions,
     resolveWithoutInstance = false,
-  } = {}) => {
+  }: Record<string, any> = {}) => {
     const configuration = {
       service: 'param-test-service',
       provider: {

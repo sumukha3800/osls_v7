@@ -25,7 +25,7 @@ export default {
       this.serverless.service.provider.websocketsApiRouteSelectionExpression ||
       '$request.body.action';
 
-    const properties = {
+    const properties: Record<string, any> = {
       Name: this.provider.naming.getWebsocketsApiName(),
       RouteSelectionExpression,
       Description:

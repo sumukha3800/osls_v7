@@ -56,7 +56,7 @@ const isDisabledByEnv = (code) => {
   return disabledDeprecationCodesByEnv.has(code) || disabledDeprecationCodesByEnv.has('*');
 };
 
-const logDeprecation = (code, message, { serviceConfig } = {}) => {
+const logDeprecation = (code, message, { serviceConfig }: Record<string, any> = {}) => {
   try {
     if (triggeredDeprecations.has(code) || isDisabledByEnv(code)) {
       return;

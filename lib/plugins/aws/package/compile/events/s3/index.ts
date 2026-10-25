@@ -6,6 +6,11 @@ import isObject from 'type/object/is.js';
 const { addCustomResourceToService } = customResources;
 
 class AwsCompileS3Events {
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

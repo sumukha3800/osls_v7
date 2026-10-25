@@ -36,7 +36,7 @@ export default {
       stackLatestError = null,
       firstEventId = null,
       completedResources = new Set(),
-    } = state;
+    }: Record<string, any> = state;
     const cloudFormation = await getCloudFormationClient(this);
     await wait(getMonitoringFrequency(options.frequency));
 
@@ -48,7 +48,7 @@ export default {
       let nextToken;
       let boundaryReached = false;
       do {
-        const input = { StackName: cfData.StackId };
+        const input: Record<string, any> = { StackName: cfData.StackId };
         if (nextToken) input.NextToken = nextToken;
         const result = await retryOnThrottlingError(
           () => cloudFormation.send(new DescribeStackEventsCommand(input)),

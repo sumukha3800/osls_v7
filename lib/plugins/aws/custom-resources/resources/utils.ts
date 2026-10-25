@@ -3,7 +3,7 @@ import url from 'node:url';
 
 const logger = console;
 
-async function response(event, context, status, data = {}, err) {
+async function response(event, context, status, data = {}, err?) {
   const reason = err ? err.message : '';
   const { StackId, RequestId, LogicalResourceId, PhysicalResourceId, ResponseURL } = event;
 
@@ -53,7 +53,7 @@ async function response(event, context, status, data = {}, err) {
   });
 }
 
-function getLambdaArn(partition, region, accountId, functionName, functionQualifier) {
+function getLambdaArn(partition, region, accountId, functionName, functionQualifier?) {
   const arn = `arn:${partition}:lambda:${region}:${accountId}:function:${functionName}`;
   return functionQualifier ? `${arn}:${functionQualifier}` : arn;
 }

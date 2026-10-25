@@ -16,24 +16,34 @@ describe('test/unit/lib/aws/sso-login.test.ts', () => {
   let originalStdoutIsTTY;
 
   class RegisterClientCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
   }
 
   class StartDeviceAuthorizationCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
   }
 
   class CreateTokenCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
   }
 
   class FakeSSOOIDCClient {
+    declare config: any;
+    declare static instances: any;
+    declare static send: any;
+
     constructor(config) {
       this.config = config;
       this.send = FakeSSOOIDCClient.send;
@@ -66,7 +76,7 @@ describe('test/unit/lib/aws/sso-login.test.ts', () => {
     );
   }
 
-  function stubOidcFlow({ register, authorization, createToken } = {}) {
+  function stubOidcFlow({ register, authorization, createToken }: Record<string, any> = {}) {
     FakeSSOOIDCClient.send.callsFake(async (command) => {
       if (command instanceof RegisterClientCommand) {
         if (register) return register();
@@ -126,7 +136,7 @@ describe('test/unit/lib/aws/sso-login.test.ts', () => {
     mkdir,
     writeFileAtomic,
     writeText,
-  } = {}) {
+  }: Record<string, any> = {}) {
     const getTokenPath =
       getSSOTokenFilepath ||
       ((cacheKey) => {

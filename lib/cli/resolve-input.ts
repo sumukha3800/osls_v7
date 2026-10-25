@@ -27,7 +27,7 @@ const resolveArgsSchema = (commandOptionsSchema) => {
   return options;
 };
 
-const resolveInput = function (commandsSchema, argv = process.argv.slice(2)) {
+const resolveInput = function (commandsSchema?, argv = process.argv.slice(2)) {
   if (arguments.length === 0 && cachedResult !== undefined) return cachedResult;
 
   commandsSchema = ensureMap(commandsSchema === undefined ? commandsSchema2 : commandsSchema);
@@ -42,10 +42,10 @@ const resolveInput = function (commandsSchema, argv = process.argv.slice(2)) {
   );
   delete options._;
 
-  const result = { commands, options, command, commandSchema, commandsSchema };
+  const result: Record<string, any> = { commands, options, command, commandSchema, commandsSchema };
   if (!commandSchema) {
-    result.isContainerCommand = Array.from(commandsSchema.keys()).some((commandName) =>
-      commandName.startsWith(`${command} `)
+    result.isContainerCommand = Array.from(commandsSchema.keys()).some(
+      (commandName: Record<string, any>) => commandName.startsWith(`${command} `)
     );
     if (result.isContainerCommand) {
       result.isHelpRequest = true;

@@ -1,5 +1,5 @@
 function createUsagePlanResource(that, name) {
-  const template = {
+  const template: Record<string, any> = {
     Type: 'AWS::ApiGateway::UsagePlan',
     DependsOn: that.apiGatewayDeploymentLogicalId,
     Properties: {

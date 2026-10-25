@@ -37,7 +37,10 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
       StatusReason: 'No updates are to be performed.',
     };
 
-    async function deployWithDeletionProtection(deletionProtection, options = {}) {
+    async function deployWithDeletionProtection(
+      deletionProtection,
+      options: Record<string, any> = {}
+    ) {
       const providerConfig = {
         deploymentMethod: options.deploymentMethod || 'direct',
         ...options.provider,
@@ -227,7 +230,7 @@ describe('test/unit/lib/plugins/aws/deploy/index.test.ts', () => {
   });
 
   describe('express deployment mode', () => {
-    async function deployExpress(options = {}) {
+    async function deployExpress(options: Record<string, any> = {}) {
       const createStackStub = sinon.stub().resolves({});
       const updateStackStub = sinon.stub().resolves({});
       const createChangeSetStub = sinon.stub().resolves({});

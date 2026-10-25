@@ -1,5 +1,10 @@
 class ServerlessError extends Error {
-  constructor(message, code, options = {}) {
+  declare code: any;
+  declare decoratedMessage: any;
+  declare providerError: any;
+  declare providerErrorCodeExtension: any;
+
+  constructor(message, code?, options: Record<string, any> = {}) {
     super(message, options);
     this.code = code;
     this.decoratedMessage = options.decoratedMessage;

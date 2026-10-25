@@ -1,12 +1,12 @@
 import AwsProvider from '../../../../../../../../lib/plugins/aws/provider.ts';
 
-function createAwsEventCompilerContext(EventCompiler, config = {}) {
+function createAwsEventCompilerContext(EventCompiler, config: Record<string, any> = {}) {
   const options = { stage: 'dev', region: 'us-east-1', ...config.options };
   const providers = new Map();
   const providerConfig = config.provider || {};
   const functions = config.functions || {};
 
-  const serverless = {
+  const serverless: Record<string, any> = {
     config: {},
     serviceDir: null,
     cli: { log() {} },

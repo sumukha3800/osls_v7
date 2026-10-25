@@ -3,6 +3,10 @@ import resolveLambdaTarget from '../../../../utils/resolve-lambda-target.ts';
 import ServerlessError from '../../../../../../serverless-error.ts';
 
 class AwsCompileMSKEvents {
+  declare hooks: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');
@@ -114,7 +118,7 @@ class AwsCompileMSKEvents {
             functionObj.targetAlias && functionObj.targetAlias.logicalId,
           ].filter(Boolean);
 
-          const mskResource = {
+          const mskResource: Record<string, any> = {
             Type: 'AWS::Lambda::EventSourceMapping',
             DependsOn: dependsOn,
             Properties: {

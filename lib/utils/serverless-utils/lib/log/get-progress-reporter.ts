@@ -20,7 +20,7 @@ const getProgressReporter = memoizee(
       get: memoizee(
         (name) => {
           name = ensureString(name, { name: 'name' });
-          const progress = {
+          const progress: Record<string, any> = {
             namespace,
             name,
             remove: () => {
@@ -49,7 +49,7 @@ const getProgressReporter = memoizee(
         namespace,
         { primitive: true }
       ),
-      create(options = {}) {
+      create(options: Record<string, any> = {}) {
         if (!isObject(options)) options = {};
         const message = ensureString(options.message, {
           isOptional: true,

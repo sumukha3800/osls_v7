@@ -62,7 +62,32 @@ const isStackFromOldLocalFallback = RegExp.prototype.test.bind(
 );
 
 class Serverless {
-  constructor(config = {}) {
+  declare _commandsSchema: any;
+  declare classes: any;
+  declare cli: any;
+  declare config: Config;
+  declare configSchemaHandler: ConfigSchemaHandler;
+  declare configurationFilename: any;
+  declare configurationInput: any;
+  declare instanceId: any;
+  declare isConfigurationExtendable: any;
+  declare isStandaloneExecutable: any;
+  declare pluginManager: PluginManager;
+  declare processedInput: any;
+  declare providers: any;
+  declare serverlessDirPath: any;
+  declare service: Service;
+  declare serviceDir: any;
+  declare serviceOutputs: any;
+  declare servicePluginOutputs: any;
+  declare triggeredDeprecations: any;
+  declare utils: Utils;
+  declare variables: any;
+  declare variablesMeta: any;
+  declare version: any;
+  declare yamlParser: YamlParser;
+
+  constructor(config: Record<string, any> = {}) {
     if (!isPlainObject(config)) config = {};
 
     if (isStackFromOldLocalFallback(new Error().stack)) {

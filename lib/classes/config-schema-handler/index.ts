@@ -73,6 +73,9 @@ const denormalizeUserConfig = (userConfig, { removedValuesMap }) => {
 const configurationValidationResults = new WeakMap();
 
 class ConfigSchemaHandler {
+  declare schema: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
     this.schema = structuredClone(schema);
@@ -105,7 +108,9 @@ class ConfigSchemaHandler {
       configurationValidationResults.set(this.serverless.configurationInput, !validate.errors);
     }
     if (validate.errors && this.serverless.service.configValidationMode !== 'off') {
-      const messages = normalizeAjvErrors(validate.errors).map((err) => err.message);
+      const messages = normalizeAjvErrors(validate.errors).map(
+        (err: Record<string, any>) => err.message
+      );
       this.handleErrorMessages(messages);
     }
   }
@@ -147,7 +152,7 @@ class ConfigSchemaHandler {
     this.schema.properties[name] = subSchema;
   }
 
-  defineProvider(name, options = {}) {
+  defineProvider(name, options: Record<string, any> = {}) {
     const currentProvider = this.serverless.service.provider.name;
     if (currentProvider !== name) {
       return;
@@ -345,6 +350,8 @@ class ConfigSchemaHandler {
 }
 
 class PropertyCollisionError extends Error {
+  declare property: any;
+
   constructor(property) {
     super();
     this.property = property;

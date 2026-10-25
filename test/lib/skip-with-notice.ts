@@ -1,6 +1,6 @@
 import colors from '../../lib/utils/colors.ts';
 
-export default (context, reason, afterCallback) => {
+export default (context, reason, afterCallback?) => {
   if (!context || typeof context.skip !== 'function') {
     throw new TypeError('Passed context is not a valid mocha suite');
   }

@@ -149,7 +149,7 @@ async function resolveRestApiId(getApiGateway) {
     this.apiGatewayRestApiId = null;
     return;
   }
-  const apiGatewayResource = resolveApiGatewayResource(
+  const apiGatewayResource: Record<string, any> = resolveApiGatewayResource(
     this.serverless.service.provider.compiledCloudFormationTemplate.Resources
   );
   if (
@@ -165,7 +165,7 @@ async function resolveRestApiId(getApiGateway) {
     ? apiGatewayResource.Properties.Name
     : this.provider.naming.getApiGatewayName();
   const apiGateway = await getApiGateway();
-  const resolveFromAws = async (position) => {
+  const resolveFromAws = async (position?) => {
     const result = await apiGateway.send(new GetRestApisCommand({ position, limit: 500 }));
     const restApi = (result.items || []).find((api) => api.name === apiName);
     if (restApi) return restApi.id;

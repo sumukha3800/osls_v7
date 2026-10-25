@@ -317,7 +317,7 @@ describe('UsagePlan', () => {
     rateLimit,
   };
 
-  const serverlessConfigurationExtension = {
+  const serverlessConfigurationExtension: Record<string, any> = {
     provider: {
       name: 'aws',
     },

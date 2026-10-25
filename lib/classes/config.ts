@@ -2,7 +2,11 @@ import path from 'node:path';
 import mergePlainObjects from '../utils/merge-plain-objects.ts';
 
 class Config {
-  constructor(serverless, config) {
+  declare custom: any;
+  declare serverless: any;
+  declare serverlessPath: any;
+
+  constructor(serverless, config?) {
     this.serverless = serverless;
     this.serverlessPath = path.join(import.meta.dirname, '..');
 

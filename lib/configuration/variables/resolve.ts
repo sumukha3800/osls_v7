@@ -66,6 +66,18 @@ const resolveSourceValuesVariables = (sourceValues) => {
 };
 
 class VariablesResolver {
+  declare configuration: any;
+  declare fulfilledSources: any;
+  declare isPropertyDeferred: any;
+  declare options: any;
+  declare propertyDependenciesMap: any;
+  declare propertyResolutionNestDepthMap: any;
+  declare resolveProperty: any;
+  declare resolveSource: any;
+  declare serviceDir: any;
+  declare sources: any;
+  declare variablesMeta: any;
+
   constructor({
     serviceDir,
     configuration,
@@ -97,9 +109,9 @@ class VariablesResolver {
 
     if (propertyPathsToResolve) {
       return Promise.all(
-        Array.from(propertyPathsToResolve, (propertyPathToResolve) =>
+        Array.from(propertyPathsToResolve, (propertyPathToResolve: Record<string, any>) =>
           Promise.all(
-            Array.from(variablesMeta.keys(), (propertyPath) => {
+            Array.from(variablesMeta.keys(), (propertyPath: Record<string, any>) => {
               if (
                 propertyPathToResolve.startsWith(`${propertyPath}\0`) ||
                 propertyPath === propertyPathToResolve ||
@@ -194,7 +206,7 @@ class VariablesResolver {
     // Work on a copy, as with multiple resolution batches, there's a rare possibility of same
     // variable being resolved multiple times at once
     const sources = Array.from(variableMeta.sources);
-    let sourceData = sources[0];
+    let sourceData: Record<string, any> = sources[0];
     do {
       const sourceMeta = this.sources[sourceData.type];
       if (!sourceMeta) {
@@ -244,7 +256,7 @@ class VariablesResolver {
         return;
       }
       sources.shift();
-      const previousSourceData = sourceData;
+      const previousSourceData: Record<string, any> = sourceData;
       sourceData = sources[0];
       if (!sourceData) {
         // Last source reported no value and there's no further fallback, we treat it as an error
@@ -454,7 +466,7 @@ class VariablesResolver {
       ? `${dependencyPropertyPathKeys.join('\0')}\0`
       : '';
     await Promise.all(
-      Array.from(this.variablesMeta.keys()).map(async (propertyPath) => {
+      Array.from(this.variablesMeta.keys()).map(async (propertyPath: Record<string, any>) => {
         if (!propertyPath.startsWith(depPropertyNestPath)) return;
         this.registerCrossPropertyDependency(dependentPropertyPath, propertyPath);
         await this.resolveProperty(resolutionBatchId, propertyPath);

@@ -246,7 +246,7 @@ const applyDirectoryMetadata = async (outputRoot, directory) => {
 };
 
 const readEntry = async (zipfile, entry) => {
-  const stream = await openEntryReadStream(zipfile, entry);
+  const stream: Record<string, any> = await openEntryReadStream(zipfile, entry);
 
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -257,7 +257,7 @@ const readEntry = async (zipfile, entry) => {
   });
 };
 
-const extractZip = async (input, output, options = {}) => {
+const extractZip = async (input, output, options: Record<string, any> = {}) => {
   const extractedFiles = [];
   const directories = [];
   const outputRoot = output ? path.resolve(output) : null;
@@ -269,7 +269,7 @@ const extractZip = async (input, output, options = {}) => {
     }
   }
 
-  const zipfile = await openZip(input);
+  const zipfile: Record<string, any> = await openZip(input);
 
   try {
     await new Promise((resolve, reject) => {

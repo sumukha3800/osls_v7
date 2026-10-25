@@ -41,7 +41,7 @@ describe('EventBridgeEvents', () => {
 
       const getRuleResourceEndingWith = (resources, ending) =>
         Object.values(resources).find(
-          (resource) =>
+          (resource: Record<string, any>) =>
             resource.Type === 'AWS::Events::Rule' && resource.Properties.Name.endsWith(ending)
         );
 
@@ -142,12 +142,18 @@ describe('EventBridgeEvents', () => {
       });
 
       it('should correctly set State when disabled on a created rule', () => {
-        const disabledRuleResource = getRuleResourceEndingWith(cfResources, '4');
+        const disabledRuleResource: Record<string, any> = getRuleResourceEndingWith(
+          cfResources,
+          '4'
+        );
         expect(disabledRuleResource.Properties.State).to.equal('DISABLED');
       });
 
       it('should correctly set State when enabled on a created rule', () => {
-        const enabledRuleResource = getRuleResourceEndingWith(cfResources, '5');
+        const enabledRuleResource: Record<string, any> = getRuleResourceEndingWith(
+          cfResources,
+          '5'
+        );
         expect(enabledRuleResource.Properties.State).to.equal('ENABLED');
       });
 
@@ -160,13 +166,19 @@ describe('EventBridgeEvents', () => {
       });
 
       it('should correctly set InputPath on the target for the created rule', () => {
-        const inputPathRuleResource = getRuleResourceEndingWith(cfResources, '2');
+        const inputPathRuleResource: Record<string, any> = getRuleResourceEndingWith(
+          cfResources,
+          '2'
+        );
         const inputPathRuleTarget = inputPathRuleResource.Properties.Targets[0];
         expect(inputPathRuleTarget.InputPath).to.deep.equal(inputPath);
       });
 
       it('should correctly set InputTransformer on the target for the created rule', () => {
-        const inputTransformerRuleResource = getRuleResourceEndingWith(cfResources, '3');
+        const inputTransformerRuleResource: Record<string, any> = getRuleResourceEndingWith(
+          cfResources,
+          '3'
+        );
         const inputTransformerRuleTarget = inputTransformerRuleResource.Properties.Targets[0];
         expect(inputTransformerRuleTarget.InputTransformer.InputPathsMap).to.deep.equal(
           inputTransformer.inputPathsMap
@@ -220,8 +232,8 @@ describe('EventBridgeEvents', () => {
           command: 'package',
         });
         const resources = cfTemplate.Resources;
-        const createdRuleResource = Object.values(resources).find(
-          (resource) => resource.Type === 'AWS::Events::Rule'
+        const createdRuleResource: Record<string, any> = Object.values(resources).find(
+          (resource: Record<string, any>) => resource.Type === 'AWS::Events::Rule'
         );
         const aliasLogicalId = awsNaming.getLambdaProvisionedConcurrencyAliasLogicalId('basic');
 
@@ -268,8 +280,8 @@ describe('EventBridgeEvents', () => {
           },
         });
 
-        const eventRule = Object.values(cfTemplate.Resources).find(
-          (resource) => resource.Type === 'AWS::Events::Rule'
+        const eventRule: Record<string, any> = Object.values(cfTemplate.Resources).find(
+          (resource: Record<string, any>) => resource.Type === 'AWS::Events::Rule'
         );
         const target = eventRule.Properties.Targets[0];
         const durableAliasTarget = {
@@ -314,8 +326,8 @@ describe('EventBridgeEvents', () => {
           },
         });
 
-        const eventRule = Object.values(cfTemplate.Resources).find(
-          (resource) => resource.Type === 'AWS::Events::Rule'
+        const eventRule: Record<string, any> = Object.values(cfTemplate.Resources).find(
+          (resource: Record<string, any>) => resource.Type === 'AWS::Events::Rule'
         );
 
         expect(eventRule.DependsOn).to.have.members([
@@ -334,7 +346,10 @@ describe('EventBridgeEvents', () => {
       });
 
       it('should correctly set ScheduleExpression on a created rule', () => {
-        const descriptionResource = getRuleResourceEndingWith(cfResources, '8');
+        const descriptionResource: Record<string, any> = getRuleResourceEndingWith(
+          cfResources,
+          '8'
+        );
         expect(descriptionResource.Properties.Description).to.equal('My lambda description');
       });
     });
@@ -407,8 +422,11 @@ describe('EventBridgeEvents', () => {
       });
 
       it('should not create an EventBus if it is provided or default', async () => {
-        expect(Object.values(cfResources).some((value) => value.Type === 'AWS::Events::EventBus'))
-          .to.be.false;
+        expect(
+          Object.values(cfResources).some(
+            (value: Record<string, any>) => value.Type === 'AWS::Events::EventBus'
+          )
+        ).to.be.false;
       });
 
       it('should create a lambda permission resource that correctly references arn event bus in SourceArn', () => {

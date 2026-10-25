@@ -23,6 +23,11 @@ const customSenderValidVersions = ['V1_0'];
 const preTokenGenerationValidVersions = ['V1_0', 'V2_0', 'V3_0'];
 
 class AwsCompileCognitoUserPoolEvents {
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
@@ -186,7 +191,7 @@ class AwsCompileCognitoUserPoolEvents {
             let customCognitoUserPoolResource;
             const forceDeployProperty = forceDeploy ? Date.now() : undefined;
 
-            let userPoolConfig = {
+            let userPoolConfig: Record<string, any> = {
               Trigger: trigger,
             };
             if (customSenderSources.includes(trigger)) {

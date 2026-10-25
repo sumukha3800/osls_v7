@@ -9,7 +9,7 @@ export default {
         event.route
       );
 
-      const routeTemplate = {
+      const routeTemplate: Record<string, any> = {
         [websocketsRouteLogicalId]: {
           Type: 'AWS::ApiGatewayV2::Route',
           Properties: {

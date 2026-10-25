@@ -330,9 +330,13 @@ describe('test/unit/lib/serverless.test.ts', () => {
         await import(pathToFileURL(path.join(serviceDir, 'extend-config-plugin/index.js')).href)
       ).default;
       setByPath(customExt, pluginConfig.overwriteValuePath, 'test_value');
-      const serverlessProcess = await spawn('node', [serverlessPath, 'print'], {
-        cwd: serviceDir,
-      });
+      const serverlessProcess: Record<string, any> = await spawn(
+        'node',
+        [serverlessPath, 'print'],
+        {
+          cwd: serviceDir,
+        }
+      );
       const configuration = yaml.load(String(serverlessProcess.stdoutBuffer));
 
       const targetValue = getByPath(configuration, pluginConfig.targetValuePath);

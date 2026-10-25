@@ -97,7 +97,7 @@ const nameTimeBase = new Date(2020, 8, 7).getTime();
 
 export default memoizee((fixturesPath) => {
   return {
-    setup: async (fixtureName, options = {}) => {
+    setup: async (fixtureName, options: Record<string, any> = {}) => {
       const baseFixturePath = path.join(fixturesPath, ensureString(fixtureName));
       if (!isFixtureConfigured(baseFixturePath)) {
         throw new Error(`No fixture configured at ${fixtureName}`);

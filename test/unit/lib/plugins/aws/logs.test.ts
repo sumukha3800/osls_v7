@@ -502,6 +502,8 @@ describe('AwsLogs', () => {
       const sleepStub = sinon.stub().onFirstCall().resolves().onSecondCall().rejects(stopError);
       const cloudWatchLogsClients = [];
       class FakeCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
@@ -509,6 +511,8 @@ describe('AwsLogs', () => {
       class FakeDescribeLogStreamsCommand extends FakeCommand {}
       class FakeFilterLogEventsCommand extends FakeCommand {}
       class FakeCloudWatchLogsClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           cloudWatchLogsClients.push(this);

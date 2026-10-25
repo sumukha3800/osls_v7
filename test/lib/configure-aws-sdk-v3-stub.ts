@@ -205,6 +205,10 @@ function createLibStorageModuleStub({ stubMap, state, passContextToCallbacks }) 
     Upload: createNamedClass(
       'Upload',
       class {
+        declare client: any;
+        declare options: any;
+        declare params: any;
+
         constructor(options) {
           this.options = options;
           this.client = options.client;
@@ -253,6 +257,9 @@ function createModuleStub({ service, definition, stubMap, state, passContextToCa
   const Client = createNamedClass(
     definition.clientName,
     class {
+      declare config: any;
+      declare service: any;
+
       constructor(config) {
         this.config = config;
         this.service = service;
@@ -295,6 +302,9 @@ function createModuleStub({ service, definition, stubMap, state, passContextToCa
     exports[commandName] = createNamedClass(
       commandName,
       class {
+        declare __awsSdkV3StubCommandName: any;
+        declare input: any;
+
         constructor(input) {
           this.input = input;
           this.__awsSdkV3StubCommandName = commandName;

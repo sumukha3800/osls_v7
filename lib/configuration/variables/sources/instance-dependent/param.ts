@@ -42,7 +42,7 @@ const resolveParams = memoizee(async (stage, serverlessInstance) => {
   return resultParams;
 });
 
-export default (serverlessInstance) => {
+export default (serverlessInstance?) => {
   return {
     resolve: async ({ address, resolveConfigurationProperty, options }) => {
       if (!address) {

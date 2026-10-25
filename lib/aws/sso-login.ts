@@ -39,7 +39,7 @@ async function resolveSsoProfileConfig({ profile, filepath, configFilepath }) {
   }
 
   const source = session || profileConfig;
-  const ssoConfig = {
+  const ssoConfig: Record<string, any> = {
     accountId: profileConfig.sso_account_id,
     cacheKey: profileConfig.sso_session || profileConfig.sso_start_url,
     profile,
@@ -196,7 +196,7 @@ async function writeSsoTokenCache(ssoConfig, registration, token) {
   await fs.promises.mkdir(path.dirname(cachePath), { recursive: true, mode: 0o700 });
 
   const expiresAtMs = Date.now() + token.expiresIn * 1000;
-  const cachedToken = {
+  const cachedToken: Record<string, any> = {
     startUrl: ssoConfig.startUrl,
     region: ssoConfig.region,
     accessToken: token.accessToken,
@@ -271,7 +271,7 @@ function runSingleFlightLogin(ssoConfig, login) {
     activeAttempt.tokenExpiresAt != null &&
     activeAttempt.tokenExpiresAt <= Date.now();
   if (!activeAttempt || hasExpired) {
-    const attempt = { tokenExpiresAt: null };
+    const attempt: Record<string, any> = { tokenExpiresAt: null };
     attempt.promise = login().then(
       (tokenExpiresAt) => {
         attempt.tokenExpiresAt = tokenExpiresAt;

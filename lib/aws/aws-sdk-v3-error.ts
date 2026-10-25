@@ -25,7 +25,7 @@ function getAwsErrorMessage(error) {
   return typeof message === 'string' ? message : undefined;
 }
 
-function getAwsErrorCode(error) {
+function getAwsErrorCode(error?) {
   if (!error) return undefined;
 
   const providerError = getOwnValue(error, 'providerError');
@@ -46,7 +46,7 @@ function getAwsErrorCode(error) {
   return getOwnValue(error, 'code');
 }
 
-function getAwsErrorStatusCode(error) {
+function getAwsErrorStatusCode(error?) {
   if (!error) return undefined;
   const providerError = getOwnValue(error, 'providerError');
   const providerMetadata = getOwnValue(providerError, '$metadata');
@@ -249,7 +249,7 @@ function normalizeS3BucketRegion(region) {
   return region;
 }
 
-function getS3BucketRegion(resultOrError) {
+function getS3BucketRegion(resultOrError?) {
   if (!resultOrError) return undefined;
   const metadata = getOwnValue(resultOrError, '$metadata');
   const response = getOwnValue(resultOrError, '$response');

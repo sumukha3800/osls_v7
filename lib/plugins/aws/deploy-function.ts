@@ -27,6 +27,16 @@ const fsp = fs.promises;
 const mainProgress = progress.get('main');
 
 class AwsDeployFunction {
+  declare hooks: any;
+  declare iamClientPromise: any;
+  declare lambdaClientPromise: any;
+  declare options: any;
+  declare packagePath: any;
+  declare provider: any;
+  declare serverless: any;
+  declare shouldEnsureFunctionState: any;
+  declare validate: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options || {};
@@ -259,7 +269,7 @@ class AwsDeployFunction {
     const providerObj = this.serverless.service.provider;
     const remoteFunctionConfiguration =
       this.serverless.service.provider.remoteFunctionData.Configuration;
-    const params = {
+    const params: Record<string, any> = {
       FunctionName: functionObj.name,
     };
 
@@ -485,7 +495,7 @@ class AwsDeployFunction {
     }
 
     if (functionObj.image) {
-      const imageConfig = {};
+      const imageConfig: Record<string, any> = {};
       const remoteImageConfig = remoteFunctionConfiguration.ImageConfigResponse?.ImageConfig;
 
       if (isObject(functionObj.image)) {
@@ -540,7 +550,7 @@ class AwsDeployFunction {
 
   async deployFunction() {
     const functionObject = this.serverless.service.getFunction(this.options.function);
-    const params = {
+    const params: Record<string, any> = {
       FunctionName: this.options.functionObj.name,
     };
 

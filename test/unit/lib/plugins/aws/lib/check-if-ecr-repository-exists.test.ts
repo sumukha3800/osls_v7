@@ -114,6 +114,8 @@ describe('test/unit/lib/plugins/aws/lib/check-if-ecr-repository-exists.test.ts',
     const ecrClients = [];
     const commands = [];
     class FakeCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -121,6 +123,8 @@ describe('test/unit/lib/plugins/aws/lib/check-if-ecr-repository-exists.test.ts',
     class FakeDescribeRepositoriesCommand extends FakeCommand {}
     class FakeDeleteRepositoryCommand extends FakeCommand {}
     class FakeECRClient {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         ecrClients.push(this);

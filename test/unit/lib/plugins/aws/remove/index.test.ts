@@ -147,6 +147,8 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
     const s3Clients = [];
     const sends = [];
     class FakeCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -155,6 +157,8 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
     class FakeListObjectVersionsCommand extends FakeCommand {}
     class FakeDeleteObjectsCommand extends FakeCommand {}
     class FakeS3Client {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         s3Clients.push(this);

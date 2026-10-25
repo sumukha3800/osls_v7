@@ -16,7 +16,7 @@ const resolveInsideService = (servicePath, relativePath) => {
 };
 
 export default async (fixtureName, options = {}) => {
-  const { configExt, serviceName, files = [] } = options;
+  const { configExt, serviceName, files = [] }: Record<string, any> = options;
   if (serviceName && configExt && Object.hasOwn(configExt, 'service')) {
     throw new Error('Use either `serviceName` or `configExt.service`, not both');
   }

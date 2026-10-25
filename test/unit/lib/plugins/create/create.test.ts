@@ -16,7 +16,7 @@ const loadCreate = async ({
   downloadTemplateFromRepoStub,
   dirExistsSyncStub,
   untildifyStub,
-} = {}) => {
+}: Record<string, any> = {}) => {
   const noticeStub = sinon.stub();
   noticeStub.success = sinon.stub();
   const copyDirContentsSyncStub = sinon.stub();

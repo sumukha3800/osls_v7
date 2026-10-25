@@ -6,7 +6,7 @@ import resolve from '../../../../../lib/configuration/variables/resolve.ts';
 
 describe('test/unit/lib/configuration/variables/resolve.test.ts', () => {
   describe('Complete resolution', () => {
-    const configuration = {
+    const configuration: Record<string, any> = {
       foo: {
         params: '${sourceParam(param1, param2)}',
         varParam: '${sourceParam(${sourceDirect:})}',
@@ -181,7 +181,7 @@ describe('test/unit/lib/configuration/variables/resolve.test.ts', () => {
             case 'serverless-error':
               throw new ServerlessError('Stop');
             case 'circular-ref': {
-              const obj = {};
+              const obj: Record<string, any> = {};
               obj.obj = obj;
               return { value: obj };
             }

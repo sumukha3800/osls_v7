@@ -10,6 +10,11 @@ const validProviders = new Set(['aws']);
 const humanReadableProvidersList = `"${Array.from(validProviders)}"`;
 
 class Config {
+  declare commands: any;
+  declare hooks: any;
+  declare options: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

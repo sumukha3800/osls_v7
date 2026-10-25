@@ -195,7 +195,7 @@ const requestHttpDocument = async (documentUrl, dispatcher) => {
   }
 
   try {
-    const fetchOptions = {
+    const fetchOptions: Record<string, any> = {
       method: 'GET',
       redirect: 'manual',
       signal: controller ? controller.signal : null,

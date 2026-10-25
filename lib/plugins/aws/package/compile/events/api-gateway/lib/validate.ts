@@ -528,7 +528,11 @@ export default {
       if (response.statusCodes) {
         response.statusCodes = safeShallowAssign({}, response.statusCodes);
 
-        if (!Object.values(response.statusCodes).some((code) => code.pattern === '')) {
+        if (
+          !Object.values(response.statusCodes).some(
+            (code: Record<string, any>) => code.pattern === ''
+          )
+        ) {
           response.statusCodes['200'] = DEFAULT_STATUS_CODES['200'];
         }
       } else {

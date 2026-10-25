@@ -43,7 +43,7 @@ export default {
               event.alb.listenerArn,
               functionName
             );
-            const albObj = {
+            const albObj: Record<string, any> = {
               // This is set to the ALB ID if the listener ARNs are provided as strings,
               // or the listener logical ID if listenerARNs are given as refs
               albId,

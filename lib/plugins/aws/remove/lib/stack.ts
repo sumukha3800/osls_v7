@@ -51,7 +51,7 @@ export default {
 
   async remove() {
     const stackName = this.provider.naming.getStackName();
-    const params = {
+    const params: Record<string, any> = {
       StackName: stackName,
     };
 

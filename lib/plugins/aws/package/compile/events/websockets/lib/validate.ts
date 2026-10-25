@@ -16,7 +16,7 @@ export default {
         if (event.websocket) {
           // dealing with the extended object definition
           if (isObject(event.websocket)) {
-            const websocketObj = {
+            const websocketObj: Record<string, any> = {
               functionName,
               route: event.websocket.route,
             };

@@ -2,6 +2,13 @@ import cliCommandsSchema from '../../cli/commands-schema/index.ts';
 import pluginUtils from './lib/utils.ts';
 
 class PluginList {
+  declare commands: any;
+  declare display: any;
+  declare getPlugins: any;
+  declare hooks: any;
+  declare options: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

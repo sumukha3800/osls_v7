@@ -538,13 +538,21 @@ describe('AwsDeployList', () => {
       const lambdaClients = [];
       const sends = [];
       class FakeCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
       }
-      class FakeGetFunctionCommand extends FakeCommand {}
-      class FakeListVersionsByFunctionCommand extends FakeCommand {}
+      class FakeGetFunctionCommand extends FakeCommand {
+        declare input: any;
+      }
+      class FakeListVersionsByFunctionCommand extends FakeCommand {
+        declare input: any;
+      }
       class FakeLambdaClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           lambdaClients.push(this);

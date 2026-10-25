@@ -1,6 +1,6 @@
 import ServerlessError from '../serverless-error.ts';
 
-const validateSpawnInput = (command, args, options = {}) => {
+const validateSpawnInput = (command, args, options: Record<string, any> = {}) => {
   options = options || {};
 
   if (typeof command !== 'string' || command.length === 0) {

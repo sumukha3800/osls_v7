@@ -13,6 +13,8 @@ import { packageJson as packageModule } from '../utils/package-root.ts';
 const version = packageModule.version;
 
 class Utils {
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
   }

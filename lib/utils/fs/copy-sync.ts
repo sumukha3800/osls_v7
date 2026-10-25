@@ -37,14 +37,14 @@ const copyDereferencedSync = (sourcePath, destinationPath, options) => {
   copyFileSync(sourcePath, destinationPath, options);
 };
 
-export default (sourcePath, destinationPath, options = {}) => {
+export default (sourcePath, destinationPath, options: Record<string, any> = {}) => {
   fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
   if (options.dereference) {
     // Native fs.cpSync can preserve nested symlinks despite dereference on supported Node releases.
     copyDereferencedSync(sourcePath, destinationPath, options);
     return;
   }
-  const copyOptions = {
+  const copyOptions: Record<string, any> = {
     dereference: Boolean(options.dereference),
     force: options.force !== false,
     recursive: true,

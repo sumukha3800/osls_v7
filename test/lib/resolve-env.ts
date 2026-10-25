@@ -25,7 +25,7 @@ const resolveWin32SystemVarNames = () =>
     ? Object.keys(process.env).filter((name) => WIN32_SYSTEM_VAR_NAMES.has(name.toLowerCase()))
     : [];
 
-export default (options = {}) => {
+export default (options: Record<string, any> = {}) => {
   if (!options) options = {};
   return createEnv({
     whitelist: [

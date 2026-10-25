@@ -6,7 +6,7 @@ const pathStyleHostPattern = /^s3(?:[.-][a-z0-9-]+)?\.amazonaws\.com$/i;
 
 const pathStylePathPattern = /^\/(?<bucket>[^/]+)\/(?<key>.+)$/;
 
-export default (url) => {
+export default (url?) => {
   if (typeof url !== 'string') return null;
 
   const s3UriMatch = url.match(s3UriPattern);

@@ -17,7 +17,7 @@ export default {
     let resourceCount = 0;
 
     do {
-      const input = { StackName: stackName };
+      const input: Record<string, any> = { StackName: stackName };
       if (nextToken) input.NextToken = nextToken;
       const result = await retryOnThrottlingError(
         () => cloudFormation.send(new ListStackResourcesCommand(input)),

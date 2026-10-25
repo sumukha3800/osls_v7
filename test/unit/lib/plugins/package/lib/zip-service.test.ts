@@ -22,7 +22,7 @@ const forceGc = () => {
 };
 
 const createServerlessLike = (serviceDir) => {
-  const serverlessLike = {
+  const serverlessLike: Record<string, any> = {
     serviceDir,
     service: {
       service: 'first-service',
@@ -1473,6 +1473,8 @@ describe('zipService', () => {
       let fakeOutput;
 
       class FakeZipFile extends EventEmitter {
+        declare outputStream: any;
+
         constructor() {
           super();
           this.outputStream = {

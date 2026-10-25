@@ -10,6 +10,18 @@ import { log, style, progress } from '../../../utils/serverless-utils/log.ts';
 const mainProgress = progress.get('main');
 
 class AwsRemove {
+  declare checkIfEcrRepositoryExists: any;
+  declare emptyS3Bucket: any;
+  declare ensureStackIsNotDeletionProtected: any;
+  declare hooks: any;
+  declare monitorStack: any;
+  declare options: any;
+  declare provider: any;
+  declare removeEcrRepository: any;
+  declare removeStack: any;
+  declare serverless: any;
+  declare validate: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options || {};

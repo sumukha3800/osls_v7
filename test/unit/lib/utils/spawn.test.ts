@@ -174,7 +174,7 @@ describe('spawn', () => {
         env.PATHEXT = [process.env.PATHEXT, '.CMD'].filter(Boolean).join(';');
       }
 
-      const result = await spawn(commandName, [], { env });
+      const result: Record<string, any> = await spawn(commandName, [], { env });
 
       expect(String(result.stdoutBuffer).trim()).to.equal('shim-ok');
       expect(result.code).to.equal(0);
@@ -185,7 +185,7 @@ describe('spawn', () => {
   });
 
   it('closes stdin when shouldCloseStdin is enabled', async () => {
-    const result = await spawn(
+    const result: Record<string, any> = await spawn(
       process.execPath,
       [
         '-e',
@@ -211,7 +211,7 @@ describe('spawn', () => {
 
     execution.std.on('data', (chunk) => stdChunks.push(chunk));
 
-    const result = await execution;
+    const result: Record<string, any> = await execution;
 
     expect(result.child).to.equal(execution.child);
     expect(String(result.stdoutBuffer)).to.equal('out');
@@ -266,7 +266,7 @@ describe('spawn', () => {
     const stdChunks = [];
     execution.std.on('data', (chunk) => stdChunks.push(Buffer.from(chunk)));
 
-    const result = await execution;
+    const result: Record<string, any> = await execution;
 
     expect(String(result.stdBuffer)).to.equal('earlylate');
     expect(String(Buffer.concat(stdChunks))).to.equal('late');
@@ -387,7 +387,7 @@ describe('spawn', () => {
   });
 
   it('handles stdio inherit with null streams on success', async () => {
-    const result = await spawn(process.execPath, ['-e', 'process.exit(0);'], {
+    const result: Record<string, any> = await spawn(process.execPath, ['-e', 'process.exit(0);'], {
       stdio: 'inherit',
     });
 

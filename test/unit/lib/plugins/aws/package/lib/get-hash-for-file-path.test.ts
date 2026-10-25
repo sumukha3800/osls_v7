@@ -32,7 +32,9 @@ describe('getHashForFilePath', () => {
   it('throws a clear error when it fails to read the file', async () => {
     const missingFilePath = path.join(process.cwd(), 'nonexistent.txt');
 
-    const error = await getHashForFilePath(missingFilePath).catch((error) => error);
+    const error: Record<string, any> = await getHashForFilePath(missingFilePath).catch(
+      (error) => error
+    );
 
     expect(error).to.be.instanceOf(Error);
     expect(error.message).to.include(`Could not calculate hash for "${missingFilePath}":`);

@@ -127,7 +127,7 @@ describe('lib/plugins/aws/package/compile/layers/index.test.ts', () => {
       getLambdaLayerS3KeyOutputLogicalId: sinon.stub().returns('LayerLambdaLayerS3Key'),
       getLambdaLayerPermissionLogicalId: sinon.stub().returns('LayerLambdaLayerPermission'),
     };
-    const testService = {
+    const testService: Record<string, any> = {
       package: { artifactDirectoryName: 'artifact-dir', path: packagePath },
       provider: { compiledCloudFormationTemplate: { Resources: {}, Outputs: {} } },
       getLayer: sinon.stub().withArgs('layer').returns(layerObject),

@@ -14,6 +14,13 @@ function getCloudWatchClient(context) {
 }
 
 class AwsMetrics {
+  declare hooks: any;
+  declare limitCloudWatchRequests: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare validate: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

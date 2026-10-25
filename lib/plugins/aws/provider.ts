@@ -159,7 +159,18 @@ const cognitoAlbAuthorizer = {
 };
 
 class AwsProvider {
-  constructor(serverless, options) {
+  declare accountId: any;
+  declare awsSdkV3CredentialsProviders: any;
+  declare cloudFormationClientPromise: any;
+  declare dockerLoginToEcr: any;
+  declare hooks: any;
+  declare limitEcrRequests: any;
+  declare naming: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+
+  constructor(serverless, options?) {
     this.naming = { provider: this };
     this.options = options;
     this.provider = this; // only load plugin in an AWS service context
@@ -1725,7 +1736,7 @@ class AwsProvider {
   }
 
   async getAwsSdkV3Config(options = {}) {
-    const { credentials, profile, region, ...clientOptions } = options;
+    const { credentials, profile, region, ...clientOptions }: Record<string, any> = options;
     delete clientOptions.service;
 
     return buildClientConfig({
@@ -2104,7 +2115,7 @@ class AwsProvider {
     const cloudFormation = await this.getCloudFormationClient();
 
     do {
-      const params = {
+      const params: Record<string, any> = {
         StackName: this.naming.getStackName(),
       };
       if (nextToken) params.NextToken = nextToken;
@@ -2117,10 +2128,13 @@ class AwsProvider {
     return resources;
   }
 
-  async dockerPushToEcr(remoteTag, options = {}) {
+  async dockerPushToEcr(remoteTag, options: Record<string, any> = {}) {
     const pushDockerArgs = ['push', remoteTag];
     try {
-      const { stdBuffer: pushDockerStdBuffer } = await spawnExt('docker', pushDockerArgs);
+      const { stdBuffer: pushDockerStdBuffer }: Record<string, any> = await spawnExt(
+        'docker',
+        pushDockerArgs
+      );
       if (pushDockerStdBuffer) {
         log.info(pushDockerStdBuffer.toString().trimRight());
       }
@@ -2203,7 +2217,9 @@ Object.defineProperties(
         }
         const dockerArgs = ['login', '--username', 'AWS', '--password-stdin', proxyEndpoint];
         try {
-          const { stdBuffer } = await spawnExt('docker', dockerArgs, { input: decodedAuthToken });
+          const { stdBuffer }: Record<string, any> = await spawnExt('docker', dockerArgs, {
+            input: decodedAuthToken,
+          });
           log.info('Login to Docker succeeded!');
           if (stdBuffer.includes('password will be stored unencrypted')) {
             log.warning(
@@ -2345,7 +2361,10 @@ Object.defineProperties(
         try {
           imageProgress.notice(`Building image "${imageName}"`);
           try {
-            const { stdBuffer: buildDockerStdBuffer } = await spawnExt('docker', buildDockerArgs);
+            const { stdBuffer: buildDockerStdBuffer }: Record<string, any> = await spawnExt(
+              'docker',
+              buildDockerArgs
+            );
             if (buildDockerStdBuffer) {
               log.info(buildDockerStdBuffer.toString().trimRight());
             }
@@ -2361,7 +2380,10 @@ Object.defineProperties(
           imageProgress.notice(`Tagging image "${imageName}"`);
           const tagDockerArgs = ['tag', localTag, remoteTag];
           try {
-            const { stdBuffer: tagDockerStdBuffer } = await spawnExt('docker', tagDockerArgs);
+            const { stdBuffer: tagDockerStdBuffer }: Record<string, any> = await spawnExt(
+              'docker',
+              tagDockerArgs
+            );
             if (tagDockerStdBuffer) {
               log.info(tagDockerStdBuffer.toString().trimRight());
             }

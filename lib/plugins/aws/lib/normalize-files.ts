@@ -20,7 +20,7 @@ export default {
         value.Properties &&
         value.Properties.DeploymentId
       ) {
-        const newVal = value;
+        const newVal: Record<string, any> = value;
         newVal.Properties.DeploymentId.Ref = 'WebsocketsDeployment';
       }
       if (
@@ -29,7 +29,7 @@ export default {
         value.Properties &&
         value.Properties.Code
       ) {
-        const newVal = value;
+        const newVal: Record<string, any> = value;
         newVal.Properties.Code.S3Key = '';
       }
       if (
@@ -38,7 +38,7 @@ export default {
         value.Properties &&
         value.Properties.Content
       ) {
-        const newVal = value;
+        const newVal: Record<string, any> = value;
         newVal.Properties.Content.S3Key = '';
       }
     });

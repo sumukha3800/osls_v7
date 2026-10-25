@@ -29,7 +29,9 @@ export default {
       const registerTargetPermissionLogicalId =
         this.provider.naming.getLambdaRegisterTargetPermissionLogicalId(functionName);
 
-      const healthCheckProperties = { HealthCheckEnabled: healthCheckDefaults.HealthCheckEnabled };
+      const healthCheckProperties: Record<string, any> = {
+        HealthCheckEnabled: healthCheckDefaults.HealthCheckEnabled,
+      };
       if (healthCheck) {
         Object.assign(healthCheckProperties, healthCheckDefaults);
         if (healthCheck.enabled != null) {

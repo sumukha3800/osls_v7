@@ -20,6 +20,12 @@ const { retryOnThrottlingError } = retry;
 const DEFAULT_PRUNE_VERSIONS = 10;
 
 class AwsPrune {
+  declare hooks: any;
+  declare lambdaClientPromise: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options || {};

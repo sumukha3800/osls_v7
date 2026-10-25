@@ -240,7 +240,7 @@ async function retrieveBitbucketServerInfo(url) {
     signal: AbortSignal.timeout(30000),
   })
     .then((resp) => resp.json())
-    .then((body) => body.displayName === 'Bitbucket');
+    .then((body: Record<string, any>) => body.displayName === 'Bitbucket');
 }
 
 /**
@@ -357,11 +357,11 @@ async function parseRepoURL(inputUrl) {
  * @param {string} [downloadPath]
  * @returns {Promise}
  */
-async function downloadTemplateFromRepo(inputUrl, requestedServiceName, downloadPath) {
-  const repoInformation = await parseRepoURL(inputUrl);
+async function downloadTemplateFromRepo(inputUrl, requestedServiceName, downloadPath?) {
+  const repoInformation: Record<string, any> = await parseRepoURL(inputUrl);
   let sourceName;
   let downloadServicePath;
-  const { username, password } = repoInformation;
+  const { username, password }: Record<string, any> = repoInformation;
   const authRedirectHostnames = repoInformation.downloadUrl.startsWith('https://github.com/')
     ? ['codeload.github.com']
     : [];

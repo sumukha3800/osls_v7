@@ -36,6 +36,12 @@ const clearDirectoryContentsSync = (directoryPath) => {
 };
 
 class RuntimeSandbox {
+  declare baseEnv: any;
+  declare testArgv: any;
+  declare testCwd: any;
+  declare testEnv: any;
+  declare testServerlessCommandStartTime: any;
+
   constructor() {
     this.baseEnv = null;
     this.testEnv = null;

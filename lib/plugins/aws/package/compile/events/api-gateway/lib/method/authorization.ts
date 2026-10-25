@@ -23,7 +23,7 @@ export default {
           return http.authorizer.type;
         })();
 
-        const authReturn = {
+        const authReturn: Record<string, any> = {
           Properties: {
             AuthorizationType: authorizationType,
             AuthorizerId: http.authorizer.authorizerId,
@@ -49,7 +49,7 @@ export default {
         (typeof authorizerArn === 'string' && awsArnRegExs.cognitoIdpArnExpr.test(authorizerArn))
       ) {
         authorizationType = 'COGNITO_USER_POOLS';
-        const cognitoReturn = {
+        const cognitoReturn: Record<string, any> = {
           Properties: {
             AuthorizationType: authorizationType,
             AuthorizerId: { Ref: authorizerLogicalId },

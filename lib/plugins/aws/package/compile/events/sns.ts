@@ -16,6 +16,11 @@ const mergeDependsOn = (resource, dependency) => {
 };
 
 class AwsCompileSNSEvents {
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');
@@ -230,7 +235,7 @@ class AwsCompileSNSEvents {
               };
 
               if (!(topicLogicalId in template.Resources)) {
-                const topicResourceProperties = { TopicName: topicName };
+                const topicResourceProperties: Record<string, any> = { TopicName: topicName };
                 if (event.sns.displayName) {
                   topicResourceProperties.DisplayName = event.sns.displayName;
                 }

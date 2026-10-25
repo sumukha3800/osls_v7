@@ -9,6 +9,15 @@ const originLimits = { maxTimeout: 30, maxMemorySize: 10240 };
 const viewerLimits = { maxTimeout: 5, maxMemorySize: 128 };
 
 class AwsCompileCloudFrontEvents {
+  declare cachePolicies: any;
+  declare cloudFrontDistributionDomainNameLogicalId: any;
+  declare cloudFrontDistributionLogicalId: any;
+  declare hooks: any;
+  declare lambdaEdgeLimits: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
@@ -434,7 +443,10 @@ class AwsCompileCloudFrontEvents {
                 ? event.cloudFront.pathPattern
                 : undefined;
 
-            let origin = createOrigin(event.cloudFront.origin, this.provider.naming);
+            let origin: Record<string, any> = createOrigin(
+              event.cloudFront.origin,
+              this.provider.naming
+            );
             const existingOrigin = origins.find((o) => o.Id === origin.Id);
 
             if (!existingOrigin) {
@@ -453,7 +465,7 @@ class AwsCompileCloudFrontEvents {
               defaultOrigin = origin;
             }
 
-            let behavior = {
+            let behavior: Record<string, any> = {
               ViewerProtocolPolicy: 'allow-all',
             };
             let shouldAssignCachePolicy = true;
@@ -506,7 +518,7 @@ class AwsCompileCloudFrontEvents {
               });
             }
 
-            const lambdaFunctionAssociation = {
+            const lambdaFunctionAssociation: Record<string, any> = {
               EventType: event.cloudFront.eventType,
               LambdaFunctionARN: {
                 Ref: lambdaVersionLogicalId,

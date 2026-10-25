@@ -36,7 +36,7 @@ export default {
             };
             Actions.push(authObj);
           } else {
-            const config = {
+            const config: Record<string, any> = {
               AuthorizationEndpoint: auth.authorizationEndpoint,
               ClientId: auth.clientId,
               Issuer: auth.issuer,
@@ -62,7 +62,7 @@ export default {
           }
         });
       }
-      const forwardAction = {
+      const forwardAction: Record<string, any> = {
         Type: 'forward',
         TargetGroupArn: {
           Ref: targetGroupLogicalId,
