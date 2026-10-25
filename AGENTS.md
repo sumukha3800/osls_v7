@@ -28,6 +28,9 @@ fork is written in TypeScript 7, ships as ES modules only, and supports Node.js 
 - Dynamic imports use string literals (or a map of literal imports) so `tsc` can rewrite them.
 - Do not import `typescript`: TypeScript 7 has no compiler API. `typescript` in devDependencies is
   the TypeScript 6 API alias for typescript-eslint; `tsc` comes from `@typescript/native` (v7).
+- Published declarations (`dist/**/*.d.ts`) may only reference types consumers get: packages that
+  ship types, or `@types/*` in `dependencies`. Types from devDependencies or `typings/` must not
+  leak into an export; give such exports an explicit type (eg. memoized functions).
 - User-land code stays JavaScript: `test/fixtures/**`, `**/fixture(s)/**`. CommonJS user configs,
   plugins and handlers must keep working.
 

@@ -2,7 +2,9 @@ import weakMemoizee from 'memoizee/weak.js';
 import customResources from '../../../../custom-resources/index.ts';
 const { addCustomResourceToService } = customResources;
 
-export default weakMemoizee(
+// Typed without memoizee's types: they come from a dev dependency, so they cannot appear in the
+// published declarations
+const ensureApiGatewayCloudWatchRole: (provider: any) => Promise<void> = weakMemoizee(
   async (provider) => {
     // There may be a specific role ARN provided in the configuration
     const config = provider.serverless.service.provider;
@@ -59,3 +61,5 @@ export default weakMemoizee(
   },
   { promise: true }
 );
+
+export default ensureApiGatewayCloudWatchRole;

@@ -65,6 +65,9 @@ importers:
       '@smithy/node-http-handler':
         specifier: 4.9.1
         version: 4.9.1
+      '@types/js-yaml':
+        specifier: 4.0.9
+        version: 4.0.9
       ajv:
         specifier: 8.12.0
         version: 8.12.0
@@ -159,9 +162,6 @@ importers:
       '@types/cross-spawn':
         specifier: 6.0.6
         version: 6.0.6
-      '@types/js-yaml':
-        specifier: 4.0.9
-        version: 4.0.9
       '@types/memoizee':
         specifier: 0.4.12
         version: 0.4.12
