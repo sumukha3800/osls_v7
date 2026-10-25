@@ -15,6 +15,7 @@ In-depth guides for building, testing, deploying, and operating services with os
 - [IAM Permissions For Functions](iam.md) — Granting functions the permissions they need via IAM roles and policies.
 - [AWS Lambda Layers](layers.md) — Publishing and consuming Lambda layers.
 - [AWS Infrastructure Resources](resources.md) — Adding raw CloudFormation resources and outputs to a service.
+- [TypeScript](typescript.md) — Typed `serverless.ts` configurations, plugins in TypeScript, and building TypeScript handlers with TypeScript 7.
 - [Packaging](packaging.md) — Controlling what code and dependencies are bundled into the deployment artifact.
 - [Variables](variables.md) — Using `${...}` variable sources to keep configuration DRY.
 - [Loading .env files](environment-variables.md) — Loading local `.env` files into a command's environment.

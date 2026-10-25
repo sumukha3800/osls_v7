@@ -106,10 +106,14 @@ module.exports = {
 // serverless.ts
 import type { AWS } from 'osls';
 
-const serverlessConfiguration: AWS = {
+export default {
   service: 'users',
+  provider: {
+    name: 'aws',
+  },
   functions: {
     usersCreate: {
+      handler: 'handler.create',
       events: [
         {
           httpApi: 'POST /users/create',
@@ -119,12 +123,10 @@ const serverlessConfiguration: AWS = {
     // ...
   },
   resources: {},
-};
-
-export default serverlessConfiguration;
+} satisfies AWS;
 ```
 
-TypeScript configuration files run on Node.js's built-in type stripping, so no compiler needs to be installed. Configurations that use TypeScript syntax Node.js cannot strip (such as `enum`), extensionless relative imports or tsconfig `paths` are loaded with [tsx](https://tsx.is) instead. Configurations are not type checked when loaded: run `tsc` in your project for that.
+TypeScript configuration files run on Node.js's built-in type stripping, so no compiler needs to be installed. Configurations that use TypeScript syntax Node.js cannot strip (such as `enum`), extensionless relative imports or tsconfig `paths` are loaded with [tsx](https://tsx.is) instead. Configurations are not type checked when loaded: run `tsc` in your project for that. See [TypeScript](typescript.md) for type checking with TypeScript 7, plugins and handlers in TypeScript.
 
 For the sake of simplicity, most examples in the documentation refer to the `serverless.yml` format. However, all functionalities work with the other available service file formats.
 
