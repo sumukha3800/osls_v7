@@ -926,6 +926,7 @@ export interface AWS {
     individually?: boolean;
     path?: string;
     patterns?: string[];
+    stripTypeScript?: boolean;
   };
   params?: {
     /**

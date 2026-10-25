@@ -79,6 +79,7 @@ const schema = {
         individually: { type: 'boolean' },
         path: { type: 'string' },
         patterns: { type: 'array', items: { type: 'string' } },
+        stripTypeScript: { type: 'boolean' },
       },
       additionalProperties: false,
     },

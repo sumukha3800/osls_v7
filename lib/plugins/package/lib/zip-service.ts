@@ -10,6 +10,7 @@ import ServerlessError from '../../../serverless-error.ts';
 import { log } from '../../../utils/serverless-utils/log.ts';
 import spawnExt from '../../../utils/spawn.ts';
 import promiseLimit from 'ext/promise/limit.js';
+import { isTypeScriptSource, stripTypeScript, toJavaScriptPath } from './strip-typescript.ts';
 const fsp = fs.promises;
 const limit = promiseLimit.bind(Promise);
 
@@ -179,23 +180,65 @@ function addPluginContentStream(zipfile, entry, options) {
   });
 }
 
-async function addBufferedEntries(zipfile, normalizedFiles, prefix) {
+// With `package.stripTypeScript`, TypeScript sources are added as JavaScript
+function addTypeScriptEntry(zipfile, entry, options) {
+  zipfile.addReadStreamLazy(entry.name, options, (callback) => {
+    Promise.resolve()
+      .then(() => this.getFileContent(entry.fullPath))
+      .then(
+        async (data) => {
+          let code;
+          try {
+            code = await stripTypeScript(
+              normalizeFileContent(data, entry.filePath).toString('utf8'),
+              entry.filePath
+            );
+          } catch (error) {
+            callback(error);
+            return;
+          }
+          callback(null, Readable.from([Buffer.from(code)]));
+        },
+        (error) => callback(getCannotReadFileError(entry.filePath, error))
+      );
+  });
+}
+
+const assertUniqueEntryNames = (entries) => {
+  const filePathsByName = new Map();
+  for (const { name, filePath } of entries) {
+    if (filePathsByName.has(name)) {
+      throw new ServerlessError(
+        `Cannot package both "${filePathsByName.get(name)}" and "${filePath}" as "${name}": ` +
+          'with "package.stripTypeScript", exclude the compiled JavaScript or the TypeScript source',
+        'TYPESCRIPT_OUTPUT_CONFLICT'
+      );
+    }
+    filePathsByName.set(name, filePath);
+  }
+};
+
+async function addBufferedEntries(zipfile, normalizedFiles, prefix, stripsTypeScript) {
   const contents = await Promise.all(
     normalizedFiles.map((filePath) => this.getFileContentAndStat(filePath))
   );
 
-  contents
-    .map((file) => ({
-      ...file,
-      name: getArchiveEntryName(file.filePath, prefix),
-    }))
-    .sort(compareZipEntries)
-    .forEach((file) => {
-      zipfile.addBuffer(file.data, file.name, {
-        mode: getFileMode(file.stat),
-        mtime: zipMtime,
-      });
+  const files = await Promise.all(
+    contents.map(async (file) => {
+      const name = getArchiveEntryName(file.filePath, prefix);
+      if (!stripsTypeScript || !isTypeScriptSource(file.filePath)) return { ...file, name };
+      const code = await stripTypeScript(file.data.toString('utf8'), file.filePath);
+      return { ...file, name: toJavaScriptPath(name), data: Buffer.from(code) };
+    })
+  );
+  assertUniqueEntryNames(files);
+
+  files.sort(compareZipEntries).forEach((file) => {
+    zipfile.addBuffer(file.data, file.name, {
+      mode: getFileMode(file.stat),
+      mtime: zipMtime,
     });
+  });
 }
 
 const zipService = {
@@ -257,6 +300,7 @@ const zipService = {
 
     // normalize both maps to avoid problems with e.g. Path Separators in different shells
     const normalizedFiles = Array.from(new Set(files.map((file) => path.normalize(file))));
+    const stripsTypeScript = Boolean(this.serverless.service.package?.stripTypeScript);
 
     const zipfile = new yazl.ZipFile();
     const output = fs.createWriteStream(artifactFilePath);
@@ -306,7 +350,7 @@ const zipService = {
             this.getFileContentAndStat === defaultGetFileContentAndStat;
 
           if (!usesDefaultGetFileContentAndStat) {
-            await addBufferedEntries.call(this, zipfile, normalizedFiles, prefix);
+            await addBufferedEntries.call(this, zipfile, normalizedFiles, prefix, stripsTypeScript);
             zipfile.end();
             return;
           }
@@ -317,6 +361,15 @@ const zipService = {
             )
           );
 
+          if (stripsTypeScript) {
+            for (const entry of entries) {
+              if (!isTypeScriptSource(entry.filePath)) continue;
+              entry.name = toJavaScriptPath(entry.name);
+              entry.isTypeScript = true;
+            }
+            assertUniqueEntryNames(entries);
+          }
+
           entries.sort(compareZipEntries);
 
           for (const entry of entries) {
@@ -325,7 +378,9 @@ const zipService = {
               mtime: zipMtime,
             };
 
-            if (usesDefaultGetFileContent) {
+            if (entry.isTypeScript) {
+              addTypeScriptEntry.call(this, zipfile, entry, options);
+            } else if (usesDefaultGetFileContent) {
               addFileStream(zipfile, entry, options);
             } else {
               addPluginContentStream.call(this, zipfile, entry, options);

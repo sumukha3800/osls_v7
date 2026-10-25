@@ -2416,6 +2416,20 @@ describe('test/unit/lib/plugins/aws/invokeLocal/index.test.ts', () => {
       expect(output).to.include('Invoked');
     });
 
+    it('should support TypeScript handlers with "package.stripTypeScript"', async () => {
+      const { output } = await runServerless({
+        fixture: 'invocation',
+        command: 'invoke local',
+        options: { function: 'asyncTypeScript' },
+        configExt: {
+          package: { stripTypeScript: true },
+          functions: { asyncTypeScript: { handler: 'async-typescript.handler' } },
+        },
+      });
+
+      expect(output).to.include('Invoked');
+    });
+
     it('should support success resolution via context.done', async () => {
       const { output } = await runServerless({
         fixture: 'invocation',

@@ -658,6 +658,8 @@ package:
   path: ./dist
   # Automatically exclude NPM dev dependencies from the deployed package (default: true)
   excludeDevDependencies: false
+  # Package .ts/.mts/.cts sources as .js/.mjs/.cjs, with types stripped (default: false)
+  stripTypeScript: true
 ```
 
 ## Functions

@@ -941,6 +941,88 @@ describe('zipService', () => {
       }
     });
 
+    describe('with "package.stripTypeScript"', () => {
+      const handlerSource =
+        "import { greet } from './greet.mts';\n" +
+        'export const hello = async (name: string): Promise<string> => greet(name);\n';
+
+      beforeEach(() => {
+        serverless.service.package.stripTypeScript = true;
+        serverless.utils.writeFileSync(path.join(tmpDirPath, 'src/handler.ts'), handlerSource);
+        serverless.utils.writeFileSync(
+          path.join(tmpDirPath, 'src/greet.mts'),
+          'export const greet = (name: string) => `Hello ${name}`;\n'
+        );
+        serverless.utils.writeFileSync(
+          path.join(tmpDirPath, 'src/types.d.ts'),
+          'export type Name = string;\n'
+        );
+      });
+
+      const zipTypeScriptSources = async (testName) => {
+        const artifact = await packagePlugin.zipFiles(
+          ['handler.js', 'src/handler.ts', 'src/greet.mts', 'src/types.d.ts'],
+          getTestArtifactFileName(testName)
+        );
+        return (await new JsZip().loadAsync(fs.readFileSync(artifact))).files;
+      };
+
+      it('packages TypeScript sources as JavaScript', async () => {
+        const files = await zipTypeScriptSources('strip-typescript');
+
+        expect(
+          Object.keys(files)
+            .filter((name) => !files[name].dir)
+            .sort()
+        ).to.deep.equal(['handler.js', 'src/greet.mjs', 'src/handler.js', 'src/types.d.ts']);
+        const handlerCode = await files['src/handler.js'].async('string');
+        expect(handlerCode).to.include("import { greet } from './greet.mjs';");
+        expect(handlerCode).to.not.include('Promise<string>');
+        expect(handlerCode).to.have.lengthOf(handlerSource.length);
+        expect(await files['src/types.d.ts'].async('string')).to.equal(
+          'export type Name = string;\n'
+        );
+      });
+
+      it('strips the content of getFileContentAndStat overrides', async () => {
+        const getFileContentAndStatStub = sinon
+          .stub(packagePlugin, 'getFileContentAndStat')
+          .callsFake(async (filePath: string) => ({
+            data: fs.readFileSync(path.join(tmpDirPath, filePath)),
+            stat: fs.statSync(path.join(tmpDirPath, filePath)),
+            filePath,
+          }));
+
+        try {
+          const files = await zipTypeScriptSources('strip-typescript-buffered');
+
+          expect(files['src/handler.ts']).to.equal(undefined);
+          expect(await files['src/handler.js'].async('string')).to.include("from './greet.mjs';");
+        } finally {
+          getFileContentAndStatStub.restore();
+        }
+      });
+
+      it('rejects a TypeScript source and a JavaScript file with the same name', async () => {
+        serverless.utils.writeFileSync(path.join(tmpDirPath, 'src/handler.js'), 'compiled');
+
+        await expect(
+          packagePlugin.zipFiles(
+            ['src/handler.ts', 'src/handler.js'],
+            getTestArtifactFileName('strip-typescript-conflict')
+          )
+        ).to.be.rejected.and.eventually.have.property('code', 'TYPESCRIPT_OUTPUT_CONFLICT');
+      });
+
+      it('packages TypeScript sources as they are without the option', async () => {
+        serverless.service.package.stripTypeScript = false;
+        const files = await zipTypeScriptSources('typescript-as-is');
+
+        expect(await files['src/handler.ts'].async('string')).to.equal(handlerSource);
+        expect(files['src/handler.js']).to.equal(undefined);
+      });
+    });
+
     it('treats pre-construction module-export getFileContent mutation as an override', async () => {
       const zipService = (await import('../../../../../../lib/plugins/package/lib/zip-service.ts'))
         .default;
