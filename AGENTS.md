@@ -10,7 +10,9 @@ fork is written in TypeScript 7, ships as ES modules only, and supports Node.js 
 - `scripts/serverless.ts`: CLI bootstrap (input, config loading, variables, `Serverless` instance).
 - `lib/serverless.ts`: the `Serverless` class. Core classes in `lib/classes/`, plugins in
   `lib/plugins/` (AWS provider in `lib/plugins/aws/`), config loading in `lib/configuration/`.
-- `types/index.d.ts`: public configuration types (`AWS`) and the `Serverless` default export.
+- `types/index.d.ts`: the package's type entry: re-exports the configuration types and the
+  `Serverless` default export. `types/aws.d.ts` (`AWS`) is generated from the configuration schema
+  by `pnpm run generate-types`: never edit it by hand; regenerate it after any schema change.
 - `dist/` (generated, ignored): the published package root, built by `scripts/build.ts`.
 
 ## Conventions
