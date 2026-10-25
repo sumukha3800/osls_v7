@@ -9,7 +9,7 @@ osls v4 is a major release with internal upgrades and new capabilities:
 
 ## osls vs Serverless Framework
 
-This guide is for upgrading the **`osls`** CLI (`npm install osls@4`), not [Serverless Framework](https://github.com/serverless/serverless). Both projects use "v3" and "v4" version numbers, but they are **different projects**.
+This guide is for upgrading the **`osls`** CLI (`npm install osls-ts7@4`), not [Serverless Framework](https://github.com/serverless/serverless). Both projects use "v3" and "v4" version numbers, but they are **different projects**.
 
 **History (osls v3):** osls v3 began as a fork of Serverless Framework v3. The repo was `oss-serverless/serverless` on GitHub and `osls` in npm. For clarity, the GitHub repo has been renamed to `oss-serverless/osls` to match.
 
@@ -22,7 +22,7 @@ If you are coming from Serverless Framework v3, you can upgrade to osls v4 direc
 If you do not have Serverless Framework installed, install osls globally:
 
 ```bash
-npm install -g osls@4
+npm install -g osls-ts7@4
 ```
 
 This makes the `osls`, `sls`, and `serverless` commands available.
@@ -31,7 +31,7 @@ If you are migrating from Serverless Framework, remove the upstream `serverless`
 
 ```bash
 npm uninstall -g serverless   # remove upstream Serverless Framework, if installed
-npm install -g osls@4         # provides the osls, sls, and serverless commands
+npm install -g osls-ts7@4         # provides the osls-ts7, osls, sls, and serverless commands
 serverless --version          # now resolves to osls
 ```
 
@@ -39,10 +39,10 @@ serverless --version          # now resolves to osls
 
 These commands were deprecated (and broken) in v3 and are removed in v4:
 
-| Removed command | Replacement                                        |
-| --------------- | -------------------------------------------------- |
-| `sls upgrade`   | `npm install -g osls@4` (or the dist-tag you need) |
-| `sls uninstall` | `npm uninstall -g osls`                            |
+| Removed command | Replacement                                            |
+| --------------- | ------------------------------------------------------ |
+| `sls upgrade`   | `npm install -g osls-ts7@4` (or the dist-tag you need) |
+| `sls uninstall` | `npm uninstall -g osls`                                |
 
 ## Breaking changes
 
@@ -55,7 +55,7 @@ osls is written in TypeScript and published as ES modules with type declarations
 - Plugins written as CommonJS or ES modules keep working. The `@serverless/utils/config` and `@serverless/utils/log` compatibility aliases keep working for `require()` and `import`.
 - Plugins that deep-require osls internal modules (`osls/lib/...`) get ES modules through Node.js's `require()` of ES modules: a module's default export is on `.default`. Internal modules are not part of the public plugin API.
 - TypeScript service configurations (`serverless.ts`, `serverless.mts`) run on Node.js's built-in type stripping, with [tsx](https://tsx.is) as the fallback for syntax Node.js cannot strip (such as `enum`), extensionless relative imports and tsconfig `paths`. The `typescript` package is no longer a dependency of osls.
-- Configuration types: `import type { AWS } from 'osls'`. They are generated from the configuration schema, so they no longer include `org`, `app`, `outputs`, `dashboard` or `provider.enterprise`, which the schema rejects.
+- Configuration types: `import type { AWS } from 'osls-ts7'`. They are generated from the configuration schema, so they no longer include `org`, `app`, `outputs`, `dashboard` or `provider.enterprise`, which the schema rejects.
 - Plugin API types (`Plugin`, `PluginUtils`, `CliOptions` and more) are exported from `osls`: see [TypeScript](typescript.md).
 - The custom resource Lambda functions osls deploys are ES modules (Node.js Lambda runtimes support them).
 

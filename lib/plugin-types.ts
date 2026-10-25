@@ -1,5 +1,5 @@
 // Types of the plugin API, exported from the package entry:
-// `import type { Plugin, PluginConstructor, PluginUtils } from 'osls'`
+// `import type { Plugin, PluginConstructor, PluginUtils } from 'osls-ts7'`
 // See docs/guides/plugins for the behaviour behind them
 import type Serverless from './serverless.ts';
 import type { OptionSchema, PluginCommandConfig } from './cli/commands-schema/types.ts';

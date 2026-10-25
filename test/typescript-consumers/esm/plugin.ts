@@ -1,4 +1,4 @@
-import type Serverless from 'osls';
+import type Serverless from 'osls-ts7';
 import type {
   AwsFunctionEvent,
   CliOptions,
@@ -9,7 +9,7 @@ import type {
   PluginConstructor,
   PluginUtils,
   VariableSource,
-} from 'osls';
+} from 'osls-ts7';
 
 export default class GreetingPlugin implements Plugin {
   serverless: Serverless;

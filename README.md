@@ -4,6 +4,8 @@ osls, short for Open Serverless, is an open-source command-line tool for deployi
 
 osls v4 continues the osls project that began as a maintained fork of [Serverless Framework](https://github.com/serverless/serverless) v3. It is independent from upstream Serverless Framework v4 and does not use Serverless Dashboard, Console, or licensing services. It remains compatible with most Serverless Framework v3 service configurations, with the v4 breaking changes documented in the [upgrade guide](./docs/guides/upgrading-to-v4.md).
 
+This repository publishes **`osls-ts7`**: osls v4 written in TypeScript 7, shipped as ES modules for Node.js 22 and 24, with type declarations for the service configuration and the plugin API (`import type { AWS, Plugin } from 'osls-ts7'`). It is a fork of [oss-serverless/osls](https://github.com/oss-serverless/osls); see the [TypeScript guide](./docs/guides/typescript.md).
+
 osls v4 is the current stable release. The osls v3 line lives on the [`3.x` branch](https://github.com/oss-serverless/osls/tree/3.x) and continues to receive bug and security fixes. If you are coming from osls v3 or Serverless Framework v3, start with [Upgrading to v4](./docs/guides/upgrading-to-v4.md).
 
 ## Installation
@@ -14,12 +16,12 @@ If you are replacing a global Serverless Framework installation, remove it first
 
 ```sh
 npm uninstall -g serverless
-npm install -g osls@4
+npm install -g osls-ts7@4
 
 osls --version
 ```
 
-The package provides the `osls`, `sls`, and `serverless` commands.
+The package provides the `osls-ts7`, `osls`, `sls`, and `serverless` commands.
 
 ## Documentation
 
@@ -46,7 +48,7 @@ This repository was created and is maintained by [Bref](https://bref.sh) maintai
 - The documentation is focused on the current osls release and AWS usage. Documentation for non-AWS providers has been removed.
 - New AWS Lambda runtimes are kept up to date.
 - osls is published as an npm package only. There is no standalone binary distribution.
-- osls is written in TypeScript and published as ES modules with type declarations. TypeScript service configurations run on Node.js's built-in type stripping, and configuration types are available with `import type { AWS } from 'osls'`.
+- osls is written in TypeScript and published as ES modules with type declarations. TypeScript service configurations run on Node.js's built-in type stripping, and configuration types are available with `import type { AWS } from 'osls-ts7'`.
 - Internal AWS calls use AWS SDK for JavaScript v3 in osls v4, including support for IAM Identity Center credentials.
 - Known inherited dependency vulnerabilities have been fixed.
 - Serverless Dashboard, Enterprise, and Console features have been removed. If you rely on those hosted upstream services, use upstream Serverless Framework instead.

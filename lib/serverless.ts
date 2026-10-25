@@ -148,7 +148,7 @@ class Serverless {
           'Cannot run a local osls installation with an outdated global version.',
           'Please upgrade via:',
           '',
-          colors.bold('npm install -g osls@4'),
+          colors.bold('npm install -g osls-ts7@4'),
           colors.gray(
             'Note: The latest 4.x release can run any locally installed osls 4.x version.'
           ),

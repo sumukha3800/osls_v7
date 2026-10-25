@@ -4,11 +4,11 @@ Get started with the osls open-source CLI and Amazon Web Services in minutes.
 
 ## Installation
 
-Install the `osls` module via npm. If you are replacing a global Serverless Framework installation, remove it first so the `serverless` command resolves to osls:
+Install the `osls-ts7` package via npm. If you are replacing a global Serverless Framework installation, remove it first so the `serverless` command resolves to osls:
 
 ```bash
 npm uninstall -g serverless
-npm install -g osls@4
+npm install -g osls-ts7@4
 ```
 
 _Requires Node.js `^22.18.0 || ^24.0.0`. If you don’t already have a supported Node.js version on your machine, [install it first](https://nodejs.org/)._

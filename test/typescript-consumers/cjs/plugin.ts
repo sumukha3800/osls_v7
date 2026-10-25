@@ -1,5 +1,5 @@
-import type Serverless from 'osls';
-import type { CliOptions, Hooks, Plugin, PluginConstructor, PluginUtils } from 'osls';
+import type Serverless from 'osls-ts7';
+import type { CliOptions, Hooks, Plugin, PluginConstructor, PluginUtils } from 'osls-ts7';
 
 class StagePlugin implements Plugin {
   hooks: Hooks;

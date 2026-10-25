@@ -64,8 +64,8 @@ jobs:
           cd "$RUNNER_TEMP/consumer"
           npm init -y > /dev/null
           npm install "$PACKAGE_PATH"
-          npx osls --version
-          npx osls print
+          npx osls-ts7 --version
+          npx osls-ts7 print
 
       - name: Upload tested tarball
         uses: actions/upload-artifact@v7

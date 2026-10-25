@@ -10,7 +10,7 @@ Write `serverless.ts` (or `serverless.mts`) and check it against the `AWS` type 
 
 ```ts
 // serverless.ts
-import type { AWS } from 'osls';
+import type { AWS } from 'osls-ts7';
 
 export default {
   service: 'users',
@@ -67,7 +67,7 @@ keeps the configuration loadable by Node.js type stripping. Run `npx tsc` to che
 `custom` accepts any properties. Type the ones the service uses:
 
 ```ts
-import type { AWS } from 'osls';
+import type { AWS } from 'osls-ts7';
 
 interface Custom {
   tableName: string;
@@ -86,8 +86,8 @@ The plugin API types are exported from `osls`:
 
 ```ts
 // greeting-plugin.ts
-import type Serverless from 'osls';
-import type { CliOptions, Hooks, Plugin, PluginCommand, PluginUtils } from 'osls';
+import type Serverless from 'osls-ts7';
+import type { CliOptions, Hooks, Plugin, PluginCommand, PluginUtils } from 'osls-ts7';
 
 export default class GreetingPlugin implements Plugin {
   hooks: Hooks;

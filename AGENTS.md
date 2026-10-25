@@ -1,7 +1,7 @@
 # AGENTS.md
 
 osls (Open Serverless) is a fork of Serverless Framework v3, maintained by the Bref team. This
-fork is written in TypeScript 7, ships as ES modules only, and supports Node.js `^22.18.0 || ^24.0.0`.
+fork, published on npm as `osls-ts7`, is written in TypeScript 7, ships as ES modules only, and supports Node.js `^22.18.0 || ^24.0.0`.
 
 ## Layout
 
