@@ -90,6 +90,16 @@ const durableSnapStartSupportedManagedRuntimes = new Set([
 ]);
 
 class AwsCompileFunctions {
+  declare hooks: any;
+  declare options: any;
+  declare packagePath: any;
+  declare provider: any;
+  declare s3ClientPromisesByRegion: any;
+  declare seenTargetExecutionPermissionKeys: any;
+  declare seenTargetExecutionPermissionObjects: any;
+  declare serverless: any;
+  declare targetAliasesInitialized: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
@@ -198,7 +208,7 @@ class AwsCompileFunctions {
 
   async compileFunction(functionName) {
     const cfTemplate = this.serverless.service.provider.compiledCloudFormationTemplate;
-    const functionResource = this.cfLambdaFunctionTemplate();
+    const functionResource: Record<string, any> = this.cfLambdaFunctionTemplate();
     const functionObject = this.serverless.service.getFunction(functionName);
     this.ensureTargetAliasesInitialized();
     functionObject.package = functionObject.package || {};
@@ -227,7 +237,7 @@ class AwsCompileFunctions {
       ({ functionImageUri, functionImageSha } =
         await this.provider.resolveImageUriAndSha(functionName));
       if (isObject(functionObject.image)) {
-        const imageConfig = {};
+        const imageConfig: Record<string, any> = {};
         if (functionObject.image.command) {
           imageConfig.Command = functionObject.image.command;
         }
@@ -584,7 +594,7 @@ class AwsCompileFunctions {
         delete layerConfig.properties.Content.S3Key;
       }
 
-      const functionProperties = structuredClone(functionResource.Properties);
+      const functionProperties: Record<string, any> = structuredClone(functionResource.Properties);
       // In `image` case, we assume it's path to ECR image digest
       if (!functionObject.image) delete functionProperties.Code;
       // Properties applied to function globally (not specific to version or alias)
@@ -709,7 +719,7 @@ class AwsCompileFunctions {
       (this.serverless.service.provider.logs && this.serverless.service.provider.logs.lambda);
 
     if (logs) {
-      const loggingConfig = {};
+      const loggingConfig: Record<string, any> = {};
 
       if (logs.applicationLogLevel) {
         loggingConfig.ApplicationLogLevel = logs.applicationLogLevel;
@@ -948,7 +958,7 @@ class AwsCompileFunctions {
       return;
     }
 
-    const destinationConfig = {};
+    const destinationConfig: Record<string, any> = {};
 
     if (destinations) {
       const executionRole = this.provider.getCustomExecutionRole(functionObject);
@@ -1187,7 +1197,8 @@ class AwsCompileFunctions {
     };
   }
 
-  cfOutputLatestVersionTemplate() {
+  // A CloudFormation output; `Value` is set by the caller
+  cfOutputLatestVersionTemplate(): { Description: string; Value: any } {
     return {
       Description: 'Current Lambda function version',
       Value: 'Value',

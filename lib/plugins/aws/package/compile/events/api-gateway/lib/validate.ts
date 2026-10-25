@@ -79,179 +79,181 @@ export default {
       );
     }
 
-    Object.entries(this.serverless.service.functions).forEach(([functionName, functionObject]) => {
-      (functionObject.events || []).forEach((event) => {
-        if (event.http) {
-          const http = this.getHttp(event);
+    Object.entries<any>(this.serverless.service.functions).forEach(
+      ([functionName, functionObject]) => {
+        (functionObject.events || []).forEach((event) => {
+          if (event.http) {
+            const http = this.getHttp(event);
 
-          http.path = this.getHttpPath(http);
-          http.method = this.getHttpMethod(http);
+            http.path = this.getHttpPath(http);
+            http.method = this.getHttpMethod(http);
 
-          if (http.authorizer) {
-            http.authorizer = this.getAuthorizer(http);
-          }
-
-          if (http.cors) {
-            http.cors = this.getCors(http);
-
-            const cors = hasOwn(corsPreflight, http.path) ? corsPreflight[http.path] : {};
-
-            cors.headers = union(http.cors.headers, cors.headers);
-            cors.methods = union(http.cors.methods, cors.methods);
-            cors.origins = union(http.cors.origins, cors.origins);
-            cors.origin = http.cors.origin;
-            cors.allowCredentials = cors.allowCredentials || http.cors.allowCredentials;
-
-            // when merging, last one defined wins
-            if (http.cors.maxAge) {
-              cors.maxAge = http.cors.maxAge;
+            if (http.authorizer) {
+              http.authorizer = this.getAuthorizer(http);
             }
 
-            if (http.cors.cacheControl) {
-              cors.cacheControl = http.cors.cacheControl;
-            }
+            if (http.cors) {
+              http.cors = this.getCors(http);
 
-            corsPreflight[http.path] = cors;
-          }
+              const cors = hasOwn(corsPreflight, http.path) ? corsPreflight[http.path] : {};
 
-          http.integration = this.getIntegration(http);
+              cors.headers = union(http.cors.headers, cors.headers);
+              cors.methods = union(http.cors.methods, cors.methods);
+              cors.origins = union(http.cors.origins, cors.origins);
+              cors.origin = http.cors.origin;
+              cors.allowCredentials = cors.allowCredentials || http.cors.allowCredentials;
 
-          // Validate transferMode if provided
-          if (http.response && http.response.transferMode) {
-            const validTransferModes = ['BUFFERED', 'STREAM'];
-            const transferMode = http.response.transferMode.toUpperCase();
-
-            if (!validTransferModes.includes(transferMode)) {
-              throw new ServerlessError(
-                [
-                  `Invalid transferMode "${http.response.transferMode}" in function "${functionName}".`,
-                  `Valid values are: ${validTransferModes.join(', ')}.`,
-                ].join(' '),
-                'API_GATEWAY_INVALID_TRANSFER_MODE'
-              );
-            }
-
-            // transferMode is only supported for AWS_PROXY and HTTP_PROXY integrations
-            if (http.integration !== 'AWS_PROXY' && http.integration !== 'HTTP_PROXY') {
-              throw new ServerlessError(
-                [
-                  'transferMode can only be used with AWS_PROXY or HTTP_PROXY integrations.',
-                  `Function "${functionName}" is using ${http.integration} integration.`,
-                ].join(' '),
-                'API_GATEWAY_TRANSFER_MODE_UNSUPPORTED_INTEGRATION'
-              );
-            }
-
-            // Normalize transferMode to uppercase
-            http.response.transferMode = transferMode;
-          }
-
-          if (http.integration === 'HTTP' || http.integration === 'HTTP_PROXY') {
-            if (!http.request || !http.request.uri) {
-              const errorMessage = [
-                `You need to set the request uri when using the ${http.integration} integration.`,
-              ];
-              throw new ServerlessError(errorMessage, 'API_GATEWAY_MISSING_REQUEST_URI');
-            }
-
-            http.connectionType = this.getConnectionType(http);
-
-            if (http.connectionType && http.connectionType === 'VPC_LINK' && !http.connectionId) {
-              const errorMessage = [
-                `You need to set connectionId when using ${http.connectionType} connectionType.`,
-              ];
-              throw new ServerlessError(errorMessage, 'API_GATEWAY_MISSING_CONNECTION_ID');
-            }
-          }
-
-          if (http.integration === 'AWS' || http.integration === 'HTTP') {
-            http.request = this.getRequest(http);
-            http.request.passThrough = this.getRequestPassThrough(http);
-            http.response = this.getResponse(http);
-            if (http.integration === 'AWS' && !Object.keys(http.response).length) {
-              http.response = {
-                statusCodes: DEFAULT_STATUS_CODES,
-              };
-            }
-          } else if (http.integration === 'AWS_PROXY' || http.integration === 'HTTP_PROXY') {
-            // show a warning when request / response config is used with AWS_PROXY (LAMBDA-PROXY)
-            if (http.request) {
-              const keys = Object.keys(http.request);
-              const allowedKeys =
-                http.integration === 'AWS_PROXY'
-                  ? ['parameters', 'schema', 'schemas']
-                  : ['parameters', 'uri', 'schema', 'schemas'];
-
-              if (keys.some((key) => !allowedKeys.includes(key))) {
-                const requestWarningMessage = [
-                  `You're using the ${http.integration} in combination with a request`,
-                  ` configuration in your function "${functionName}". Only the `,
-                  allowedKeys.map((value) => `request.${value}`).join(', '),
-                  ` configs are available in conjunction with ${http.integration}.`,
-                  ' osls will remove this configuration automatically',
-                  ' before deployment.',
-                ].join('');
-                log.warning(requestWarningMessage);
-                for (const key of keys) {
-                  if (!allowedKeys.includes(key)) {
-                    delete http.request[key];
-                  }
-                }
+              // when merging, last one defined wins
+              if (http.cors.maxAge) {
+                cors.maxAge = http.cors.maxAge;
               }
-              if (Object.keys(http.request).length === 0) {
-                // No keys left, delete the request object
-                delete http.request;
-              } else {
-                http.request = this.getRequest(http);
-              }
-            }
-            if (http.response) {
-              const transferMode = http.response.transferMode;
-              const hasOtherResponseConfig = Object.keys(http.response).some(
-                (key) => key !== 'transferMode'
-              );
 
-              if (hasOtherResponseConfig) {
-                log.warning(
+              if (http.cors.cacheControl) {
+                cors.cacheControl = http.cors.cacheControl;
+              }
+
+              corsPreflight[http.path] = cors;
+            }
+
+            http.integration = this.getIntegration(http);
+
+            // Validate transferMode if provided
+            if (http.response && http.response.transferMode) {
+              const validTransferModes = ['BUFFERED', 'STREAM'];
+              const transferMode = http.response.transferMode.toUpperCase();
+
+              if (!validTransferModes.includes(transferMode)) {
+                throw new ServerlessError(
                   [
-                    `You're using the ${http.integration} in combination with response`,
-                    ` configuration in your function "${functionName}".`,
-                    ' osls will remove this configuration automatically before deployment.',
-                    transferMode ? ' (transferMode will be preserved)' : '',
-                  ].join('')
+                    `Invalid transferMode "${http.response.transferMode}" in function "${functionName}".`,
+                    `Valid values are: ${validTransferModes.join(', ')}.`,
+                  ].join(' '),
+                  'API_GATEWAY_INVALID_TRANSFER_MODE'
                 );
               }
 
-              // Preserve transferMode if present, otherwise delete the entire response object
-              if (transferMode) {
-                http.response = { transferMode };
-              } else {
-                delete http.response;
+              // transferMode is only supported for AWS_PROXY and HTTP_PROXY integrations
+              if (http.integration !== 'AWS_PROXY' && http.integration !== 'HTTP_PROXY') {
+                throw new ServerlessError(
+                  [
+                    'transferMode can only be used with AWS_PROXY or HTTP_PROXY integrations.',
+                    `Function "${functionName}" is using ${http.integration} integration.`,
+                  ].join(' '),
+                  'API_GATEWAY_TRANSFER_MODE_UNSUPPORTED_INTEGRATION'
+                );
+              }
+
+              // Normalize transferMode to uppercase
+              http.response.transferMode = transferMode;
+            }
+
+            if (http.integration === 'HTTP' || http.integration === 'HTTP_PROXY') {
+              if (!http.request || !http.request.uri) {
+                const errorMessage = [
+                  `You need to set the request uri when using the ${http.integration} integration.`,
+                ];
+                throw new ServerlessError(errorMessage, 'API_GATEWAY_MISSING_REQUEST_URI');
+              }
+
+              http.connectionType = this.getConnectionType(http);
+
+              if (http.connectionType && http.connectionType === 'VPC_LINK' && !http.connectionId) {
+                const errorMessage = [
+                  `You need to set connectionId when using ${http.connectionType} connectionType.`,
+                ];
+                throw new ServerlessError(errorMessage, 'API_GATEWAY_MISSING_CONNECTION_ID');
               }
             }
-          }
 
-          const provider = this.serverless.getProvider('aws');
-          const stage = provider.getStage();
-          const validAPIGatewayStageNamePattern = /^[-_a-zA-Z0-9]+$/;
-          if (!validAPIGatewayStageNamePattern.test(stage)) {
-            throw new ServerlessError(
-              [
-                `Invalid stage name ${stage}:`,
-                'it should contains only [-_a-zA-Z0-9] for AWS provider if http event are present',
-                'according to API Gateway limitation.',
-              ].join(' '),
-              'API_GATEWAY_INVALID_STAGE_NAME'
-            );
-          }
+            if (http.integration === 'AWS' || http.integration === 'HTTP') {
+              http.request = this.getRequest(http);
+              http.request.passThrough = this.getRequestPassThrough(http);
+              http.response = this.getResponse(http);
+              if (http.integration === 'AWS' && !Object.keys(http.response).length) {
+                http.response = {
+                  statusCodes: DEFAULT_STATUS_CODES,
+                };
+              }
+            } else if (http.integration === 'AWS_PROXY' || http.integration === 'HTTP_PROXY') {
+              // show a warning when request / response config is used with AWS_PROXY (LAMBDA-PROXY)
+              if (http.request) {
+                const keys = Object.keys(http.request);
+                const allowedKeys =
+                  http.integration === 'AWS_PROXY'
+                    ? ['parameters', 'schema', 'schemas']
+                    : ['parameters', 'uri', 'schema', 'schemas'];
 
-          events.push({
-            functionName,
-            http,
-          });
-        }
-      });
-    });
+                if (keys.some((key) => !allowedKeys.includes(key))) {
+                  const requestWarningMessage = [
+                    `You're using the ${http.integration} in combination with a request`,
+                    ` configuration in your function "${functionName}". Only the `,
+                    allowedKeys.map((value) => `request.${value}`).join(', '),
+                    ` configs are available in conjunction with ${http.integration}.`,
+                    ' osls will remove this configuration automatically',
+                    ' before deployment.',
+                  ].join('');
+                  log.warning(requestWarningMessage);
+                  for (const key of keys) {
+                    if (!allowedKeys.includes(key)) {
+                      delete http.request[key];
+                    }
+                  }
+                }
+                if (Object.keys(http.request).length === 0) {
+                  // No keys left, delete the request object
+                  delete http.request;
+                } else {
+                  http.request = this.getRequest(http);
+                }
+              }
+              if (http.response) {
+                const transferMode = http.response.transferMode;
+                const hasOtherResponseConfig = Object.keys(http.response).some(
+                  (key) => key !== 'transferMode'
+                );
+
+                if (hasOtherResponseConfig) {
+                  log.warning(
+                    [
+                      `You're using the ${http.integration} in combination with response`,
+                      ` configuration in your function "${functionName}".`,
+                      ' osls will remove this configuration automatically before deployment.',
+                      transferMode ? ' (transferMode will be preserved)' : '',
+                    ].join('')
+                  );
+                }
+
+                // Preserve transferMode if present, otherwise delete the entire response object
+                if (transferMode) {
+                  http.response = { transferMode };
+                } else {
+                  delete http.response;
+                }
+              }
+            }
+
+            const provider = this.serverless.getProvider('aws');
+            const stage = provider.getStage();
+            const validAPIGatewayStageNamePattern = /^[-_a-zA-Z0-9]+$/;
+            if (!validAPIGatewayStageNamePattern.test(stage)) {
+              throw new ServerlessError(
+                [
+                  `Invalid stage name ${stage}:`,
+                  'it should contains only [-_a-zA-Z0-9] for AWS provider if http event are present',
+                  'according to API Gateway limitation.',
+                ].join(' '),
+                'API_GATEWAY_INVALID_STAGE_NAME'
+              );
+            }
+
+            events.push({
+              functionName,
+              http,
+            });
+          }
+        });
+      }
+    );
 
     return {
       events,
@@ -528,7 +530,11 @@ export default {
       if (response.statusCodes) {
         response.statusCodes = safeShallowAssign({}, response.statusCodes);
 
-        if (!Object.values(response.statusCodes).some((code) => code.pattern === '')) {
+        if (
+          !Object.values(response.statusCodes).some(
+            (code: Record<string, any>) => code.pattern === ''
+          )
+        ) {
           response.statusCodes['200'] = DEFAULT_STATUS_CODES['200'];
         }
       } else {

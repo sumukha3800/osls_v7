@@ -11,7 +11,7 @@ import {
 
 describe('safe-object', () => {
   afterEach(() => {
-    delete Object.prototype.polluted;
+    delete (Object.prototype as { polluted?: unknown }).polluted;
   });
 
   it('distinguishes own and inherited properties with hasOwn', () => {
@@ -36,7 +36,7 @@ describe('safe-object', () => {
     });
     expect(Object.getOwnPropertyDescriptor(target, 'constructor').value).to.equal('ctor');
     expect(Object.getOwnPropertyDescriptor(target, 'prototype').value).to.equal('proto');
-    expect({}.polluted).to.equal(undefined);
+    expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
   });
 
   it('defines unsafe keys with pollution-robust own data descriptors', () => {
@@ -76,13 +76,13 @@ describe('safe-object', () => {
       if (originalGetDescriptor) {
         Object.defineProperty(Object.prototype, 'get', originalGetDescriptor);
       } else {
-        delete Object.prototype.get;
+        delete (Object.prototype as { get?: unknown }).get;
       }
 
       if (originalSetDescriptor) {
         Object.defineProperty(Object.prototype, 'set', originalSetDescriptor);
       } else {
-        delete Object.prototype.set;
+        delete (Object.prototype as { set?: unknown }).set;
       }
     }
 
@@ -105,7 +105,7 @@ describe('safe-object', () => {
       enumerable: true,
       configurable: true,
     });
-    expect({}.polluted).to.equal(undefined);
+    expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
   });
 
   it('preserves overwrite order in safeShallowAssign', () => {

@@ -15,6 +15,8 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/get-s
   let credentials;
 
   class GetObjectCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
@@ -30,6 +32,8 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/get-s
     }));
 
     class S3Client {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         clientInstances.push(this);

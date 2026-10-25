@@ -44,10 +44,10 @@ function fromPrefixedEnv(prefix) {
   };
 }
 
-function promptMfaCode(mfaSerial) {
+function promptMfaCode(mfaSerial: string) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     let answered = false;
     rl.question(`Enter MFA code for ${mfaSerial}: `, (answer) => {
       answered = true;
@@ -229,7 +229,7 @@ function fromImplicitDefaultProfileWithFallback() {
   };
 }
 
-function getAwsSdkV3CredentialsProviderCacheKey({ provider, profile } = {}) {
+function getAwsSdkV3CredentialsProviderCacheKey({ provider, profile }: Record<string, any> = {}) {
   const stage = provider && provider.getStage ? provider.getStage() : null;
   const stageUpper = stage ? stage.toUpperCase() : null;
   const providerProfile =
@@ -255,7 +255,8 @@ function getAwsSdkV3CredentialsProviderCacheKey({ provider, profile } = {}) {
 
 // Named through the providers it returns, so declarations stay portable
 type AwsSdkV3CredentialsProvider =
-  ReturnType<typeof fromIni> | ReturnType<typeof fromNodeProviderChain>;
+  | ReturnType<typeof fromIni>
+  | ReturnType<typeof fromNodeProviderChain>;
 
 function getAwsSdkV3CredentialsProvider({
   provider,

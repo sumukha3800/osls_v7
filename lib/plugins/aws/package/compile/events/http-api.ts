@@ -36,6 +36,15 @@ const defaultCors = {
 const toSet = (item) => new Set(Array.isArray(item) ? item : [item]);
 
 class HttpApiEvents {
+  declare cfTemplate: any;
+  declare compileIntegration: any;
+  declare compileLambdaPermissions: any;
+  declare config: any;
+  declare hooks: any;
+  declare provider: any;
+  declare resolveConfiguration: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');
@@ -104,7 +113,7 @@ class HttpApiEvents {
   }
   compileApi() {
     if (this.config.id) return;
-    const properties = {
+    const properties: Record<string, any> = {
       Name: this.provider.naming.getHttpApiName(),
       Description: this.provider.naming.getHttpApiDescription(),
       ProtocolType: 'HTTP',
@@ -134,7 +143,7 @@ class HttpApiEvents {
   compileLogGroup() {
     if (!this.config.accessLogFormat) return;
 
-    const resource = {
+    const resource: Record<string, any> = {
       Type: 'AWS::Logs::LogGroup',
       Properties: { LogGroupName: this.provider.naming.getHttpApiLogGroupName() },
     };
@@ -153,7 +162,7 @@ class HttpApiEvents {
   }
   compileStage() {
     if (this.config.id) return;
-    const properties = {
+    const properties: Record<string, any> = {
       ApiId: { Ref: this.provider.naming.getHttpApiLogicalId() },
       StageName: '$default',
       AutoDeploy: true,
@@ -166,7 +175,9 @@ class HttpApiEvents {
       properties.Tags = safeShallowAssign({}, this.serverless.service.provider.tags);
     }
 
-    const resource = (this.cfTemplate.Resources[this.provider.naming.getHttpApiStageLogicalId()] = {
+    const resource: Record<string, any> = (this.cfTemplate.Resources[
+      this.provider.naming.getHttpApiStageLogicalId()
+    ] = {
       Type: 'AWS::ApiGatewayV2::Stage',
       Properties: properties,
     });
@@ -206,7 +217,7 @@ class HttpApiEvents {
         authorizer.name
       );
 
-      const authorizerResource = {
+      const authorizerResource: Record<string, any> = {
         Type: 'AWS::ApiGatewayV2::Authorizer',
         Properties: {
           ApiId: this.getApiIdConfig(),
@@ -264,7 +275,7 @@ class HttpApiEvents {
   compileAuthorizerLambdaPermission({ functionName, functionArn, name, functionObject }) {
     const authorizerPermissionLogicalId =
       this.provider.naming.getLambdaAuthorizerHttpApiPermissionLogicalId(name);
-    const permissionResource = {
+    const permissionResource: Record<string, any> = {
       Type: 'AWS::Lambda::Permission',
       Properties: {
         FunctionName: functionArn || resolveLambdaTarget(functionName, functionObject),
@@ -299,7 +310,7 @@ class HttpApiEvents {
     for (const [routeKey, { targetData, authorizer, authorizationScopes }] of this.config.routes) {
       this.compileLambdaPermissions(targetData);
       this.compileIntegration(targetData);
-      const resource = (this.cfTemplate.Resources[
+      const resource: Record<string, any> = (this.cfTemplate.Resources[
         this.provider.naming.getHttpApiRouteLogicalId(routeKey)
       ] = {
         Type: 'AWS::ApiGatewayV2::Route',
@@ -404,7 +415,7 @@ Object.defineProperties(
             'EXTERNAL_HTTP_API_AUTHORIZERS_CONFIG'
           );
         }
-        for (const [name, authorizerConfig] of Object.entries(userAuthorizers)) {
+        for (const [name, authorizerConfig] of Object.entries<any>(userAuthorizers)) {
           let authorizerFunctionObject;
 
           if (authorizerConfig.type === 'request') {
@@ -482,7 +493,7 @@ Object.defineProperties(
           })}`;
       }
 
-      for (const [functionName, functionData] of Object.entries(
+      for (const [functionName, functionData] of Object.entries<any>(
         this.serverless.service.functions
       )) {
         const routeTargetData = {
@@ -545,7 +556,7 @@ Object.defineProperties(
               );
             }
           }
-          const routeConfig = { targetData: routeTargetData };
+          const routeConfig: Record<string, any> = { targetData: routeTargetData };
           if (authorizer) {
             const { name, scopes, id, type } = (() => {
               if (isObject(authorizer)) return authorizer;

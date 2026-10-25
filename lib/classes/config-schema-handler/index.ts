@@ -6,6 +6,7 @@ import normalizeAjvErrors from './normalize-ajv-errors.ts';
 import resolveAjvValidate from './resolve-ajv-validate.ts';
 import { log, style } from '../../utils/serverless-utils/log.ts';
 import { setByPath } from '../../utils/object-path.ts';
+import type Serverless from '../../serverless.ts';
 
 const FUNCTION_NAME_PATTERN = '^[a-zA-Z0-9-_]+$';
 const ERROR_PREFIX = 'Configuration error';
@@ -73,7 +74,11 @@ const denormalizeUserConfig = (userConfig, { removedValuesMap }) => {
 const configurationValidationResults = new WeakMap();
 
 class ConfigSchemaHandler {
-  constructor(serverless) {
+  // The JSON schema of the service configuration, extended by plugins
+  declare schema: Record<string, any>;
+  declare serverless: Serverless;
+
+  constructor(serverless: Serverless) {
     this.serverless = serverless;
     this.schema = structuredClone(schema);
 
@@ -147,7 +152,7 @@ class ConfigSchemaHandler {
     this.schema.properties[name] = subSchema;
   }
 
-  defineProvider(name, options = {}) {
+  defineProvider(name, options: Record<string, any> = {}) {
     const currentProvider = this.serverless.service.provider.name;
     if (currentProvider !== name) {
       return;
@@ -345,13 +350,21 @@ class ConfigSchemaHandler {
 }
 
 class PropertyCollisionError extends Error {
-  constructor(property) {
+  declare property: string;
+
+  constructor(property: string) {
     super();
     this.property = property;
   }
 }
 
-function addPropertiesToSchema(subSchema, extension = { properties: {}, required: [] }) {
+function addPropertiesToSchema(
+  subSchema: Record<string, any>,
+  extension: { properties?: Record<string, any>; required?: string[] } = {
+    properties: {},
+    required: [],
+  }
+) {
   let collidingExtensionPropertyKey;
   const existingSubSchemaPropertiesKeys = new Set(Object.keys(subSchema.properties));
   Object.keys(extension.properties).some((extensionPropertiesKey) => {

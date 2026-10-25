@@ -5,7 +5,7 @@ export default {
     this.validated.events.forEach((event) => {
       if (event.http.authorizer && event.http.authorizer.arn) {
         const authorizer = event.http.authorizer;
-        const authorizerProperties = {
+        const authorizerProperties: Record<string, any> = {
           AuthorizerResultTtlInSeconds: authorizer.resultTtlInSeconds,
           IdentitySource: authorizer.identitySource,
           Name: authorizer.name,

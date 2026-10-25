@@ -15,8 +15,15 @@ import { NodeHttpHandler } from '@smithy/node-http-handler';
  * @returns {Object} AWS SDK v3 client configuration
  */
 function buildClientConfig(options = {}) {
-  const { credentials, maxAttempts, region, requestHandler, retryMode, ...clientOptions } = options;
-  const config = {
+  const {
+    credentials,
+    maxAttempts,
+    region,
+    requestHandler,
+    retryMode,
+    ...clientOptions
+  }: Record<string, any> = options;
+  const config: Record<string, any> = {
     ...clientOptions,
     region:
       region === undefined
@@ -59,7 +66,7 @@ function getMaxAttempts() {
  * @returns {Object} HTTP configuration
  */
 function buildHttpOptions() {
-  const httpOptions = {};
+  const httpOptions: Record<string, any> = {};
 
   // Socket inactivity timeout, matching the AWS SDK v2 default of 120 seconds. A bare
   // requestTimeout would be warn-only in @smithy/node-http-handler 4.4.0+.

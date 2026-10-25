@@ -7,7 +7,7 @@ const loadUntildify = async ({
   username = 'test-user',
   homedirError,
   userInfoError,
-} = {}) => {
+}: Record<string, any> = {}) => {
   const osStub = {
     homedir: sinon.stub(),
     userInfo: sinon.stub(),

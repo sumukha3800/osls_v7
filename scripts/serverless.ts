@@ -28,7 +28,7 @@ let serverless;
 const keepAliveTimer = setTimeout(() => {}, 60 * 60 * 1000);
 
 let hasBeenFinalized = false;
-const finalize = async ({ error, shouldBeSync } = {}) => {
+const finalize = async ({ error, shouldBeSync }: Record<string, any> = {}) => {
   processLog.debug('finalize %o', { error, shouldBeSync });
   if (hasBeenFinalized) {
     if (error) {
@@ -154,7 +154,11 @@ process.once('uncaughtException', (error) => {
     let variablesMeta;
     let resolverConfiguration;
 
-    const ensureResolvedProperty = (propertyPath) => {
+    // Some callers also pass `{ shouldSilentlyReturnIfLegacyMode }`, which is not used
+    const ensureResolvedProperty: (
+      propertyPath: string,
+      options?: { shouldSilentlyReturnIfLegacyMode?: boolean }
+    ) => boolean = (propertyPath) => {
       if (isPropertyResolved(variablesMeta, propertyPath)) return true;
       variablesMeta = null;
       if (isHelpRequest) return false;

@@ -12,6 +12,8 @@ describe('Custom resource Cognito user pool permissions', () => {
     sentCommands = [];
 
     class LambdaClient {
+      declare config: any;
+
       constructor() {
         this.config = {};
       }
@@ -23,12 +25,16 @@ describe('Custom resource Cognito user pool permissions', () => {
     }
 
     class AddPermissionCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
     }
 
     class RemovePermissionCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -770,6 +776,8 @@ describe('Custom resource Cognito user pool configuration', () => {
     const sentCommands = [];
 
     class CognitoIdentityProviderClient {
+      declare config: any;
+
       constructor() {
         this.config = {};
       }
@@ -783,18 +791,24 @@ describe('Custom resource Cognito user pool configuration', () => {
     }
 
     class ListUserPoolsCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
     }
 
     class DescribeUserPoolCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
     }
 
     class UpdateUserPoolCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }

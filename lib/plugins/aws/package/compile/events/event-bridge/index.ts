@@ -4,6 +4,11 @@ import resolveLambdaTarget from '../../../../utils/resolve-lambda-target.ts';
 import isObject from 'type/object/is.js';
 
 class AwsCompileEventBridgeEvents {
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

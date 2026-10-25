@@ -20,7 +20,7 @@ const getMessage = (props, serviceConfig) => {
   return null;
 };
 
-export default (code, props, { serviceConfig } = {}) => {
+export default (code, props, { serviceConfig }: Record<string, any> = {}) => {
   const msg = getMessage(props, serviceConfig);
   if (msg) {
     logDeprecation(code, msg, { serviceConfig });

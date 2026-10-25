@@ -66,6 +66,18 @@ const resolveSourceValuesVariables = (sourceValues) => {
 };
 
 class VariablesResolver {
+  declare configuration: any;
+  declare fulfilledSources: any;
+  declare isPropertyDeferred: any;
+  declare options: any;
+  declare propertyDependenciesMap: any;
+  declare propertyResolutionNestDepthMap: any;
+  declare resolveProperty: any;
+  declare resolveSource: any;
+  declare serviceDir: any;
+  declare sources: any;
+  declare variablesMeta: any;
+
   constructor({
     serviceDir,
     configuration,
@@ -95,11 +107,13 @@ class VariablesResolver {
     // and cached source resolver may block access to already resolved structure)
     const resolutionBatchId = ++lastResolutionBatchId;
 
+    // The constructor returns a promise and not an instance (see the default export), which the
+    // class type cannot express, hence the `any` casts below
     if (propertyPathsToResolve) {
       return Promise.all(
-        Array.from(propertyPathsToResolve, (propertyPathToResolve) =>
+        Array.from(propertyPathsToResolve, (propertyPathToResolve: string) =>
           Promise.all(
-            Array.from(variablesMeta.keys(), (propertyPath) => {
+            Array.from(variablesMeta.keys(), (propertyPath: string) => {
               if (
                 propertyPathToResolve.startsWith(`${propertyPath}\0`) ||
                 propertyPath === propertyPathToResolve ||
@@ -112,7 +126,7 @@ class VariablesResolver {
             })
           )
         )
-      ).then(() => {});
+      ).then(() => {}) as any;
     }
 
     return Promise.all(
@@ -120,7 +134,7 @@ class VariablesResolver {
         if (this.isPropertyDeferred(propertyPath)) return null;
         return this.resolveProperty(resolutionBatchId, propertyPath);
       })
-    ).then(() => {});
+    ).then(() => {}) as any;
   }
   async resolveVariables(resolutionBatchId, propertyPath, valueMeta) {
     // Resolve all variables configured in given string value.
@@ -194,7 +208,7 @@ class VariablesResolver {
     // Work on a copy, as with multiple resolution batches, there's a rare possibility of same
     // variable being resolved multiple times at once
     const sources = Array.from(variableMeta.sources);
-    let sourceData = sources[0];
+    let sourceData: Record<string, any> = sources[0];
     do {
       const sourceMeta = this.sources[sourceData.type];
       if (!sourceMeta) {
@@ -244,7 +258,7 @@ class VariablesResolver {
         return;
       }
       sources.shift();
-      const previousSourceData = sourceData;
+      const previousSourceData: Record<string, any> = sourceData;
       sourceData = sources[0];
       if (!sourceData) {
         // Last source reported no value and there's no further fallback, we treat it as an error
@@ -291,7 +305,9 @@ class VariablesResolver {
             return await this.resolveSource(resolutionBatchId, propertyPath, sourceData);
           } catch (error) {
             if (isError(error)) {
-              if (error.code === 'MISSING_VARIABLE_DEPENDENCY') throw error;
+              if ((error as Error & { code?: string }).code === 'MISSING_VARIABLE_DEPENDENCY') {
+                throw error;
+              }
               if (
                 error.constructor.name === 'ServerlessError' &&
                 error.message.startsWith('Cannot resolve variable at ')
@@ -454,7 +470,7 @@ class VariablesResolver {
       ? `${dependencyPropertyPathKeys.join('\0')}\0`
       : '';
     await Promise.all(
-      Array.from(this.variablesMeta.keys()).map(async (propertyPath) => {
+      Array.from(this.variablesMeta.keys()).map(async (propertyPath: Record<string, any>) => {
         if (!propertyPath.startsWith(depPropertyNestPath)) return;
         this.registerCrossPropertyDependency(dependentPropertyPath, propertyPath);
         await this.resolveProperty(resolutionBatchId, propertyPath);
@@ -699,13 +715,21 @@ export default async (data) => {
   ensurePlainObject(data.configuration);
   ensureMap(data.variablesMeta);
   ensurePlainObject(data.sources);
-  for (const { resolve } of Object.values(data.sources)) ensurePlainFunction(resolve);
+  for (const { resolve } of Object.values<{ resolve: unknown }>(data.sources)) {
+    ensurePlainFunction(resolve);
+  }
   ensurePlainObject(data.options);
   ensureSet(data.fulfilledSources);
   ensurePlainFunction(data.isPropertyDeferred, { isOptional: true });
   ensureSet(data.propertyPathsToResolve, { isOptional: true });
   if (data.propertyPathsToResolve) {
-    data.propertyPathsToResolve = new Set(Array.from(data.propertyPathsToResolve, ensureString));
+    data.propertyPathsToResolve = new Set(
+      // `ensureString` also receives the index as its options argument, which it ignores
+      Array.from(
+        data.propertyPathsToResolve as Iterable<unknown>,
+        ensureString as (value: unknown) => string
+      )
+    );
   }
 
   // Note: Below construct returns a promise, and not an actual VariablesResolver instance

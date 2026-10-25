@@ -11,7 +11,27 @@ import validateStage from '../utils/validate-stage.ts';
 // const isLocallyInstalled = require('../cli/is-locally-installed');
 
 class Service {
-  constructor(serverless, data) {
+  declare app: any;
+  declare configValidationMode: any;
+  declare custom: any;
+  declare deprecationNotificationMode: any;
+  declare disabledDeprecations: any;
+  declare functions: any;
+  declare initialServerlessConfig: any;
+  declare layers: any;
+  declare org: any;
+  declare outputs: any;
+  declare package: any;
+  declare plugins: any;
+  declare pluginsData: any;
+  declare provider: any;
+  declare resources: any;
+  declare serverless: any;
+  declare service: any;
+  declare serviceFilename: any;
+  declare serviceObject: any;
+
+  constructor(serverless, data?) {
     // #######################################################################
     // ## KEEP SYNCHRONIZED WITH EQUIVALENT IN ~/lib/plugins/print/print.js ##
     // #######################################################################

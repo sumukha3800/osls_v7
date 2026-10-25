@@ -34,7 +34,7 @@ const MONTH_NAMES = [
 
 const pad = (number, width = 2) => String(number).padStart(width, '0');
 
-const utcMsFromParts = (year, month, day, hour, minute, second, fraction) => {
+const utcMsFromParts = (year, month, day, hour?, minute?, second?, fraction?) => {
   const [numericYear, numericMonth, numericDay, numericHour, numericMinute, numericSecond] = [
     year,
     month,
@@ -80,7 +80,9 @@ const parseUtcMs = (input) => {
     return NaN;
   }
   const match = input.match(EXTENDED_DATE_TIME_PATTERN) || input.match(BASIC_DATE_TIME_PATTERN);
-  if (match) return utcMsFromParts(...match.slice(1, 8));
+  if (match) {
+    return utcMsFromParts(...(match.slice(1, 8) as Parameters<typeof utcMsFromParts>));
+  }
   // A signed integer is a mistyped epoch or relative value, but native
   // parsing would accept it as a year (V8 parses "-3600" as the year 3600)
   if (/^[+-]\d+$/.test(input)) return NaN;

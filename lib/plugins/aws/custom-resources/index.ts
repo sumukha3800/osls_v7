@@ -185,7 +185,7 @@ async function addCustomResourceToService(awsProvider, resourceName, iamRoleStat
     runtimeVersion = providerRuntime;
   }
 
-  const customResourceFunction = {
+  const customResourceFunction: Record<string, any> = {
     Type: 'AWS::Lambda::Function',
     Properties: {
       Code: {

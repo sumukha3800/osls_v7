@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import {
   LambdaClient,
   GetFunctionCommand,
@@ -274,7 +275,7 @@ describe('AwsRollbackFunction', () => {
       });
 
       afterEach(() => {
-        LambdaClient.prototype.send.restore();
+        (LambdaClient.prototype.send as SinonStub).restore();
       });
 
       it('should return the requested function', async () => {
@@ -338,7 +339,7 @@ describe('AwsRollbackFunction', () => {
       });
 
       afterEach(() => {
-        LambdaClient.prototype.send.restore();
+        (LambdaClient.prototype.send as SinonStub).restore();
       });
 
       it('should translate the error message to a custom error message', () => {
@@ -368,7 +369,7 @@ describe('AwsRollbackFunction', () => {
       });
 
       afterEach(() => {
-        LambdaClient.prototype.send.restore();
+        (LambdaClient.prototype.send as SinonStub).restore();
       });
 
       it('should re-throw the error without translating it to a custom error message', () => {
@@ -507,7 +508,7 @@ describe('AwsRollbackFunction', () => {
     });
 
     afterEach(() => {
-      LambdaClient.prototype.send.restore();
+      (LambdaClient.prototype.send as SinonStub).restore();
     });
 
     it('should restore the provided function', async () => {

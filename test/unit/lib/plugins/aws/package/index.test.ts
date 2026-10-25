@@ -106,7 +106,7 @@ describe('AwsPackage', () => {
     beforeEach(() => {
       spawnStub = sinon.stub(serverless.pluginManager, 'spawn');
       generateCoreTemplateStub = sinon.stub(awsPackage, 'generateCoreTemplate').resolves();
-      mergeIamTemplatesStub = sinon.stub(awsPackage, 'mergeIamTemplates').returns();
+      mergeIamTemplatesStub = sinon.stub(awsPackage, 'mergeIamTemplates').returns(undefined);
       generateArtifactDirectoryNameStub = sinon
         .stub(awsPackage, 'generateArtifactDirectoryName')
         .resolves();

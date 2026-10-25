@@ -8,7 +8,7 @@ import resolveInput from './resolve-input.ts';
 
 const supportedExtensions = new Set(['yml', 'yaml', 'json', 'js', 'mjs', 'cjs', 'ts']);
 
-export default async (options = {}) => {
+export default async (options: Record<string, any> = {}) => {
   if (!options) options = {};
   const cliOptions =
     ensurePlainObject(options.options, { isOptional: true }) || resolveInput().options;

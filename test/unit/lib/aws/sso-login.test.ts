@@ -1,5 +1,6 @@
 import * as chai from 'chai';
 import * as sinon from 'sinon';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import esmock from 'esmock';
 
@@ -7,8 +8,12 @@ const { expect } = chai;
 
 // esmock resolves package names with the "module"/"import" export conditions, which point
 // @smithy/core/config at a bundler-only ES build. Node.js loads the "node" (CommonJS) build, so
-// the mock is keyed by the path Node.js resolves
-const smithyCoreConfigPath = fileURLToPath(import.meta.resolve('@smithy/core/config'));
+// the mock is keyed by the path Node.js resolves, relative to this file with forward slashes
+// (esmock does not match Windows absolute paths)
+const smithyCoreConfigPath = path
+  .relative(import.meta.dirname, fileURLToPath(import.meta.resolve('@smithy/core/config')))
+  .split(path.sep)
+  .join('/');
 
 describe('test/unit/lib/aws/sso-login.test.ts', () => {
   let originalEnv;
@@ -16,24 +21,35 @@ describe('test/unit/lib/aws/sso-login.test.ts', () => {
   let originalStdoutIsTTY;
 
   class RegisterClientCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
   }
 
   class StartDeviceAuthorizationCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
   }
 
   class CreateTokenCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
   }
 
   class FakeSSOOIDCClient {
+    declare config: any;
+    declare send: any;
+    declare static instances: any;
+    declare static send: any;
+
     constructor(config) {
       this.config = config;
       this.send = FakeSSOOIDCClient.send;
@@ -66,7 +82,7 @@ describe('test/unit/lib/aws/sso-login.test.ts', () => {
     );
   }
 
-  function stubOidcFlow({ register, authorization, createToken } = {}) {
+  function stubOidcFlow({ register, authorization, createToken }: Record<string, any> = {}) {
     FakeSSOOIDCClient.send.callsFake(async (command) => {
       if (command instanceof RegisterClientCommand) {
         if (register) return register();
@@ -95,7 +111,10 @@ describe('test/unit/lib/aws/sso-login.test.ts', () => {
     });
   }
 
-  async function loadWrappedSsoProvider(provider, { requestHandler = {}, ...loadOptions } = {}) {
+  async function loadWrappedSsoProvider(
+    provider,
+    { requestHandler = {}, ...loadOptions }: Record<string, any> = {}
+  ) {
     const loaded = await loadSsoLogin({
       profiles: {
         dev: {
@@ -126,7 +145,7 @@ describe('test/unit/lib/aws/sso-login.test.ts', () => {
     mkdir,
     writeFileAtomic,
     writeText,
-  } = {}) {
+  }: Record<string, any> = {}) {
     const getTokenPath =
       getSSOTokenFilepath ||
       ((cacheKey) => {

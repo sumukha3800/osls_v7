@@ -9,7 +9,7 @@ describe('test/unit/lib/utils/tokenize-exception.test.ts', () => {
     );
     expect(errorTokens.title).to.equal('Serverless Error');
     expect(errorTokens.name).to.equal('ServerlessError');
-    expect(errorTokens.stack).to.include('tokenize-exception.test.js:');
+    expect(errorTokens.stack).to.include('tokenize-exception.test.ts:');
     expect(errorTokens.message).to.equal('Some error');
     expect(errorTokens.isUserError).to.equal(true);
     expect(errorTokens.code).to.equal('ERR_CODE');
@@ -20,7 +20,7 @@ describe('test/unit/lib/utils/tokenize-exception.test.ts', () => {
     const errorTokens = tokenizeError(new TypeError('Some error'));
     expect(errorTokens.title).to.equal('Type Error');
     expect(errorTokens.name).to.equal('TypeError');
-    expect(errorTokens.stack).to.include('tokenize-exception.test.js:');
+    expect(errorTokens.stack).to.include('tokenize-exception.test.ts:');
     expect(errorTokens.message).to.equal('Some error');
     expect(errorTokens.isUserError).to.equal(false);
   });

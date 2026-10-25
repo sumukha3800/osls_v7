@@ -18,6 +18,16 @@ const ALB_HTTP_HEADER_SCHEMA = {
 };
 
 class AwsCompileAlbEvents {
+  declare compileListenerRules: any;
+  declare compilePermissions: any;
+  declare compileTargetGroups: any;
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare validate: any;
+  declare validated: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

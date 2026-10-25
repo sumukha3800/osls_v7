@@ -14,6 +14,8 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/get-s
   let credentials;
 
   class GetParameterCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
@@ -32,6 +34,8 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/get-s
     }));
 
     class SSMClient {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         clientInstances.push(this);

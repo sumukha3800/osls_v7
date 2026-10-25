@@ -1,4 +1,5 @@
 import * as chai from 'chai';
+import type { AddressInfo } from 'node:net';
 import http from 'node:http';
 import net from 'node:net';
 import { EnvHttpProxyAgent, ProxyAgent } from 'undici';
@@ -36,24 +37,28 @@ describe('test/unit/lib/utils/build-fetch-dispatcher.test.ts', () => {
       const targetServer = http.createServer((request, response) => {
         response.end('from-target');
       });
-      await new Promise((resolve) => targetServer.listen(0, '127.0.0.1', resolve));
+      await new Promise<void>((resolve) => targetServer.listen(0, '127.0.0.1', resolve));
 
       // undici tunnels through proxies with CONNECT, also for plain-http targets
       const connectRequests = [];
       const proxyServer = http.createServer();
       proxyServer.on('connect', (request, clientSocket, head) => {
         connectRequests.push(request.url);
-        const targetSocket = net.connect(targetServer.address().port, '127.0.0.1', () => {
-          clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-          targetSocket.write(head);
-          targetSocket.pipe(clientSocket);
-          clientSocket.pipe(targetSocket);
-        });
+        const targetSocket = net.connect(
+          (targetServer.address() as AddressInfo).port,
+          '127.0.0.1',
+          () => {
+            clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+            targetSocket.write(head);
+            targetSocket.pipe(clientSocket);
+            clientSocket.pipe(targetSocket);
+          }
+        );
       });
-      await new Promise((resolve) => proxyServer.listen(0, '127.0.0.1', resolve));
+      await new Promise<void>((resolve) => proxyServer.listen(0, '127.0.0.1', resolve));
 
       try {
-        process.env.HTTP_PROXY = `http://127.0.0.1:${proxyServer.address().port}`;
+        process.env.HTTP_PROXY = `http://127.0.0.1:${(proxyServer.address() as AddressInfo).port}`;
         const dispatcher = buildFetchDispatcher();
         try {
           // `.invalid` never resolves; a response proves the request went via the proxy

@@ -22,7 +22,7 @@ export default {
       const apiGatewayPermission = this.provider.naming.getLambdaApiGatewayPermissionLogicalId(
         event.functionName
       );
-      const template = {
+      const template: Record<string, any> = {
         Type: 'AWS::ApiGateway::Method',
         Properties: {
           HttpMethod: event.http.method.toUpperCase(),
@@ -90,7 +90,7 @@ export default {
       }
       const requestTemplates = template.Properties.Integration.RequestTemplates;
       if (requestTemplates) {
-        Object.entries(requestTemplates).forEach(([key, value]) => {
+        Object.entries<any>(requestTemplates).forEach(([key, value]) => {
           let claimsString = '';
           if (extraCognitoPoolClaims && extraCognitoPoolClaims.length > 0) {
             claimsString = extraCognitoPoolClaims.join(',').concat(',');

@@ -61,7 +61,7 @@ export default {
 
     const stackName = this.provider.naming.getStackName();
 
-    const stackData = {};
+    const stackData: Record<string, any> = {};
     const cloudFormation = await getCloudFormationClient(this);
     const sdkRequests = [
       retryOnThrottlingError(
@@ -115,7 +115,7 @@ export default {
         // Functions
         this.serverless.service.getAllFunctions().forEach((func) => {
           const functionObj = this.serverless.service.getFunction(func);
-          const functionInfo = {};
+          const functionInfo: Record<string, any> = {};
           functionInfo.name = func;
           functionInfo.deployedName = functionObj.name;
           functionInfo.artifactSize = functionObj.artifactSize;
@@ -131,7 +131,7 @@ export default {
 
         // Layers
         this.serverless.service.getAllLayers().forEach((layer) => {
-          const layerInfo = {};
+          const layerInfo: Record<string, any> = {};
           layerInfo.name = layer;
           const layerOutputId = this.provider.naming.getLambdaLayerOutputLogicalId(layer);
           for (const output of outputs) {

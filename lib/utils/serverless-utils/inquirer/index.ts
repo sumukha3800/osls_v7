@@ -20,7 +20,15 @@ const parseConfirm = (value, defaultValue = true) => {
   return undefined;
 };
 
-const promptOne = async ({ message, type, name, default: defaultValue = true }) => {
+// Only "confirm" questions are supported
+interface Question {
+  message: string;
+  type: string;
+  name: string;
+  default?: boolean;
+}
+
+const promptOne = async ({ message, type, name, default: defaultValue = true }: Question) => {
   if (type !== 'confirm') {
     throw new Error(`Unsupported prompt type: ${type}`);
   }
@@ -44,9 +52,9 @@ const promptOne = async ({ message, type, name, default: defaultValue = true }) 
   }
 };
 
-const prompt = async (questionConfig) => {
+const prompt = async (questionConfig: Question | Question[]) => {
   const questions = Array.isArray(questionConfig) ? questionConfig : [questionConfig];
-  const answers = {};
+  const answers: Record<string, boolean> = {};
 
   for (const question of questions) {
     Object.assign(answers, await promptOne(question));

@@ -1,10 +1,13 @@
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import logEmitter from 'log/lib/emitter.js';
 import { S3Client, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import emptyS3Bucket from '../../../../../../lib/plugins/aws/remove/lib/bucket.ts';
 import runServerless from '../../../../../utils/run-serverless.ts';
 import { expect } from 'chai';
 import esmock from 'esmock';
+
+type TestError = Error & { code?: string; providerError?: Record<string, unknown> };
 
 describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
   const deleteObjectsStub = sinon.stub().resolves();
@@ -50,7 +53,7 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
   };
 
   const createSignatureMismatchListError = () => {
-    const error = new Error('signature mismatch');
+    const error: TestError = new Error('signature mismatch');
     error.providerError = {
       code: 'SignatureDoesNotMatch',
       statusCode: 403,
@@ -59,7 +62,7 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
   };
 
   const createAccessDeniedListError = () => {
-    const error = new Error('access denied');
+    const error: TestError = new Error('access denied');
     error.providerError = {
       code: 'AccessDenied',
       statusCode: 403,
@@ -68,7 +71,7 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
   };
 
   const createStatusOnlyListError = () => {
-    const error = new Error('forbidden');
+    const error: TestError = new Error('forbidden');
     error.providerError = {
       statusCode: 403,
     };
@@ -117,7 +120,7 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
         Delete: { Objects: [{ Key: 'first' }] },
       });
     } finally {
-      S3Client.prototype.send.restore();
+      (S3Client.prototype.send as SinonStub).restore();
     }
   });
 
@@ -147,6 +150,8 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
     const s3Clients = [];
     const sends = [];
     class FakeCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -155,6 +160,8 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
     class FakeListObjectVersionsCommand extends FakeCommand {}
     class FakeDeleteObjectsCommand extends FakeCommand {}
     class FakeS3Client {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         s3Clients.push(this);
@@ -518,7 +525,7 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
           deleteObjects: deleteObjectsStub,
           listObjectsV2: { Contents: [{ Key: 'first' }, { Key: 'second' }] },
           headBucket: () => {
-            const err = new Error('err');
+            const err: TestError = new Error('err');
             err.code = 'AWS_S3_HEAD_BUCKET_NOT_FOUND';
             throw err;
           },
@@ -548,7 +555,7 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
         CloudFormation: {
           ...awsSdkV3StubMap.CloudFormation,
           describeStackResource: () => {
-            const err = new Error('does not exist for stack');
+            const err: TestError = new Error('does not exist for stack');
             err.providerError = {
               code: 'ValidationError',
             };
@@ -919,7 +926,7 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
           ...awsSdkV3StubMap,
           S3: {
             listObjectVersions: () => {
-              const err = new Error('ff');
+              const err: TestError = new Error('ff');
               err.providerError = { statusCode: 403 };
               throw err;
             },
@@ -957,7 +964,7 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
   });
 
   it('does not rewrite deleteObjects access denied failures as list failures', async () => {
-    const deleteError = new Error('delete denied');
+    const deleteError: TestError = new Error('delete denied');
     deleteError.code = 'AccessDenied';
 
     try {
@@ -1169,7 +1176,7 @@ describe('test/unit/lib/plugins/aws/remove/index.test.ts', () => {
           S3: {
             ...awsSdkV3StubMap.S3,
             listObjectsV2: () => {
-              const err = new Error('ff');
+              const err: TestError = new Error('ff');
               err.code = 'AWS_S3_LIST_OBJECTS_V2_ACCESS_DENIED';
               throw err;
             },

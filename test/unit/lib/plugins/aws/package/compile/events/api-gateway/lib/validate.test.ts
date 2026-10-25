@@ -11,13 +11,13 @@ describe('#validate()', () => {
   let awsCompileApigEvents;
 
   afterEach(() => {
-    delete Object.prototype.headers;
-    delete Object.prototype.methods;
-    delete Object.prototype.origins;
-    delete Object.prototype.origin;
-    delete Object.prototype.allowCredentials;
-    delete Object.prototype.maxAge;
-    delete Object.prototype.cacheControl;
+    delete (Object.prototype as Record<string, unknown>).headers;
+    delete (Object.prototype as Record<string, unknown>).methods;
+    delete (Object.prototype as Record<string, unknown>).origins;
+    delete (Object.prototype as Record<string, unknown>).origin;
+    delete (Object.prototype as Record<string, unknown>).allowCredentials;
+    delete (Object.prototype as Record<string, unknown>).maxAge;
+    delete (Object.prototype as Record<string, unknown>).cacheControl;
   });
 
   beforeEach(() => {
@@ -1598,8 +1598,8 @@ describe('#validate()', () => {
     expect(
       Object.getOwnPropertyDescriptor(validated.corsPreflight, '__proto__').value.methods
     ).to.deep.equal(['OPTIONS', 'GET']);
-    expect({}.headers).to.equal(undefined);
-    expect({}.methods).to.equal(undefined);
+    expect(({} as Record<string, unknown>).headers).to.equal(undefined);
+    expect(({} as Record<string, unknown>).methods).to.equal(undefined);
   });
 });
 

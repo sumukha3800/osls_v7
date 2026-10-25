@@ -1,6 +1,7 @@
+import type { OptionsSchema } from '../types.ts';
 import global from './global.ts';
 
-const options = {
+const options: OptionsSchema = {
   config: {
     usage: 'Path to serverless config file',
     shortcut: 'c',

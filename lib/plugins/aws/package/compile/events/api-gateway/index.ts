@@ -169,7 +169,29 @@ const responseSchema = {
 };
 
 class AwsCompileApigEvents {
-  constructor(serverless, options) {
+  declare apiGatewayMethodLogicalIds: any;
+  declare compileApiKeys: any;
+  declare compileAuthorizers: any;
+  declare compileCors: any;
+  declare compileDeployment: any;
+  declare compileMethods: any;
+  declare compilePermissions: any;
+  declare compileRequestValidators: any;
+  declare compileResources: any;
+  declare compileRestApi: any;
+  declare compileStage: any;
+  declare compileUsagePlan: any;
+  declare compileUsagePlanKeys: any;
+  declare createRequestValidator: any;
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare state: any;
+  declare validate: any;
+  declare validated: any;
+
+  constructor(serverless, options?) {
     this.serverless = serverless;
     this.options = options;
     this.provider = this.serverless.getProvider('aws');

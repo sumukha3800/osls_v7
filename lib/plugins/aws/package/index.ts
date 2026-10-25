@@ -13,6 +13,23 @@ import { log, style, progress } from '../../../utils/serverless-utils/log.ts';
 const mainProgress = progress.get('main');
 
 class AwsPackage {
+  declare addExportNameForOutputs: any;
+  declare commands: any;
+  declare generateArtifactDirectoryName: any;
+  declare generateCoreTemplate: any;
+  declare hooks: any;
+  declare mergeCustomProviderResources: any;
+  declare mergeIamTemplates: any;
+  declare options: any;
+  declare packagePath: any;
+  declare provider: any;
+  declare saveCompiledTemplate: any;
+  declare saveServiceState: any;
+  declare serverless: any;
+  declare servicePath: any;
+  declare stripNullPropsFromTemplateResources: any;
+  declare validateTemplate: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

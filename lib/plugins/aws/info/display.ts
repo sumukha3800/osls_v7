@@ -1,6 +1,6 @@
 import log from '../../../utils/serverless-utils/log.ts';
 import filesize from '../../../utils/filesize.ts';
-const { isVerboseMode, style } = log;
+const { isVerboseMode, style }: Record<string, any> = log;
 
 export default {
   async displayServiceInfo() {
@@ -38,36 +38,38 @@ export default {
       info.endpoints.forEach((endpoint) => {
         // if the endpoint is of type http(s)
         if (endpoint.startsWith('https://')) {
-          Object.values(this.serverless.service.functions).forEach((functionObject) => {
-            functionObject.events.forEach((event) => {
-              if (event.http) {
-                let method;
-                let path;
+          Object.values(this.serverless.service.functions).forEach(
+            (functionObject: Record<string, any>) => {
+              functionObject.events.forEach((event) => {
+                if (event.http) {
+                  let method;
+                  let path;
 
-                if (typeof event.http === 'object') {
-                  method = event.http.method.toUpperCase();
-                  path = event.http.path;
-                } else {
-                  method = event.http.split(' ')[0].toUpperCase();
-                  path = event.http.split(' ')[1];
+                  if (typeof event.http === 'object') {
+                    method = event.http.method.toUpperCase();
+                    path = event.http.path;
+                  } else {
+                    method = event.http.split(' ')[0].toUpperCase();
+                    path = event.http.split(' ')[1];
+                  }
+                  path =
+                    path !== '/'
+                      ? `/${path
+                          .split('/')
+                          .filter((p) => p !== '')
+                          .join('/')}`
+                      : '';
+                  outputSectionItems.push(`${method} - ${endpoint}${path}`);
                 }
-                path =
-                  path !== '/'
-                    ? `/${path
-                        .split('/')
-                        .filter((p) => p !== '')
-                        .join('/')}`
-                    : '';
-                outputSectionItems.push(`${method} - ${endpoint}${path}`);
-              }
-            });
-          });
+              });
+            }
+          );
         } else if (endpoint.startsWith('httpApi: ')) {
           endpoint = endpoint.slice('httpApi: '.length);
           const { httpApiEventsPlugin } = this.serverless;
           httpApiEventsPlugin.resolveConfiguration();
 
-          for (const functionData of Object.values(this.serverless.service.functions)) {
+          for (const functionData of Object.values<any>(this.serverless.service.functions)) {
             for (const event of functionData.events) {
               if (!event.httpApi) continue;
               outputSectionItems.push(

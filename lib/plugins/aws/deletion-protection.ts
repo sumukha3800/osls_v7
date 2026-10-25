@@ -9,6 +9,12 @@ import retry from '../../aws/retry.ts';
 const { retryOnThrottlingError } = retry;
 
 class AwsDeletionProtection {
+  declare cloudFormationClientPromise: any;
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options || {};

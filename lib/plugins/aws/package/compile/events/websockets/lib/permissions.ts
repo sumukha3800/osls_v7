@@ -28,7 +28,7 @@ export default {
         const websocketsAuthorizerPermissionLogicalId =
           this.provider.naming.getLambdaWebsocketsPermissionLogicalId(event.authorizer.name);
 
-        const authorizerPermissionTemplate = {
+        const authorizerPermissionTemplate: Record<string, any> = {
           [websocketsAuthorizerPermissionLogicalId]: {
             Type: 'AWS::Lambda::Permission',
             DependsOn: websocketApiId.Ref ? [websocketApiId.Ref] : [],

@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import logEmitter from 'log/lib/emitter.js';
 import {
   CloudFormationClient,
@@ -14,7 +15,7 @@ describe('removeStack', () => {
 
   let removeStackStub;
 
-  const createRemoveStackContext = (overrides = {}) => {
+  const createRemoveStackContext = (overrides: Record<string, any> = {}) => {
     const provider = {
       naming: { getStackName: sinon.stub().returns(stackName) },
       getAwsSdkV3Config: sinon.stub().resolves({ region: 'us-east-1' }),
@@ -34,7 +35,7 @@ describe('removeStack', () => {
   });
 
   afterEach(() => {
-    CloudFormationClient.prototype.send.restore();
+    (CloudFormationClient.prototype.send as SinonStub).restore();
   });
 
   describe('#ensureStackIsNotDeletionProtected()', () => {

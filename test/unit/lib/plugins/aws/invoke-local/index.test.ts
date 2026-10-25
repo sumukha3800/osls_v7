@@ -1,7 +1,9 @@
 import http from 'node:http';
+import type { AddressInfo } from 'node:net';
 import fs from 'node:fs';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import os from 'node:os';
 import path from 'node:path';
 import AdmZip from 'adm-zip';
@@ -14,6 +16,7 @@ import {
   ListStackResourcesCommand,
 } from '@aws-sdk/client-cloudformation';
 import Serverless from '../../../../../../lib/serverless.ts';
+import type { ProcessedInput } from '../../../../../../lib/serverless.ts';
 import ServerlessError from '../../../../../../lib/serverless-error.ts';
 import CLI from '../../../../../../lib/classes/cli.ts';
 import { getTmpDirPath } from '../../../../../utils/fs.ts';
@@ -61,7 +64,7 @@ const runInvokeLocal = async ({
   cwd,
   env,
   modulesCacheStub,
-} = {}) => {
+}: Record<string, any> = {}) => {
   const result = await runServerless({
     ...(cwd ? { cwd } : { fixture: 'invocation', configExt }),
     command: 'invoke local',
@@ -95,7 +98,10 @@ describe('AwsInvokeLocal', () => {
       function: 'first',
     };
     spawnExtStub = sinon.stub().callsFake(() => {
-      const result = Promise.resolve({ stdoutBuffer: Buffer.from('Mocked output') });
+      const result: Promise<{ stdoutBuffer: Buffer }> & {
+        stderr?: EventEmitter;
+        stdout?: EventEmitter;
+      } = Promise.resolve({ stdoutBuffer: Buffer.from('Mocked output') });
       result.stderr = new EventEmitter().on('data', () => {});
       result.stdout = new EventEmitter().on('data', () => {});
       return result;
@@ -111,7 +117,7 @@ describe('AwsInvokeLocal', () => {
     serverless = new Serverless({ commands: [], options: {} });
     serverless.serviceDir = 'servicePath';
     serverless.cli = new CLI(serverless);
-    serverless.processedInput = { commands: ['invoke'] };
+    serverless.processedInput = { commands: ['invoke'] } as ProcessedInput;
     provider = new AwsProvider(serverless, options);
     serverless.setProvider('aws', provider);
     awsInvokeLocal = new AwsInvokeLocal(serverless, options);
@@ -119,8 +125,8 @@ describe('AwsInvokeLocal', () => {
   });
 
   afterEach(() => {
-    delete Object.prototype.polluted;
-    delete Object.prototype.adversarial;
+    delete (Object.prototype as Record<string, unknown>).polluted;
+    delete (Object.prototype as Record<string, unknown>).adversarial;
   });
 
   describe('#extendedValidate()', () => {
@@ -385,7 +391,7 @@ describe('AwsInvokeLocal', () => {
 
       expect(result.REGULAR).to.equal('value');
       expect(Object.prototype.hasOwnProperty.call(result, '__proto__')).to.equal(true);
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as Record<string, unknown>).polluted).to.equal(undefined);
     });
 
     it('preserves function env values including __proto__ without silent drops', () => {
@@ -398,14 +404,14 @@ describe('AwsInvokeLocal', () => {
       expect(result.NORMAL).to.equal('yes');
       expect(Reflect.get(result, '__proto__')).to.equal('value');
       expect(Object.prototype.hasOwnProperty.call(result, '__proto__')).to.equal(true);
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as Record<string, unknown>).polluted).to.equal(undefined);
     });
   });
 
   describe('#resolveConfiguredEnvVars()', () => {
     afterEach(() => {
-      if (CloudFormationClient.prototype.send.restore) {
-        CloudFormationClient.prototype.send.restore();
+      if ((CloudFormationClient.prototype.send as SinonStub).restore) {
+        (CloudFormationClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -864,7 +870,7 @@ describe('AwsInvokeLocal', () => {
         'prototype',
       ]);
       expect(Object.prototype.constructor).to.equal(originalConstructor);
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as Record<string, unknown>).polluted).to.equal(undefined);
     });
   });
 
@@ -879,7 +885,7 @@ describe('AwsInvokeLocal', () => {
     });
 
     afterEach(() => {
-      fsp.access.restore();
+      (fsp.access as SinonStub).restore();
       serverless.pluginManager.spawn.restore();
     });
 
@@ -914,7 +920,7 @@ describe('AwsInvokeLocal', () => {
     });
 
     afterEach(() => {
-      fsp.chmod.restore();
+      (fsp.chmod as SinonStub).restore();
     });
 
     it('filters directory placeholders and chmods bootstrap to 755', async () => {
@@ -1613,7 +1619,7 @@ describe('AwsInvokeLocal', () => {
       const localServerless = new Serverless({ commands: [], options: {} });
       localServerless.serviceDir = 'servicePath';
       localServerless.cli = new CLI(localServerless);
-      localServerless.processedInput = { commands: ['invoke'] };
+      localServerless.processedInput = { commands: ['invoke'] } as ProcessedInput;
       localServerless.service.layers = {};
 
       const localProvider = new AwsProvider(localServerless, localOptions);
@@ -1668,7 +1674,7 @@ describe('AwsInvokeLocal', () => {
       const localServerless = new Serverless({ commands: [], options: {} });
       localServerless.serviceDir = 'servicePath';
       localServerless.cli = new CLI(localServerless);
-      localServerless.processedInput = { commands: ['invoke'] };
+      localServerless.processedInput = { commands: ['invoke'] } as ProcessedInput;
       localServerless.service.layers = {};
 
       const localProvider = new AwsProvider(localServerless, localOptions);
@@ -1862,8 +1868,8 @@ describe('AwsInvokeLocal', () => {
         res.end();
       });
 
-      await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-      const baseUrl = `http://127.0.0.1:${server.address().port}`;
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+      const baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
       const ProxyquiredAwsInvokeLocal = (
         await esmock('../../../../../../lib/plugins/aws/invoke-local/index.ts', {
@@ -1897,7 +1903,7 @@ describe('AwsInvokeLocal', () => {
         const localServerless = new Serverless({ commands: [], options: {} });
         localServerless.serviceDir = tempRoot;
         localServerless.cli = new CLI(localServerless);
-        localServerless.processedInput = { commands: ['invoke'] };
+        localServerless.processedInput = { commands: ['invoke'] } as ProcessedInput;
         localServerless.service.layers = {};
 
         const localProvider = new AwsProvider(localServerless, localOptions);
@@ -1937,7 +1943,7 @@ describe('AwsInvokeLocal', () => {
         expect(await fsp.readFile(cachedFilePath, 'utf8')).to.equal('module.exports = 123;');
       } finally {
         process.chdir(originalCwd);
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           server.close((error) => {
             if (error) {
               reject(error);
@@ -1998,7 +2004,7 @@ describe('AwsInvokeLocal', () => {
       const localServerless = new Serverless({ commands: [], options: {} });
       localServerless.serviceDir = 'servicePath';
       localServerless.cli = new CLI(localServerless);
-      localServerless.processedInput = { commands: ['invoke'] };
+      localServerless.processedInput = { commands: ['invoke'] } as ProcessedInput;
       localServerless.service.layers = {};
       const localProvider = new AwsProvider(localServerless, localOptions);
       localServerless.setProvider('aws', localProvider);
@@ -2080,8 +2086,8 @@ describe('AwsInvokeLocal', () => {
 
       expect(Reflect.get(result, '__proto__')).to.equal('adversarial');
       expect(Object.prototype.hasOwnProperty.call(result, '__proto__')).to.equal(true);
-      expect({}.adversarial).to.equal(undefined);
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as Record<string, unknown>).adversarial).to.equal(undefined);
+      expect(({} as Record<string, unknown>).polluted).to.equal(undefined);
     });
 
     it('accepts --env constructor=value without changing Object.prototype.constructor', () => {
@@ -2111,7 +2117,7 @@ describe('AwsInvokeLocal', () => {
       expect(result.constructor).to.equal('two');
       expect(result.prototype).to.equal('three');
       expect(result.SAFE).to.equal('four');
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as Record<string, unknown>).polluted).to.equal(undefined);
     });
   });
 

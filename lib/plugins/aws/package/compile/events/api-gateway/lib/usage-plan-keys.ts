@@ -1,7 +1,7 @@
 import ServerlessError from '../../../../../../../serverless-error.ts';
 import isObject from 'type/object/is.js';
 
-function createUsagePlanKeyResource(that, usagePlanLogicalId, keyNumber, keyName) {
+function createUsagePlanKeyResource(that, usagePlanLogicalId, keyNumber, keyName?) {
   const apiKeyLogicalId = that.provider.naming.getApiKeyLogicalId(keyNumber, keyName);
 
   return {

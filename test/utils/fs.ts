@@ -49,12 +49,12 @@ function ensureFileSync(filePath) {
   fs.closeSync(fs.openSync(filePath, 'a'));
 }
 
-async function outputFile(filePath, data, options) {
+async function outputFile(filePath, data, options?) {
   await ensureDir(path.dirname(filePath));
   await fsp.writeFile(filePath, data, options);
 }
 
-function outputFileSync(filePath, data, options) {
+function outputFileSync(filePath, data, options?) {
   ensureDirSync(path.dirname(filePath));
   fs.writeFileSync(filePath, data, options);
 }
@@ -69,9 +69,9 @@ const remove = (targetPath) => fsp.rm(targetPath, { recursive: true, force: true
 
 const removeSync = (targetPath) => fs.rmSync(targetPath, { recursive: true, force: true });
 
-async function copyPath(sourcePath, destinationPath, options = {}) {
+async function copyPath(sourcePath, destinationPath, options: Record<string, any> = {}) {
   await ensureDir(path.dirname(destinationPath));
-  const copyOptions = {
+  const copyOptions: Record<string, any> = {
     dereference: Boolean(options.dereference),
     force: options.force !== false,
     recursive: true,
@@ -80,9 +80,9 @@ async function copyPath(sourcePath, destinationPath, options = {}) {
   await fsp.cp(sourcePath, destinationPath, copyOptions);
 }
 
-function copyPathSync(sourcePath, destinationPath, options = {}) {
+function copyPathSync(sourcePath, destinationPath, options: Record<string, any> = {}) {
   ensureDirSync(path.dirname(destinationPath));
-  const copyOptions = {
+  const copyOptions: Record<string, any> = {
     dereference: Boolean(options.dereference),
     force: options.force !== false,
     recursive: true,
@@ -96,7 +96,7 @@ async function readJsonFile(filePath) {
   return JSON.parse(contents.replace(/^\uFEFF/u, ''));
 }
 
-async function writeJsonFile(filePath, value, { spaces } = {}) {
+async function writeJsonFile(filePath, value, { spaces }: Record<string, any> = {}) {
   const serialized = JSON.stringify(value, null, spaces);
   if (serialized === undefined) {
     throw new TypeError(`Converting ${typeof value} value to JSON is not supported`);

@@ -39,6 +39,10 @@ describe('#createZipFile()', () => {
     let zipfile;
 
     class FakeZipFile extends EventEmitter {
+      declare addFile: any;
+      declare end: any;
+      declare outputStream: any;
+
       constructor() {
         super();
         this.outputStream = { pipe() {} };
@@ -70,6 +74,10 @@ describe('#createZipFile()', () => {
     const output = new EventEmitter();
 
     class FakeZipFile extends EventEmitter {
+      declare addFile: any;
+      declare end: any;
+      declare outputStream: any;
+
       constructor() {
         super();
         this.outputStream = { pipe() {} };

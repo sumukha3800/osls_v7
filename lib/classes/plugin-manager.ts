@@ -8,7 +8,31 @@ import resolveFrom from '../utils/resolve-from.ts';
 import importModule from '../utils/import-module.ts';
 import { log, getPluginWriters } from '../utils/serverless-utils/log.ts';
 import pluginManagement from '../commands/plugin-management.ts';
+import type Serverless from '../serverless.ts';
+import type { PluginCommandConfig } from '../cli/commands-schema/types.ts';
 const { splitPackageSpec, validatePluginName } = pluginManagement;
+
+// A plugin command once loaded, with its nested commands loaded too
+export interface LoadedCommand extends PluginCommandConfig {
+  key: string;
+  pluginName: string;
+  commands: Record<string, LoadedCommand>;
+  isExternal?: boolean;
+}
+
+// A plugin instance; only the properties read by the plugin manager are described
+export interface PluginInstance {
+  commands?: Record<string, PluginCommandConfig>;
+  hooks?: Record<string, (...args: any[]) => unknown>;
+  provider?: string | Record<string, any>;
+  asyncInit?: () => unknown;
+  [key: string]: any;
+}
+
+export interface HookEntry {
+  pluginName: string;
+  hook: (...args: any[]) => unknown;
+}
 
 let hooksIdCounter = 0;
 let nestTracker = 0;
@@ -130,7 +154,23 @@ class TerminateHookChain extends Error {
 let isRegisteringExternalPlugins = false;
 
 class PluginManager {
-  constructor(serverless) {
+  // Alias path segments (nested objects) ending in a `command` property with the command key
+  declare aliases: Record<string, any>;
+  declare cliCommands: string[];
+  declare cliOptions: Record<string, any>;
+  declare commandRunStartTime: number;
+  declare commands: Record<string, LoadedCommand>;
+  declare deprecatedEvents: Record<string, string | null>;
+  // Plugin instances
+  declare externalPlugins: Set<PluginInstance>;
+  declare hooks: Record<string, HookEntry[]>;
+  declare localPluginsPaths: { resolvedPath: string; inputPath: string }[];
+  declare pluginIndependentCommands: Set<string>;
+  // Plugin instances
+  declare plugins: PluginInstance[];
+  declare serverless: Serverless;
+
+  constructor(serverless: Serverless) {
     this.serverless = serverless;
 
     this.cliOptions = {};
@@ -396,7 +436,12 @@ class PluginManager {
     aliasTarget.command = command;
   }
 
-  loadCommand(pluginName, details, key, isEntryPoint) {
+  loadCommand(
+    pluginName: string,
+    details: PluginCommandConfig,
+    key: string,
+    isEntryPoint?: boolean
+  ): LoadedCommand {
     const commandIsEntryPoint = details.type === 'entrypoint' || isEntryPoint;
     log.get('lifecycle:command:register').debug(key);
     // Check if there is already an alias for the same path as the command
@@ -422,7 +467,7 @@ class PluginManager {
     return Object.assign({}, details, { key, pluginName, commands });
   }
 
-  loadCommands(pluginInstance) {
+  loadCommands(pluginInstance: PluginInstance) {
     const pluginName = pluginInstance.constructor.name;
     if (pluginInstance.commands) {
       Object.entries(pluginInstance.commands).forEach(([key, details]) => {
@@ -438,7 +483,7 @@ class PluginManager {
     }
   }
 
-  loadHooks(pluginInstance) {
+  loadHooks(pluginInstance: PluginInstance) {
     const pluginName = pluginInstance.constructor.name;
     if (pluginInstance.hooks) {
       Object.entries(pluginInstance.hooks).forEach(([event, hook]) => {
@@ -463,11 +508,15 @@ class PluginManager {
   }
 
   getCommands() {
-    const result = {};
+    const result: Record<string, any> = {};
 
     // Iterate through the commands and stop at entrypoints to include only public
     // command throughout the hierarchy.
-    const stack = [{ commands: this.commands, target: result }];
+    const stack: {
+      commands?: Record<string, LoadedCommand>;
+      aliases?: Record<string, any>;
+      target: Record<string, any>;
+    }[] = [{ commands: this.commands, target: result }];
     while (stack.length) {
       const currentCommands = stack.pop();
       const commands = currentCommands.commands;
@@ -536,7 +585,7 @@ class PluginManager {
    * @param allowEntryPoints {undefined|boolean} Allow entrypoint commands to be returned
    * @returns {Object} Command
    */
-  getCommand(commandsArray, allowEntryPoints) {
+  getCommand(commandsArray, allowEntryPoints?) {
     // Check if the command references an alias
     const aliasCommandTarget = this.getAliasCommandTarget(commandsArray);
     const commandOrAlias = aliasCommandTarget ? aliasCommandTarget.split(':') : commandsArray;
@@ -607,7 +656,7 @@ class PluginManager {
     }
   }
 
-  async invoke(commandsArray, allowEntryPoints) {
+  async invoke(commandsArray, allowEntryPoints?) {
     const command = this.getCommand(commandsArray, allowEntryPoints);
     if (command.type === 'container') {
       renderCommandHelp(commandsArray.join(' '), this.serverless.processedInput);
@@ -715,7 +764,7 @@ class PluginManager {
     }
   }
 
-  convertShortcutsIntoOptions(command) {
+  convertShortcutsIntoOptions(command: PluginCommandConfig) {
     if (command.options) {
       Object.entries(command.options).forEach(([optionKey, optionObject]) => {
         if (optionObject.shortcut && Object.keys(this.cliOptions).includes(optionObject.shortcut)) {
@@ -729,7 +778,7 @@ class PluginManager {
     }
   }
 
-  assignDefaultOptions(command) {
+  assignDefaultOptions(command: PluginCommandConfig) {
     if (command.options) {
       Object.entries(command.options).forEach(([key, value]) => {
         if (value.default != null && (!this.cliOptions[key] || this.cliOptions[key] === true)) {

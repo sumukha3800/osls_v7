@@ -128,10 +128,13 @@ async function create(event, context) {
   return updateAccount();
 }
 
+// Called with the event and context like `create`, which are not needed
+function update(event: unknown, context: unknown): void;
 function update() {
   // No actions
 }
 
+function remove(event: unknown, context: unknown): void;
 function remove() {
   // No actions
 }

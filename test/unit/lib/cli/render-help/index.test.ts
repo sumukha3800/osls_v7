@@ -7,6 +7,8 @@ import observeOutput from '../../../../lib/observe-output.ts';
 
 describe('test/unit/lib/cli/render-help/index.test.ts', () => {
   class TestPlugin {
+    declare commands: any;
+
     constructor() {
       this.commands = {
         customCommand: {

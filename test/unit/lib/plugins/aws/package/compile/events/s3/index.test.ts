@@ -363,7 +363,7 @@ describe('AwsCompileS3Events', () => {
       expect(Object.getOwnPropertyDescriptor(properties, '__proto__').value).to.deep.equal({
         marker: 'bucket-config',
       });
-      expect({}.marker).to.equal(undefined);
+      expect(({} as Record<string, unknown>).marker).to.equal(undefined);
     });
 
     it('preserves unsafe notification configuration keys as own data without mutating prototypes', () => {
@@ -413,7 +413,7 @@ describe('AwsCompileS3Events', () => {
         },
       ]);
       expect(notificationConfig.QueueConfigurations).to.deep.equal([1, 2, 3]);
-      expect({}.marker).to.equal(undefined);
+      expect(({} as Record<string, unknown>).marker).to.equal(undefined);
     });
 
     it('should convert camel case properties to pascal case', () => {

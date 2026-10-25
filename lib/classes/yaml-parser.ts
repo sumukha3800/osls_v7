@@ -269,6 +269,8 @@ const materializeValue = async (value, context) => {
 };
 
 class YamlParser {
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
   }

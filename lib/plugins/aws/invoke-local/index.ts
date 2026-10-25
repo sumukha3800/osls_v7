@@ -25,6 +25,7 @@ import {
   ListExportsCommand,
   ListStackResourcesCommand,
 } from '@aws-sdk/client-cloudformation';
+import type { ListStackResourcesCommandInput } from '@aws-sdk/client-cloudformation';
 import promiseLimit2 from 'ext/promise/limit.js';
 const promiseLimit = promiseLimit2.bind(Promise);
 
@@ -107,7 +108,7 @@ async function resolveCfRefValue(context, resourceLogicalId) {
   let nextToken;
 
   do {
-    const input = { StackName: stackName };
+    const input: ListStackResourcesCommandInput = { StackName: stackName };
     if (nextToken) input.NextToken = nextToken;
 
     const result = await cloudFormation.send(new ListStackResourcesCommand(input));
@@ -125,6 +126,13 @@ async function resolveCfRefValue(context, resourceLogicalId) {
 }
 
 class AwsInvokeLocal {
+  declare hooks: any;
+  declare limitLambdaRequests: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare validate: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options || {};
@@ -237,7 +245,7 @@ class AwsInvokeLocal {
       throw error;
     }
 
-    const credentialEnvVars = {};
+    const credentialEnvVars: Record<string, any> = {};
     if (credentials.accessKeyId) {
       credentialEnvVars.AWS_ACCESS_KEY_ID = credentials.accessKeyId;
     }
@@ -297,7 +305,7 @@ class AwsInvokeLocal {
       Number(this.serverless.service.provider.memorySize) ||
       1024;
 
-    const lambdaDefaultEnvVars = {
+    const lambdaDefaultEnvVars: Record<string, any> = {
       LANG: 'en_US.UTF-8',
       LD_LIBRARY_PATH:
         '/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib',
@@ -313,7 +321,7 @@ class AwsInvokeLocal {
       NODE_PATH: '/var/runtime:/var/task:/var/runtime/node_modules',
     };
 
-    const credentialEnvVars = await this.getCredentialEnvVars();
+    const credentialEnvVars: Record<string, any> = await this.getCredentialEnvVars();
     const hasResolvedCredentials = Boolean(credentialEnvVars.AWS_ACCESS_KEY_ID);
 
     // profile override from config, used only when there are no static credentials to inject
@@ -421,7 +429,11 @@ class AwsInvokeLocal {
   }
 
   async checkDockerImage(imageName) {
-    const { stdoutBuffer } = await spawnExt('docker', ['images', '-q', imageName]);
+    const { stdoutBuffer }: Record<string, any> = await spawnExt('docker', [
+      'images',
+      '-q',
+      imageName,
+    ]);
     return Boolean(stdoutBuffer.toString().trim());
   }
 
@@ -438,7 +450,7 @@ class AwsInvokeLocal {
 
   async getLayerPaths() {
     const layers = Object.fromEntries(
-      Object.entries(this.serverless.service.layers || {}).map(([key, value]) => {
+      Object.entries<any>(this.serverless.service.layers || {}).map(([key, value]) => {
         ensureValidLayerPath(key, value && value.path);
         return [this.provider.naming.getLambdaLayerLogicalId(key), value];
       })
@@ -697,7 +709,7 @@ class AwsInvokeLocal {
     );
 
     try {
-      const { stdBuffer } = await spawnExt('docker', dockerArgs);
+      const { stdBuffer }: Record<string, any> = await spawnExt('docker', dockerArgs);
       if (stdBuffer) {
         writeText(stripAnsi(stdBuffer.toString().trimRight()));
       }
@@ -1010,8 +1022,8 @@ class AwsInvokeLocal {
       writeText(JSON.stringify(result, null, 4));
     }
 
-    return new Promise((resolve) => {
-      const callback = (err, result) => {
+    return new Promise<void>((resolve) => {
+      const callback = (err, result?) => {
         if (!hasResponded) {
           hasResponded = true;
           if (err) {

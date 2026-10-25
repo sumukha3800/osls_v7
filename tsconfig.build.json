@@ -8,6 +8,12 @@
     "declaration": true,
     "types": ["node"]
   },
-  "include": ["bin/**/*.ts", "commands/**/*.ts", "lib/**/*.ts", "scripts/serverless.ts"],
+  "include": [
+    "bin/**/*.ts",
+    "commands/**/*.ts",
+    "lib/**/*.ts",
+    "scripts/serverless.ts",
+    "typings/**/*.d.ts"
+  ],
   "exclude": ["dist", "node_modules"]
 }

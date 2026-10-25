@@ -3,7 +3,7 @@ import spawn from '../../../lib/utils/spawn.ts';
 import { expect } from 'chai';
 import setupProgrammaticFixture from '../../utils/setup-programmatic-fixture.ts';
 
-const serverlessPath = path.resolve(import.meta.dirname, '../../../scripts/serverless.js');
+const serverlessPath = path.resolve(import.meta.dirname, '../../../scripts/serverless.ts');
 
 describe('test/unit/commands/doctor.test.ts', async () => {
   before(() => {

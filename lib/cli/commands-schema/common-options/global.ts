@@ -1,4 +1,6 @@
-const options = {
+import type { OptionsSchema } from '../types.ts';
+
+const options: OptionsSchema = {
   help: { usage: 'Show this message', shortcut: 'h', type: 'boolean' },
   version: { usage: 'Show version info', shortcut: 'v', type: 'boolean' },
   verbose: { usage: 'Show verbose logs', type: 'boolean' },

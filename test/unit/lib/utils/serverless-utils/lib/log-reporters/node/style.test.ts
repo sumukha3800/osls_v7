@@ -13,7 +13,7 @@ describe('test/unit/lib/utils/serverless-utils/lib/log-reporters/node/style.test
       title: (value) => value,
       warning: (value) => value,
     };
-    const logState = {
+    const logState: Record<string, any> = {
       notice: (...tokens) => tokens.join(' '),
     };
 

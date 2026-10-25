@@ -7,7 +7,7 @@ import safeMoveFile from './fs/safe-move-file.ts';
 import { style, log } from './serverless-utils/log.ts';
 import healthStatusFilename from './health-status-filename.ts';
 
-const triggeredDeprecations = new Set();
+const triggeredDeprecations = new Set<string>();
 const bufferedDeprecations = [];
 
 const deprecationLogger = log.get('deprecation');
@@ -56,7 +56,7 @@ const isDisabledByEnv = (code) => {
   return disabledDeprecationCodesByEnv.has(code) || disabledDeprecationCodesByEnv.has('*');
 };
 
-const logDeprecation = (code, message, { serviceConfig } = {}) => {
+const logDeprecation = (code, message, { serviceConfig }: Record<string, any> = {}) => {
   try {
     if (triggeredDeprecations.has(code) || isDisabledByEnv(code)) {
       return;

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import fastGlob from 'fast-glob';
+import type { Options as FastGlobOptions } from 'fast-glob';
 
 const toArray = (patterns) => {
   return Array.isArray(patterns) ? patterns : [patterns];
@@ -38,8 +39,13 @@ const expandPattern = (pattern, cwd, expandDirectories) => {
   return maybeExpandDirectoryPattern(pattern, cwd);
 };
 
+interface GlobTask {
+  patterns: string[];
+  options: FastGlobOptions;
+}
+
 const normalizeOptions = (options = {}) => {
-  const globOptions = { ...options };
+  const globOptions: Record<string, any> = { ...options };
   const expandDirectories =
     globOptions.expandDirectories !== undefined ? globOptions.expandDirectories : true;
 
@@ -104,9 +110,10 @@ const buildTasks = (patterns, globOptions) => {
   return tasks;
 };
 
-const collectResults = async (tasks) => {
-  const seen = new Set();
-  const results = [];
+// Results are paths: osls never sets the `objectMode` or `stats` option
+const collectResults = async (tasks: GlobTask[]) => {
+  const seen = new Set<string>();
+  const results: string[] = [];
 
   for (const task of tasks) {
     for (const entry of await fastGlob(task.patterns, task.options)) {
@@ -122,9 +129,9 @@ const collectResults = async (tasks) => {
   return results;
 };
 
-const collectResultsSync = (tasks) => {
-  const seen = new Set();
-  const results = [];
+const collectResultsSync = (tasks: GlobTask[]) => {
+  const seen = new Set<string>();
+  const results: string[] = [];
 
   for (const task of tasks) {
     for (const entry of fastGlob.sync(task.patterns, task.options)) {
@@ -140,7 +147,10 @@ const collectResultsSync = (tasks) => {
   return results;
 };
 
-const glob = async (patterns, options = {}) => {
+const glob = async (
+  patterns: string | readonly string[],
+  options: Record<string, any> = {}
+): Promise<string[]> => {
   const normalizedPatterns = toArray(patterns);
   const { expandDirectories, globOptions } = normalizeOptions(options);
   const expandedPatterns = normalizedPatterns.map((pattern) =>
@@ -150,7 +160,7 @@ const glob = async (patterns, options = {}) => {
   return collectResults(buildTasks(expandedPatterns, globOptions));
 };
 
-glob.sync = (patterns, options = {}) => {
+glob.sync = (patterns: string | readonly string[], options: Record<string, any> = {}): string[] => {
   const normalizedPatterns = toArray(patterns);
   const { expandDirectories, globOptions } = normalizeOptions(options);
   const expandedPatterns = normalizedPatterns.map((pattern) =>

@@ -12,8 +12,8 @@ describe('lib/plugins/aws/package/compile/events/httpApi.test.ts', () => {
       const cfResources = serverless.service.provider.compiledCloudFormationTemplate.Resources;
       const naming = serverless.getProvider('aws').naming;
 
-      expect(cfResources[naming.getHttpApiLogicalId()]).to.equal();
-      expect(cfResources[naming.getHttpApiStageLogicalId()]).to.equal();
+      expect(cfResources[naming.getHttpApiLogicalId()]).to.equal(undefined);
+      expect(cfResources[naming.getHttpApiStageLogicalId()]).to.equal(undefined);
     }));
 
   it('defines compiler methods as lazy non-enumerable descriptors', async () => {
@@ -286,7 +286,8 @@ describe('lib/plugins/aws/package/compile/events/httpApi.test.ts', () => {
 
     describe('Cors', () => {
       describe('`true` configuration', () => {
-        it('should not set AllowCredentials', () => expect(cfCors.AllowCredentials).to.equal());
+        it('should not set AllowCredentials', () =>
+          expect(cfCors.AllowCredentials).to.equal(undefined));
         it('should include default set of headers at AllowHeaders', () =>
           expect(cfCors.AllowHeaders).to.include('Content-Type'));
         it('should include "OPTIONS" method at AllowMethods', () =>
@@ -301,8 +302,8 @@ describe('lib/plugins/aws/package/compile/events/httpApi.test.ts', () => {
         });
         it('should allow all origins at AllowOrigins', () =>
           expect(cfCors.AllowOrigins).to.include('*'));
-        it('should not set ExposeHeaders', () => expect(cfCors.ExposeHeaders).to.equal());
-        it('should not set MaxAge', () => expect(cfCors.MaxAge).to.equal());
+        it('should not set ExposeHeaders', () => expect(cfCors.ExposeHeaders).to.equal(undefined));
+        it('should not set MaxAge', () => expect(cfCors.MaxAge).to.equal(undefined));
       });
 
       describe('Object configuration #1', () => {
@@ -325,7 +326,8 @@ describe('lib/plugins/aws/package/compile/events/httpApi.test.ts', () => {
               cfTemplate.Resources[awsNaming.getHttpApiLogicalId()].Properties.CorsConfiguration;
           })
         );
-        it('should not set AllowCredentials', () => expect(cfCors.AllowCredentials).to.equal());
+        it('should not set AllowCredentials', () =>
+          expect(cfCors.AllowCredentials).to.equal(undefined));
         it('should include default set of headers at AllowHeaders', () =>
           expect(cfCors.AllowHeaders).to.include('Content-Type'));
         it('should include "OPTIONS" method at AllowMethods', () =>
@@ -342,7 +344,7 @@ describe('lib/plugins/aws/package/compile/events/httpApi.test.ts', () => {
           expect(cfCors.AllowOrigins).to.deep.equal(['https://example.com']));
         it('should respect exposedResponseHeaders', () =>
           expect(cfCors.ExposeHeaders).to.deep.equal(['Content-Length', 'X-Kuma-Revision']));
-        it('should not set MaxAge', () => expect(cfCors.MaxAge).to.equal());
+        it('should not set MaxAge', () => expect(cfCors.MaxAge).to.equal(undefined));
       });
 
       describe('Object configuration #2', () => {
@@ -374,7 +376,7 @@ describe('lib/plugins/aws/package/compile/events/httpApi.test.ts', () => {
           expect(cfCors.AllowMethods).to.deep.equal(['GET']));
         it('should fallback AllowOrigins to default', () =>
           expect(cfCors.AllowOrigins).to.include('*'));
-        it('should not set ExposeHeaders', () => expect(cfCors.ExposeHeaders).to.equal());
+        it('should not set ExposeHeaders', () => expect(cfCors.ExposeHeaders).to.equal(undefined));
         it('should respect maxAge', () => expect(cfCors.MaxAge).to.equal(300));
       });
 

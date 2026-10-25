@@ -1,9 +1,11 @@
 import fs, { promises as fsp } from 'node:fs';
+import type { WriteStream } from 'node:fs';
 import path from 'node:path';
 import { Readable, Writable } from 'node:stream';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import AwsProvider from '../../../../../../../lib/plugins/aws/provider.ts';
 import AwsCompileFunctions from '../../../../../../../lib/plugins/aws/package/compile/functions.ts';
 import Serverless from '../../../../../../../lib/serverless.ts';
@@ -86,19 +88,24 @@ describe('AwsCompileFunctions', () => {
     });
 
     afterEach(() => {
-      S3Client.prototype.send.restore();
-      if (fs.createWriteStream.restore) fs.createWriteStream.restore();
-      if (fsp.unlink.restore) fsp.unlink.restore();
+      (S3Client.prototype.send as SinonStub).restore();
+      if ((fs.createWriteStream as SinonStub).restore)
+        (fs.createWriteStream as SinonStub).restore();
+      if ((fsp.unlink as SinonStub).restore) (fsp.unlink as SinonStub).restore();
     });
 
-    async function createAwsCompileFunctionsWithS3ClientStub({ onSend } = {}) {
+    async function createAwsCompileFunctionsWithS3ClientStub({ onSend }: Record<string, any> = {}) {
       const s3Clients = [];
       class FakeGetObjectCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
       }
       class FakeS3Client {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           s3Clients.push(this);
@@ -300,7 +307,7 @@ describe('AwsCompileFunctions', () => {
           write(chunk, encoding, callback) {
             callback(writeError);
           },
-        })
+        }) as unknown as WriteStream
       );
       const originalArtifact = setRemoteFunctionArtifact();
 
@@ -325,7 +332,7 @@ describe('AwsCompileFunctions', () => {
       await expect(awsCompileFunctions.downloadPackageArtifacts()).to.be.rejectedWith(streamError);
 
       expect(unlinkSpy).to.have.been.calledOnce;
-      const removedPath = unlinkSpy.firstCall.args[0];
+      const removedPath = unlinkSpy.firstCall.args[0] as string;
       expect(path.basename(removedPath)).to.equal(s3ArtifactName);
       expect(fs.existsSync(removedPath)).to.equal(false);
     });
@@ -1096,7 +1103,7 @@ describe('AwsCompileFunctions', () => {
 
       return expect(awsCompileFunctions.compileFunctions()).to.be.fulfilled.then(() => {
         let versionDescription;
-        for (const [key, value] of Object.entries(
+        for (const [key, value] of Object.entries<Record<string, any>>(
           awsCompileFunctions.serverless.service.provider.compiledCloudFormationTemplate.Resources
         )) {
           if (key.startsWith('FuncLambdaVersion')) {
@@ -1316,8 +1323,8 @@ describe('AwsCompileFunctions', () => {
       });
 
       const functionResource = cfTemplate.Resources[awsNaming.getLambdaLogicalId('imageDurable')];
-      const versionResource = Object.values(cfTemplate.Resources).find(
-        (resource) =>
+      const versionResource: Record<string, any> = Object.values(cfTemplate.Resources).find(
+        (resource: Record<string, any>) =>
           resource.Type === 'AWS::Lambda::Version' &&
           resource.Properties.FunctionName.Ref === awsNaming.getLambdaLogicalId('imageDurable')
       );
@@ -1997,8 +2004,8 @@ describe('AwsCompileFunctions', () => {
         command: 'package',
       });
 
-      const eventSourceMapping = Object.values(cfTemplate.Resources).find(
-        (resource) => resource.Type === 'AWS::Lambda::EventSourceMapping'
+      const eventSourceMapping: Record<string, any> = Object.values(cfTemplate.Resources).find(
+        (resource: Record<string, any>) => resource.Type === 'AWS::Lambda::EventSourceMapping'
       );
       expect(eventSourceMapping.Properties.FunctionName).to.deep.equal({
         'Fn::Join': [
@@ -2042,8 +2049,8 @@ describe('AwsCompileFunctions', () => {
         command: 'package',
       });
 
-      const eventSourceMapping = Object.values(cfTemplate.Resources).find(
-        (resource) => resource.Type === 'AWS::Lambda::EventSourceMapping'
+      const eventSourceMapping: Record<string, any> = Object.values(cfTemplate.Resources).find(
+        (resource: Record<string, any>) => resource.Type === 'AWS::Lambda::EventSourceMapping'
       );
       expect(eventSourceMapping.Properties.DestinationConfig).to.deep.equal({
         OnFailure: { Destination: destination },
@@ -2092,8 +2099,8 @@ describe('AwsCompileFunctions', () => {
         command: 'package',
       });
 
-      const eventSourceMapping = Object.values(cfTemplate.Resources).find(
-        (resource) => resource.Type === 'AWS::Lambda::EventSourceMapping'
+      const eventSourceMapping: Record<string, any> = Object.values(cfTemplate.Resources).find(
+        (resource: Record<string, any>) => resource.Type === 'AWS::Lambda::EventSourceMapping'
       );
       expect(eventSourceMapping.Properties.DestinationConfig).to.deep.equal({
         OnFailure: { Destination: destination },
@@ -2173,7 +2180,7 @@ describe('AwsCompileFunctions', () => {
 
   describe('#compileRole()', () => {
     it('should ignore inherited Fn::GetAtt role markers', () => {
-      const compiledFunction = {
+      const compiledFunction: Record<string, any> = {
         Properties: {},
         DependsOn: [],
       };
@@ -2343,7 +2350,7 @@ describe('AwsCompileFunctions', () => {
   });
 
   describe('#compileFunctionEventInvokeConfig()', () => {
-    function useFunctions(functions) {
+    function useFunctions(functions: Record<string, Record<string, unknown>>) {
       awsCompileFunctions.serverless.service.provider.versionFunctions = false;
       awsCompileFunctions.serverless.service.functions = Object.fromEntries(
         Object.entries(functions).map(([name, config]) => [
@@ -3240,7 +3247,7 @@ describe('lib/plugins/aws/package/compile/functions/index.test.ts', () => {
       cfResources[naming.getLambdaLogicalId(functionName)];
     const getVersionResourceEntry = (functionName) => {
       const functionLogicalId = naming.getLambdaLogicalId(functionName);
-      const entry = Object.entries(cfResources).find(
+      const entry = Object.entries<Record<string, any>>(cfResources).find(
         ([, resource]) =>
           resource.Type === 'AWS::Lambda::Version' &&
           resource.Properties.FunctionName.Ref === functionLogicalId
@@ -4728,8 +4735,8 @@ describe('lib/plugins/aws/package/compile/functions/index.test.ts', () => {
       );
       expect(imageDigest).to.match(/^sha256:[a-f0-9]{64}$/);
       const imageDigestSha = imageDigest.slice('sha256:'.length);
-      const versionCfConfig = Object.values(cfResources).find(
-        (resource) =>
+      const versionCfConfig = Object.values<Record<string, any>>(cfResources).find(
+        (resource: Record<string, any>) =>
           resource.Type === 'AWS::Lambda::Version' &&
           resource.Properties.FunctionName.Ref === functionCfLogicalId
       ).Properties;

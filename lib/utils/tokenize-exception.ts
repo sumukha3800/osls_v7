@@ -26,8 +26,9 @@ export default (exception) => {
       // account or environment, not framework bugs - render them without a stack trace
       isUserError: userErrorNames.has(exception.name) || isAwsServiceError,
       code:
-        exception.code ?? (isAwsServiceError ? `AWS_${toConstantCase(exception.name)}` : undefined),
-      decoratedMessage: exception.decoratedMessage,
+        (exception as Error & { code?: unknown }).code ??
+        (isAwsServiceError ? `AWS_${toConstantCase(exception.name)}` : undefined),
+      decoratedMessage: (exception as Error & { decoratedMessage?: string }).decoratedMessage,
     };
   }
   return {

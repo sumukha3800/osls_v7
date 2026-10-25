@@ -3,6 +3,10 @@ import resolveLambdaTarget from '../../../utils/resolve-lambda-target.ts';
 import { createRegistry } from '../../../../../utils/safe-object.ts';
 
 class AwsCompileCloudWatchLogEvents {
+  declare hooks: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');

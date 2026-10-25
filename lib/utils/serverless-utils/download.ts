@@ -57,7 +57,13 @@ const getFilename = ({ requestUrl, headers, data, explicitFilename }) => {
 
 const fetchWithRedirects = async (
   requestUrl,
-  { headers, dispatcher, signal, maxRedirects = 10, allowedAuthRedirectHostnames = [] } = {}
+  {
+    headers,
+    dispatcher,
+    signal,
+    maxRedirects = 10,
+    allowedAuthRedirectHostnames = [],
+  }: Record<string, any> = {}
 ) => {
   let currentUrl = new URL(requestUrl);
   // Use the platform header parser so redirect auth checks see normalized names and values.
@@ -111,7 +117,7 @@ const fetchWithRedirects = async (
   throw new Error('Too many redirects');
 };
 
-export default (uri, output, opts) => {
+export default (uri, output, opts?) => {
   return (async () => {
     if (typeof output === 'object') {
       opts = output;

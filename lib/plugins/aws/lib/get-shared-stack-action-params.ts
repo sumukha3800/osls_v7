@@ -18,7 +18,7 @@ export default {
       safeShallowAssign(stackTags, this.serverless.service.provider.stackTags);
     }
 
-    const params = {
+    const params: Record<string, any> = {
       StackName: stackName,
       Capabilities: ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
       Parameters: [],

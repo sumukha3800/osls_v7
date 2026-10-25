@@ -123,7 +123,9 @@ async function resolveAccountInfo() {
 
 function resolveApiGatewayResource(resources) {
   const apiGatewayResources = Object.fromEntries(
-    Object.entries(resources).filter(([, resource]) => resource.Type === 'AWS::ApiGateway::RestApi')
+    Object.entries<any>(resources).filter(
+      ([, resource]) => resource.Type === 'AWS::ApiGateway::RestApi'
+    )
   );
   const apiGatewayResourcesIds = Object.keys(apiGatewayResources);
   if (apiGatewayResourcesIds.length !== 1) return null;
@@ -149,7 +151,7 @@ async function resolveRestApiId(getApiGateway) {
     this.apiGatewayRestApiId = null;
     return;
   }
-  const apiGatewayResource = resolveApiGatewayResource(
+  const apiGatewayResource: Record<string, any> = resolveApiGatewayResource(
     this.serverless.service.provider.compiledCloudFormationTemplate.Resources
   );
   if (
@@ -165,7 +167,7 @@ async function resolveRestApiId(getApiGateway) {
     ? apiGatewayResource.Properties.Name
     : this.provider.naming.getApiGatewayName();
   const apiGateway = await getApiGateway();
-  const resolveFromAws = async (position) => {
+  const resolveFromAws = async (position?) => {
     const result = await apiGateway.send(new GetRestApisCommand({ position, limit: 500 }));
     const restApi = (result.items || []).find((api) => api.name === apiName);
     if (restApi) return restApi.id;
@@ -261,7 +263,7 @@ function handleLogs() {
   const logs = this.state.service.provider.logs.restApi;
   const ops = this.apiGatewayStagePatchOperations;
 
-  let operations = [
+  let operations: { op: string; path: string; value?: string }[] = [
     { op: 'replace', path: '/*/*/logging/dataTrace', value: 'false' },
     { op: 'replace', path: '/*/*/logging/loglevel', value: 'OFF' },
   ];

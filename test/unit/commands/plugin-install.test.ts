@@ -28,7 +28,7 @@ const readParsedConfiguration = async (configurationFilePath) =>
     schema: cloudformationSchema,
   });
 
-const writeJsonConfiguration = async (serviceDir, configuration, rawJson) => {
+const writeJsonConfiguration = async (serviceDir, configuration, rawJson?) => {
   const configurationFilePath = path.join(serviceDir, 'serverless.json');
   await fsp.writeFile(configurationFilePath, rawJson || JSON.stringify(configuration));
   return {
@@ -96,9 +96,12 @@ describe('test/unit/commands/plugin-install.test.ts', () => {
     });
 
     it('should add plugin to serverless file', async () => {
-      const serverlessFileObj = yaml.load(await fsp.readFile(configurationFilePath, 'utf8'), {
-        filename: configurationFilePath,
-      });
+      const serverlessFileObj: Record<string, any> = yaml.load(
+        await fsp.readFile(configurationFilePath, 'utf8'),
+        {
+          filename: configurationFilePath,
+        }
+      );
       expect(serverlessFileObj.plugins).to.include(pluginName);
     });
   });
@@ -133,9 +136,12 @@ describe('test/unit/commands/plugin-install.test.ts', () => {
         configurationFilename,
         options,
       });
-      const serverlessFileObj = yaml.load(await fsp.readFile(configurationFilePath, 'utf8'), {
-        filename: configurationFilePath,
-      });
+      const serverlessFileObj: Record<string, any> = yaml.load(
+        await fsp.readFile(configurationFilePath, 'utf8'),
+        {
+          filename: configurationFilePath,
+        }
+      );
       expect(serverlessFileObj.plugins).not.to.include(pluginName);
     });
   });
@@ -385,7 +391,7 @@ describe('test/unit/commands/plugin-install.test.ts', () => {
       });
 
       const fileText = await fsp.readFile(configurationFilePath, 'utf8');
-      const parsed = await readParsedConfiguration(configurationFilePath);
+      const parsed: Record<string, any> = await readParsedConfiguration(configurationFilePath);
 
       expect(fileText).to.include(
         'pluginLogGroupArn: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${self:service}-${sls:stage}:*'
@@ -435,7 +441,7 @@ describe('test/unit/commands/plugin-install.test.ts', () => {
       });
 
       const fileText = await fsp.readFile(configurationFilePath, 'utf8');
-      const parsed = await readParsedConfiguration(configurationFilePath);
+      const parsed: Record<string, any> = await readParsedConfiguration(configurationFilePath);
 
       expect(fileText).to.include('taggedValue: !Sub ${AWS::Region}');
       expect(parsed.plugins.localPath).to.equal('./.serverless_plugins');
@@ -480,7 +486,7 @@ describe('test/unit/commands/plugin-install.test.ts', () => {
       });
 
       const fileText = await fsp.readFile(configurationFilePath, 'utf8');
-      const parsed = await readParsedConfiguration(configurationFilePath);
+      const parsed: Record<string, any> = await readParsedConfiguration(configurationFilePath);
 
       expect(fileText.match(/^(?:"plugins"|plugins):/gm)).to.have.length(1);
       expect(parsed.plugins).to.deep.equal(['existing-plugin', pluginName]);

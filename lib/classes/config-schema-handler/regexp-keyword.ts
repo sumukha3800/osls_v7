@@ -1,4 +1,5 @@
 import compileCodegen from 'ajv/dist/compile/codegen/index.js';
+import type { CodeKeywordDefinition, KeywordCxt } from 'ajv';
 
 // Implementation has been heavily inspired by `ajv-keywords` implementation from:
 // https://github.com/ajv-validator/ajv-keywords/blob/9656614be0104fe71d229459a5217ccac11958a6/src/definitions/regexp.ts
@@ -23,7 +24,11 @@ const regexpMetaSchema = {
 
 const metaRegexp = /^\/(.*)\/([gimuy]*)$/;
 
-const usePattern = ({ gen, it: { opts } }, pattern, flags = opts.unicodeRegExp ? 'u' : '') => {
+const usePattern = (
+  { gen, it: { opts } }: KeywordCxt,
+  pattern: string,
+  flags = opts.unicodeRegExp ? 'u' : ''
+) => {
   const rx = new RegExp(pattern, flags);
   return gen.scopeValue('pattern', {
     key: rx.toString(),
@@ -36,7 +41,7 @@ export default {
   keyword: 'regexp',
   type: 'string',
   schemaType: ['string', 'object'],
-  code(cxt) {
+  code(cxt: KeywordCxt) {
     const { data, schema } = cxt;
     const regx = getRegExp(schema);
     cxt.pass(_`${regx}.test(${data})`);
@@ -51,4 +56,4 @@ export default {
   metaSchema: {
     anyOf: [{ type: 'string' }, regexpMetaSchema],
   },
-};
+} satisfies CodeKeywordDefinition;

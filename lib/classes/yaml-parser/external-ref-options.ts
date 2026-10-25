@@ -30,7 +30,7 @@ const normalizeAllowedUnsafeHost = (host) => {
   }
 };
 
-const normalizeHttpRefOptions = (options = {}) => {
+const normalizeHttpRefOptions = (options: Record<string, any> = {}) => {
   assertOptionsObject(options, 'externalRefs.http');
   assertKnownOptions(options, 'externalRefs.http', ['allowUnsafeUrls', 'allowedUnsafeHosts']);
 
@@ -49,7 +49,7 @@ const normalizeHttpRefOptions = (options = {}) => {
   };
 };
 
-const normalizeExternalRefOptions = async (yamlFilePath, options = {}) => {
+const normalizeExternalRefOptions = async (yamlFilePath, options: Record<string, any> = {}) => {
   assertOptionsObject(options, 'options');
   assertKnownOptions(options, 'options', ['externalRefs']);
 

@@ -5,6 +5,11 @@ import cliCommandsSchema from '../../cli/commands-schema/index.ts';
 import { log } from '../../utils/serverless-utils/log.ts';
 
 class AwsConfigCredentials {
+  declare commands: any;
+  declare hooks: any;
+  declare options: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

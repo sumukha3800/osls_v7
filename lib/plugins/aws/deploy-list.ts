@@ -15,6 +15,17 @@ import promiseLimit2 from 'ext/promise/limit.js';
 const promiseLimit = promiseLimit2.bind(Promise);
 
 class AwsDeployList {
+  declare bucketName: any;
+  declare hooks: any;
+  declare lambdaClientPromise: any;
+  declare limitLambdaRequests: any;
+  declare options: any;
+  declare provider: any;
+  declare s3ClientPromise: any;
+  declare serverless: any;
+  declare setBucketName: any;
+  declare validate: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options || {};
@@ -107,13 +118,13 @@ class AwsDeployList {
     const match = deployment[0].directory.match(directoryRegex);
     const date = new Date(Date.parse(match[2]));
     writeText(
-      `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, 0)}-${String(
+      `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(
         date.getUTCDate()
-      ).padStart(2, 0)} ` +
-        `${String(date.getUTCHours()).padStart(2, 0)}:${String(date.getUTCMinutes()).padStart(
+      ).padStart(2, '0')} ` +
+        `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(
           2,
-          0
-        )}:${String(date.getUTCSeconds()).padStart(2, 0)} UTC`,
+          '0'
+        )}:${String(date.getUTCSeconds()).padStart(2, '0')} UTC`,
       `Timestamp: ${match[1]}`,
       'Files:'
     );
@@ -146,7 +157,7 @@ class AwsDeployList {
     return result.map((item) => item.Configuration);
   }
 
-  async getFunctionPaginatedVersions(params, totalVersions) {
+  async getFunctionPaginatedVersions(params, totalVersions?) {
     const lambda = await this.getLambdaClient();
     const Versions = totalVersions ? [...totalVersions] : [];
     let input = params;

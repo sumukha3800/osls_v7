@@ -3,7 +3,7 @@ import path from 'node:path';
 import jc from 'json-cycle';
 import * as yaml from 'js-yaml';
 
-function writeFileSync(filePath, conts, cycles) {
+function writeFileSync(filePath, conts?, cycles?) {
   let contents = conts || '';
 
   fs.mkdirSync(path.dirname(filePath), { recursive: true });

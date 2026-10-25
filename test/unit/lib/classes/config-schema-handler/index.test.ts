@@ -2,6 +2,7 @@ import * as chai from 'chai';
 import runServerless from '../../../../utils/run-serverless.ts';
 import ConfigSchemaHandler from '../../../../../lib/classes/config-schema-handler/index.ts';
 import STAGE_NAME_PATTERN from '../../../../../lib/utils/stage-pattern.ts';
+import type Serverless from '../../../../../lib/serverless.ts';
 
 const { getConfigurationValidationResult } = ConfigSchemaHandler;
 
@@ -12,7 +13,7 @@ const createConfigSchemaHandler = (configurationInput) =>
   new ConfigSchemaHandler({
     configurationInput,
     service: { configValidationMode: 'error' },
-  });
+  } as Serverless);
 
 describe('test/unit/lib/classes/ConfigSchemaHandler/index.test.ts', () => {
   describe('#constructor', () => {
@@ -127,7 +128,7 @@ describe('test/unit/lib/classes/ConfigSchemaHandler/index.test.ts', () => {
       expect(Object.prototype.hasOwnProperty.call(userConfig.custom, '__proto__')).to.equal(false);
       expect(Object.prototype.hasOwnProperty.call(userConfig.custom, 'constructor')).to.equal(true);
       expect(userConfig.custom.constructor.prototype.blockedNull).to.equal(undefined);
-      expect({}.blockedNull).to.equal(undefined);
+      expect(({} as { blockedNull?: unknown }).blockedNull).to.equal(undefined);
     });
 
     it('resolves schema references through own definition keys named constructor', async () => {

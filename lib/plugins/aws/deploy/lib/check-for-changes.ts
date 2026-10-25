@@ -277,7 +277,7 @@ export default {
       new Set(zipFiles.map((zipFile) => path.resolve(serverlessDirPath, zipFile)))
     );
 
-    const hashZipFileLimited = limit(maxConcurrentArtifactHashes, async (zipFilePath) => {
+    const hashZipFileLimited = limit(maxConcurrentArtifactHashes, async (zipFilePath: string) => {
       localHashesMap.set(zipFilePath, await getHashForFilePath(zipFilePath));
     });
 

@@ -144,12 +144,17 @@ describe('test/unit/lib/utils/create-from-local-template.test.ts', () => {
 
     it('should set service name in serverless.yml', async () =>
       expect(
-        yamlParse(await fsp.readFile(path.join(tmpDirPath, 'serverless.yml'))).service
+        (
+          yamlParse(
+            (await fsp.readFile(path.join(tmpDirPath, 'serverless.yml'))) as unknown as string
+          ) as Record<string, any>
+        ).service
       ).to.equal('testproj'));
 
     it('should set name in package.json', async () =>
-      expect(JSON.parse(await fsp.readFile(path.join(tmpDirPath, 'package.json'))).name).to.equal(
-        'testproj'
-      ));
+      expect(
+        JSON.parse((await fsp.readFile(path.join(tmpDirPath, 'package.json'))) as unknown as string)
+          .name
+      ).to.equal('testproj'));
   });
 });

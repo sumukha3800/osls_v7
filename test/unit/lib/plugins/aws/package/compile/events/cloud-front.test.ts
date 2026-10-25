@@ -54,7 +54,7 @@ function createDefaultCompiledCloudFormationTemplate() {
   };
 }
 
-function createAwsCompileCloudFrontEvents(config = {}) {
+function createAwsCompileCloudFrontEvents(config: Record<string, any> = {}) {
   const providerConfig = config.provider || {};
   const { awsCompileEvents } = createAwsEventCompilerContext(AwsCompileCloudFrontEvents, {
     ...config,
@@ -1124,7 +1124,7 @@ describe('test/unit/lib/plugins/aws/package/compile/events/cloudFront.test.ts', 
         },
       ]);
 
-      expect(iamRoleDocument.Properties.AssumeRolePolicyDocument.Statement[0]).to.deep.eql({
+      expect(iamRoleDocument.Properties.AssumeRolePolicyDocument.Statement[0]).to.deep.equal({
         Effect: 'Allow',
         Principal: {
           Service: ['lambda.amazonaws.com', 'edgelambda.amazonaws.com'],

@@ -8,6 +8,12 @@ import { getReachableByPath } from '../utils/safe-object.ts';
 import { writeText } from '../utils/serverless-utils/log.ts';
 
 class Print {
+  declare cache: any;
+  declare commands: any;
+  declare hooks: any;
+  declare options: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options || {};

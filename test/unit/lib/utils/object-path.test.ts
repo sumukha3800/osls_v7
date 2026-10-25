@@ -9,7 +9,7 @@ import {
 
 describe('object-path', () => {
   afterEach(() => {
-    delete Object.prototype.polluted;
+    delete (Object.prototype as { polluted?: unknown }).polluted;
   });
 
   it('tokenizes dot and bracket paths', () => {
@@ -47,7 +47,7 @@ describe('object-path', () => {
         value: 'safe',
       },
     });
-    expect(Object.prototype.toString.value).to.equal(undefined);
+    expect((Object.prototype.toString as { value?: unknown }).value).to.equal(undefined);
   });
 
   it('returns undefined for unsafe get paths', () => {
@@ -59,12 +59,12 @@ describe('object-path', () => {
 
     expect(setByPath(target, '__proto__.polluted', 'yes')).to.equal(false);
     expect(unsetByPath(target, '__proto__.polluted')).to.equal(false);
-    expect({}.polluted).to.equal(undefined);
+    expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
   });
 
   it('refuses bracket-notation unsafe paths for setByPath', () => {
     expect(setByPath({}, '["__proto__"].polluted', 'yes')).to.equal(false);
-    expect({}.polluted).to.equal(undefined);
+    expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
   });
 
   it('refuses bracket-notation unsafe paths for getByPath', () => {
@@ -77,7 +77,7 @@ describe('object-path', () => {
 
   it('refuses bracket-notation with single-quoted unsafe segments', () => {
     expect(setByPath({}, "['constructor']['prototype'].polluted", 'yes')).to.equal(false);
-    expect({}.polluted).to.equal(undefined);
+    expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
   });
 
   it('refuses constructor.prototype paths for set/get/unset', () => {
@@ -85,18 +85,18 @@ describe('object-path', () => {
     expect(setByPath(target, 'constructor.prototype.polluted', 'yes')).to.equal(false);
     expect(getByPath(target, 'constructor.prototype')).to.equal(undefined);
     expect(unsetByPath(target, 'constructor.prototype.polluted')).to.equal(false);
-    expect({}.polluted).to.equal(undefined);
+    expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
   });
 
   it('refuses constructor at depth inside the path', () => {
     expect(setByPath({}, 'safe.constructor.prototype.polluted', 'yes')).to.equal(false);
     expect(getByPath({ safe: {} }, 'safe.constructor.prototype.polluted')).to.equal(undefined);
-    expect({}.polluted).to.equal(undefined);
+    expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
   });
 
   it('refuses bracket-notation __proto__ and constructor segments with double quotes', () => {
     expect(setByPath({}, 'safe["__proto__"].x', 'y')).to.equal(false);
     expect(setByPath({}, 'safe["constructor"].x', 'y')).to.equal(false);
-    expect({}.x).to.equal(undefined);
+    expect(({} as { x?: unknown }).x).to.equal(undefined);
   });
 });

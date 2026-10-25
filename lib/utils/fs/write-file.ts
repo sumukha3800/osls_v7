@@ -3,7 +3,7 @@ import path from 'node:path';
 import jc from 'json-cycle';
 import * as yaml from 'js-yaml';
 
-async function writeFile(filePath, conts, cycles) {
+async function writeFile(filePath, conts, cycles?) {
   let contents = conts || '';
 
   return fsp.mkdir(path.dirname(filePath), { recursive: true }).then(() => {

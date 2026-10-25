@@ -3,6 +3,7 @@ import ServerlessError from '../../../serverless-error.ts';
 import { log, style, progress } from '../../../utils/serverless-utils/log.ts';
 import getMonitoringFrequency from '../utils/get-monitoring-frequency.ts';
 import { CloudFormationClient, DescribeStackEventsCommand } from '@aws-sdk/client-cloudformation';
+import type { DescribeStackEventsCommandInput } from '@aws-sdk/client-cloudformation';
 import { isCloudFormationMissingStackError } from '../../../aws/aws-sdk-v3-error.ts';
 import retry from '../../../aws/retry.ts';
 const { retryOnThrottlingError } = retry;
@@ -36,7 +37,7 @@ export default {
       stackLatestError = null,
       firstEventId = null,
       completedResources = new Set(),
-    } = state;
+    }: Record<string, any> = state;
     const cloudFormation = await getCloudFormationClient(this);
     await wait(getMonitoringFrequency(options.frequency));
 
@@ -48,7 +49,7 @@ export default {
       let nextToken;
       let boundaryReached = false;
       do {
-        const input = { StackName: cfData.StackId };
+        const input: DescribeStackEventsCommandInput = { StackName: cfData.StackId };
         if (nextToken) input.NextToken = nextToken;
         const result = await retryOnThrottlingError(
           () => cloudFormation.send(new DescribeStackEventsCommand(input)),

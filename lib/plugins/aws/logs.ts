@@ -9,9 +9,17 @@ import {
   DescribeLogStreamsCommand,
   FilterLogEventsCommand,
 } from '@aws-sdk/client-cloudwatch-logs';
+import type { DescribeLogStreamsCommandInput } from '@aws-sdk/client-cloudwatch-logs';
 
 class AwsLogs {
-  constructor(serverless, options) {
+  declare cloudWatchLogsClientPromise: any;
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare validate: any;
+
+  constructor(serverless, options?) {
     this.serverless = serverless;
     this.options = options || {};
     this.provider = this.serverless.getProvider('aws');
@@ -45,7 +53,7 @@ class AwsLogs {
   }
 
   async getLogStreams() {
-    const params = {
+    const params: DescribeLogStreamsCommandInput = {
       logGroupName: this.options.logGroupName,
       descending: true,
       limit: 50,
@@ -70,7 +78,7 @@ class AwsLogs {
       }
     }
 
-    const params = {
+    const params: Record<string, any> = {
       logGroupName: this.options.logGroupName,
       interleaved: true,
       logStreamNames,

@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import AwsProvider from '../../../../../../../../../lib/plugins/aws/provider.ts';
 import { createApiGatewayCompilerContext } from './test-utils.ts';
 import validate from '../../../../../../../../../lib/plugins/aws/lib/validate.ts';
@@ -52,8 +53,8 @@ describe('AwsCompileApigEvents', () => {
       awsCompileApigEvents.compileUsagePlan.restore();
       awsCompileApigEvents.compilePermissions.restore();
       awsCompileApigEvents.compileStage.restore();
-      updateStage.updateStage.restore();
-      disassociateUsagePlan.disassociateUsagePlan.restore();
+      (updateStage.updateStage as SinonStub).restore();
+      (disassociateUsagePlan.disassociateUsagePlan as SinonStub).restore();
     });
 
     it('should have hooks', () => expect(awsCompileApigEvents.hooks).to.be.not.empty);
@@ -100,7 +101,7 @@ describe('AwsCompileApigEvents', () => {
       });
 
       afterEach(() => {
-        getServiceState.getServiceState.restore();
+        (getServiceState.getServiceState as SinonStub).restore();
       });
 
       it('should run the promise chain in order', async () => {
@@ -150,7 +151,7 @@ describe('AwsCompileApigEvents', () => {
         expect(validateStub.calledOnce).to.equal(true);
         expect(disassociateUsagePlanStub.calledAfter(validateStub)).to.equal(true);
 
-        validate.validate.restore();
+        (validate.validate as SinonStub).restore();
       });
     });
 

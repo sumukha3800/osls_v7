@@ -6,7 +6,7 @@ const serverless = new Serverless({ commands: [], options: {} });
 
 describe('Config', () => {
   afterEach(() => {
-    delete Object.prototype.polluted;
+    delete (Object.prototype as { polluted?: unknown }).polluted;
   });
 
   describe('#constructor()', () => {
@@ -55,7 +55,7 @@ describe('Config', () => {
       configInstance.update(JSON.parse('{"__proto__":{"polluted":"yes"},"custom":{"safe":true}}'));
 
       expect(configInstance.custom).to.deep.equal({ safe: true });
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
     });
   });
 });

@@ -43,12 +43,24 @@ describe('test/unit/lib/aws/credentials.test.ts', () => {
   }
 
   class FakeNodeHttpHandler {
+    declare static instances: any;
+    declare options: any;
+
     constructor(options) {
       this.options = options;
       FakeNodeHttpHandler.instances.push(this);
     }
   }
   FakeNodeHttpHandler.instances = [];
+
+  interface LoadCredentialsOptions {
+    files?: Record<string, string | Error>;
+    fromIni: sinon.SinonStub;
+    fromNodeProviderChain: sinon.SinonStub;
+    readline?: ReturnType<typeof createFakeReadline>;
+    logWarning?: sinon.SinonSpy;
+    withInteractiveSsoLogin?: sinon.SinonStub;
+  }
 
   async function loadCredentials({
     files = {},
@@ -57,7 +69,7 @@ describe('test/unit/lib/aws/credentials.test.ts', () => {
     readline,
     logWarning,
     withInteractiveSsoLogin,
-  }) {
+  }: LoadCredentialsOptions) {
     const readFileSync = sinon.stub().callsFake((filePath) => {
       if (Object.prototype.hasOwnProperty.call(files, filePath)) {
         const result = files[filePath];
@@ -91,10 +103,10 @@ describe('test/unit/lib/aws/credentials.test.ts', () => {
     return (await esmock('../../../../lib/aws/credentials.ts', stubs)).default;
   }
 
-  function createFakeReadline({ answer } = {}) {
+  function createFakeReadline({ answer }: Record<string, any> = {}) {
     return {
       createInterface: () => {
-        const handlers = {};
+        const handlers: Record<string, any> = {};
         return {
           question: (prompt, callback) => {
             if (answer !== undefined) {
@@ -478,7 +490,7 @@ describe('test/unit/lib/aws/credentials.test.ts', () => {
         'config single-quoted profile default',
         { [configFilePath]: ["[profile 'default']", 'region = us-east-1'].join('\n') },
       ],
-    ]) {
+    ] as Array<[string, Record<string, string>]>) {
       const { doesImplicitDefaultProfileExist } = await loadCredentials({
         files,
         fromIni,

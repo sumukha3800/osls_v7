@@ -6,6 +6,23 @@ import globalState from '../global-state.ts';
 import memoizee from 'memoizee';
 import logLevels from 'log/levels.json' with { type: 'json' };
 
+type ProgressUpdate = (textTokens?: unknown, options?: Record<string, any> | null) => void;
+
+export interface Progress {
+  namespace: string;
+  name: string;
+  remove: () => void;
+  info: ProgressUpdate;
+  notice: ProgressUpdate;
+  update: ProgressUpdate;
+  [key: string]: any;
+}
+
+export interface ProgressReporter {
+  get: ((name: string) => Progress) & { _has: (name: string) => boolean };
+  create: (options?: { message?: string; name?: string }) => Progress;
+}
+
 const progressEmitter = (() => {
   if (!globalState.progressEmitter) {
     globalState.progressEmitter = new EventEmitter();
@@ -14,13 +31,17 @@ const progressEmitter = (() => {
   return globalState.progressEmitter;
 })();
 
-const getProgressReporter = memoizee(
-  (namespace) => {
+type GetProgressReporter = ((namespace: string) => ProgressReporter) & { emitter?: EventEmitter };
+
+const getProgressReporter: GetProgressReporter = memoizee(
+  (namespace: string): ProgressReporter => {
     return {
-      get: memoizee(
-        (name) => {
+      // Upstream passes `namespace` where memoizee expects its options and memoizee ignores the
+      // third argument, so `primitive` is not applied; kept as is to preserve behaviour
+      get: (memoizee as (...args: unknown[]) => ProgressReporter['get'])(
+        (name: string) => {
           name = ensureString(name, { name: 'name' });
-          const progress = {
+          const progress: Record<string, any> = {
             namespace,
             name,
             remove: () => {
@@ -44,12 +65,12 @@ const getProgressReporter = memoizee(
             };
           }
           progress.update = progress.notice;
-          return progress;
+          return progress as Progress;
         },
         namespace,
         { primitive: true }
       ),
-      create(options = {}) {
+      create(options: Record<string, any> = {}) {
         if (!isObject(options)) options = {};
         const message = ensureString(options.message, {
           isOptional: true,

@@ -29,11 +29,11 @@ const loadProgressFooter = async (platform = process.platform) => {
   }
 };
 
-const createMockStream = (options = {}) => {
+const createMockStream = (options: Record<string, any> = {}) => {
   const writes = [];
   const stream = {
     columns: options.columns || 80,
-    write(chunk, encoding, callback) {
+    write(chunk, encoding?, callback?) {
       writes.push(chunk);
       if (typeof encoding === 'function') encoding();
       if (callback) callback();
@@ -55,7 +55,7 @@ const createMockStream = (options = {}) => {
   };
 };
 
-const createFooter = async (options = {}) => {
+const createFooter = async (options: Record<string, any> = {}) => {
   const stdout = createMockStream({ columns: options.columns });
   const stderr = createMockStream({ columns: options.columns });
   const createProgressFooter = await loadProgressFooter(options.platform);
@@ -107,14 +107,14 @@ describe('test/unit/lib/utils/progress-footer.test.ts', () => {
     const intervals = [];
     sinon.stub(global, 'setInterval').callsFake((callback, interval) => {
       intervals.push(interval);
-      return { unref: sinon.stub() };
+      return { unref: sinon.stub() } as unknown as NodeJS.Timeout;
     });
     sinon.stub(global, 'clearInterval');
 
     for (const [platform, expectedInterval] of [
       ['linux', 80],
       ['win32', 100],
-    ]) {
+    ] as Array<[NodeJS.Platform, number]>) {
       const stdout = createMockStream();
       const stderr = createMockStream();
       const createProgressFooter = await loadProgressFooter(platform);

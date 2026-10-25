@@ -1,9 +1,15 @@
+import type { ErrorObject } from 'ajv';
+
+// AJV runs with `verbose: true`, so errors carry `schema`, `parentSchema` and `data`
+type NormalizedError = ErrorObject & { commonType?: string };
+type VariantErrors = NormalizedError[] & { deepestInstancePathSize?: number };
+
 const isEventTypeInstancePath = RegExp.prototype.test.bind(/^\/functions\/[^/]+\/events\/\d+$/);
 const oneOfPathPattern = /\/(?:anyOf|oneOf)(?:\/\d+\/|$)/;
 const isAnyOfPathTypePostfix = RegExp.prototype.test.bind(/^\/\d+\/type$/);
 const oneOfKeywords = new Set(['anyOf', 'oneOf']);
 
-const groupBy = (items, iteratee) => {
+const groupBy = <T>(items: T[], iteratee: ((item: T) => string) | keyof T): Record<string, T[]> => {
   // Use a null-prototype accumulator so that unusual key values cannot collide
   // with inherited Object.prototype members (e.g., result['__proto__'] would
   // otherwise return Object.prototype and break `||= []` + push).
@@ -14,7 +20,7 @@ const groupBy = (items, iteratee) => {
   }, Object.create(null));
 };
 
-const filterIrreleventEventConfigurationErrors = (resultErrorsSet) => {
+const filterIrreleventEventConfigurationErrors = (resultErrorsSet: Set<NormalizedError>) => {
   // 1. Resolve all errors at event type configuration level
   const eventTypeErrors = Array.from(resultErrorsSet).filter(({ instancePath }) =>
     isEventTypeInstancePath(instancePath)
@@ -88,9 +94,9 @@ const filterIrreleventEventConfigurationErrors = (resultErrorsSet) => {
   }
 };
 
-const filterIrrelevantAnyOfErrors = (resultErrorsSet) => {
+const filterIrrelevantAnyOfErrors = (resultErrorsSet: Set<NormalizedError>) => {
   // 1. Group errors by anyOf/oneOf schema path
-  const oneOfErrorsByPath = {};
+  const oneOfErrorsByPath: Record<string, NormalizedError[]> = {};
   for (const error of resultErrorsSet) {
     const schemaPath = error.schemaPath;
     let fromIndex = 0;
@@ -139,7 +145,9 @@ const filterIrrelevantAnyOfErrors = (resultErrorsSet) => {
       if (!instancePathOneOfPathErrorsByVariant.root) return;
       const noMatchingVariantError = instancePathOneOfPathErrorsByVariant.root[0];
       delete instancePathOneOfPathErrorsByVariant.root;
-      let instancePathOneOfPathVariants = Object.values(instancePathOneOfPathErrorsByVariant);
+      let instancePathOneOfPathVariants: VariantErrors[] = Object.values(
+        instancePathOneOfPathErrorsByVariant
+      );
       // 2.2.4 If no variants, set was already filtered by event configuration errors filter
       if (!instancePathOneOfPathVariants.length) return;
 
@@ -205,7 +213,7 @@ const filterIrrelevantAnyOfErrors = (resultErrorsSet) => {
       }
       // 2.2.8 If more than one variant left, expose just "no matching variant" error
       for (const instancePathOneOfPathVariantErrors of instancePathOneOfPathVariants) {
-        const types = new Set();
+        const types = new Set<string>();
         for (const instancePathOneOfPathVariantError of instancePathOneOfPathVariantErrors) {
           const parentSchema = instancePathOneOfPathVariantError.parentSchema;
           types.add(parentSchema.const ? 'const' : parentSchema.type);
@@ -217,14 +225,14 @@ const filterIrrelevantAnyOfErrors = (resultErrorsSet) => {
   }
 };
 
-const normalizeInstancePath = (instancePath) => {
+const normalizeInstancePath = (instancePath: string) => {
   if (!instancePath) return 'root';
 
   // This code removes leading / and replaces / with . in error path indication
   return `'${instancePath.slice(1).replace(/\//g, '.')}'`;
 };
 
-const improveMessages = (resultErrorsSet) => {
+const improveMessages = (resultErrorsSet: Set<NormalizedError>) => {
   for (const error of resultErrorsSet) {
     switch (error.keyword) {
       case 'additionalProperties':
@@ -262,8 +270,8 @@ const improveMessages = (resultErrorsSet) => {
   }
 };
 
-const filterDuplicateErrors = (resultErrorsSet) => {
-  const seenMessages = new Set();
+const filterDuplicateErrors = (resultErrorsSet: Set<NormalizedError>) => {
+  const seenMessages = new Set<string>();
   resultErrorsSet.forEach((item) => {
     if (!seenMessages.has(item.message)) {
       seenMessages.add(item.message);
@@ -276,8 +284,8 @@ const filterDuplicateErrors = (resultErrorsSet) => {
 /*
  * For error object structure, see https://github.com/ajv-validator/ajv/#error-objects
  */
-export default (ajvErrors) => {
-  const resultErrorsSet = new Set(ajvErrors);
+export default (ajvErrors: readonly ErrorObject[]): NormalizedError[] => {
+  const resultErrorsSet = new Set<NormalizedError>(ajvErrors);
 
   // 1. Filter eventual irrelevant errors for faulty event type configurations
   filterIrreleventEventConfigurationErrors(resultErrorsSet);

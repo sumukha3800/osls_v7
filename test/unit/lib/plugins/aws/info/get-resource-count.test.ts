@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import AwsInfo from '../../../../../../lib/plugins/aws/info/index.ts';
 import retry from '../../../../../../lib/aws/retry.ts';
 import { CloudFormationClient, ListStackResourcesCommand } from '@aws-sdk/client-cloudformation';
@@ -59,7 +60,7 @@ describe('#getResourceCount()', () => {
     if (awsInfo.provider.getAwsSdkV3Config.restore) {
       awsInfo.provider.getAwsSdkV3Config.restore();
     }
-    CloudFormationClient.prototype.send.restore();
+    (CloudFormationClient.prototype.send as SinonStub).restore();
   });
 
   it('attach resourceCount to this.gatheredData after listStackResources call', async () => {

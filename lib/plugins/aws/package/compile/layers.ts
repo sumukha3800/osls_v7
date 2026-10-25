@@ -25,6 +25,14 @@ const getLayerArtifactHash = async (layerArtifactPath, layerForHash) =>
   });
 
 class AwsCompileLayers {
+  declare cloudFormationClientPromise: any;
+  declare hooks: any;
+  declare limitCloudFormationRequests: any;
+  declare options: any;
+  declare packagePath: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
@@ -50,7 +58,7 @@ class AwsCompileLayers {
   }
 
   async compileLayer(layerName) {
-    const newLayer = this.cfLambdaLayerTemplate();
+    const newLayer: Record<string, any> = this.cfLambdaLayerTemplate();
     const layerObject = this.serverless.service.getLayer(layerName);
     layerObject.package = layerObject.package || {};
     Object.defineProperty(newLayer, '_serverlessLayerName', { value: layerName });
@@ -99,7 +107,7 @@ class AwsCompileLayers {
 
     if (layerObject.allowedAccounts) {
       layerObject.allowedAccounts.map((account) => {
-        const newPermission = this.cfLambdaLayerPermissionTemplate();
+        const newPermission: Record<string, any> = this.cfLambdaLayerPermissionTemplate();
         newPermission.Properties.LayerVersionArn = { Ref: layerLogicalId };
         newPermission.Properties.Principal = account;
         let layerPermLogicalId = this.provider.naming.getLambdaLayerPermissionLogicalId(
@@ -224,21 +232,24 @@ class AwsCompileLayers {
     };
   }
 
-  cfOutputLayerTemplate() {
+  // A CloudFormation output; `Value` is set by the caller
+  cfOutputLayerTemplate(): { Description: string; Value: any } {
     return {
       Description: 'Current Lambda layer version',
       Value: 'Value',
     };
   }
 
-  cfOutputLayerHashTemplate() {
+  // A CloudFormation output; `Value` is set by the caller
+  cfOutputLayerHashTemplate(): { Description: string; Value: any } {
     return {
       Description: 'Current Lambda layer hash',
       Value: 'Value',
     };
   }
 
-  cfOutputLayerS3KeyTemplate() {
+  // A CloudFormation output; `Value` is set by the caller
+  cfOutputLayerS3KeyTemplate(): { Description: string; Value: any } {
     return {
       Description: 'Current Lambda layer S3Key',
       Value: 'Value',

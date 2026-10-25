@@ -12,6 +12,8 @@ describe('Custom resource S3 permissions', () => {
     sentCommands = [];
 
     class LambdaClient {
+      declare config: any;
+
       constructor() {
         this.config = {};
       }
@@ -23,12 +25,16 @@ describe('Custom resource S3 permissions', () => {
     }
 
     class AddPermissionCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
     }
 
     class RemovePermissionCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -829,6 +835,8 @@ describe('Custom resource S3 bucket configuration', () => {
     const sentCommands = [];
 
     class S3Client {
+      declare config: any;
+
       constructor() {
         this.config = {};
       }
@@ -857,12 +865,16 @@ describe('Custom resource S3 bucket configuration', () => {
     }
 
     class GetBucketNotificationConfigurationCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
     }
 
     class PutBucketNotificationConfigurationCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -904,6 +916,8 @@ describe('Custom resource S3 bucket configuration', () => {
     const sentCommands = [];
 
     class S3Client {
+      declare config: any;
+
       constructor() {
         this.config = {};
       }
@@ -940,12 +954,16 @@ describe('Custom resource S3 bucket configuration', () => {
     }
 
     class GetBucketNotificationConfigurationCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
     }
 
     class PutBucketNotificationConfigurationCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -989,6 +1007,8 @@ describe('Custom resource S3 bucket configuration', () => {
     const sentCommands = [];
 
     class S3Client {
+      declare config: any;
+
       constructor() {
         this.config = {};
       }
@@ -1021,12 +1041,16 @@ describe('Custom resource S3 bucket configuration', () => {
     }
 
     class GetBucketNotificationConfigurationCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
     }
 
     class PutBucketNotificationConfigurationCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }

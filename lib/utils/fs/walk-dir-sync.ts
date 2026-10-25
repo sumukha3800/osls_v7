@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 
-function walkDirSync(dirPath, opts) {
+function walkDirSync(dirPath, opts?) {
   const options = Object.assign(
     {
       noLinks: false,

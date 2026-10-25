@@ -1,6 +1,10 @@
 import resolveLambdaTarget from '../../../utils/resolve-lambda-target.ts';
 
 class AwsCompileAlexaSkillEvents {
+  declare hooks: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');
@@ -43,7 +47,7 @@ class AwsCompileAlexaSkillEvents {
           }
           alexaSkillNumberInFunction++;
 
-          const permissionTemplate = {
+          const permissionTemplate: Record<string, any> = {
             Type: 'AWS::Lambda::Permission',
             DependsOn: functionObj.targetAlias && functionObj.targetAlias.logicalId,
             Properties: {

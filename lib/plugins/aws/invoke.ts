@@ -5,8 +5,16 @@ import formatLambdaLogEvent from './utils/format-lambda-log-event.ts';
 import ServerlessError from '../../serverless-error.ts';
 import { writeText, style } from '../../utils/serverless-utils/log.ts';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
+import type { InvokeCommandInput } from '@aws-sdk/client-lambda';
 
 class AwsInvoke {
+  declare hooks: any;
+  declare lambdaClientPromise: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare validate: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options || {};
@@ -111,7 +119,7 @@ class AwsInvoke {
       this.options.log = this.options.log ? 'Tail' : 'None';
     }
 
-    const params = {
+    const params: InvokeCommandInput = {
       FunctionName: this.options.functionObj.name,
       InvocationType: invocationType,
       LogType: this.options.log,

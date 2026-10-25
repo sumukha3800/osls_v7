@@ -1,11 +1,12 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 
-export default async (filePath) => {
+// Resolves with the base64 encoded SHA-256 hash of the file
+export default async (filePath: string) => {
   const fileHash = crypto.createHash('sha256');
   fileHash.setEncoding('base64');
 
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const readStream = fs.createReadStream(filePath);
     readStream
       .on('data', (chunk) => {

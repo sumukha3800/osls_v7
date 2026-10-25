@@ -6,7 +6,7 @@ import resolve from '../../../../../lib/configuration/variables/resolve.ts';
 
 describe('test/unit/lib/configuration/variables/resolve.test.ts', () => {
   describe('Complete resolution', () => {
-    const configuration = {
+    const configuration: Record<string, any> = {
       foo: {
         params: '${sourceParam(param1, param2)}',
         varParam: '${sourceParam(${sourceDirect:})}',
@@ -181,14 +181,14 @@ describe('test/unit/lib/configuration/variables/resolve.test.ts', () => {
             case 'serverless-error':
               throw new ServerlessError('Stop');
             case 'circular-ref': {
-              const obj = {};
+              const obj: Record<string, any> = {};
               obj.obj = obj;
               return { value: obj };
             }
             case 'non-json':
               return { value: new Set() };
             case 'non-json-circular': {
-              const obj = new Set();
+              const obj: Set<unknown> & { obj?: unknown } = new Set();
               obj.obj = obj;
               return { value: obj };
             }
@@ -618,7 +618,7 @@ describe('test/unit/lib/configuration/variables/resolve.test.ts', () => {
   });
 
   describe('Partial resolution', () => {
-    const configuration = {
+    const configuration: Record<string, any> = {
       static: true,
       obj: {
         child: 'marko',
@@ -742,7 +742,7 @@ describe('test/unit/lib/configuration/variables/resolve.test.ts', () => {
   });
 
   describe('Deferred resolution of dynamically discovered properties', () => {
-    const configuration = {
+    const configuration: Record<string, any> = {
       params: {
         dev: { greeting: '${sourceDirect:}' },
         prod: '${sourceObject:}',

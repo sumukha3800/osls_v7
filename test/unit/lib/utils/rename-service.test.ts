@@ -7,7 +7,7 @@ import { ensureDirSync, getTmpDirPath } from '../../../utils/fs.ts';
 import { renameService } from '../../../../lib/utils/rename-service.ts';
 
 const createHarness = () => {
-  const serverlessLike = {};
+  const serverlessLike: Record<string, any> = {};
   serverlessLike.utils = new Utils(serverlessLike);
   serverlessLike.yamlParser = new YamlParser(serverlessLike);
   return serverlessLike;

@@ -10,7 +10,24 @@ const { log } = log2;
 const mainProgress = progress.get('main');
 
 class AwsInfo {
-  constructor(serverless, options) {
+  declare commands: any;
+  declare displayApiKeys: any;
+  declare displayEndpoints: any;
+  declare displayFunctions: any;
+  declare displayLayers: any;
+  declare displayServiceInfo: any;
+  declare displayStackOutputs: any;
+  declare gatheredData: any;
+  declare getApiKeyValues: any;
+  declare getResourceCount: any;
+  declare getStackInfo: any;
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare validate: any;
+
+  constructor(serverless, options?) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');
     this.options = options || {};

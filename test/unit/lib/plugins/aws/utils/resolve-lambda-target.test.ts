@@ -19,7 +19,7 @@ describe('#resolveLambdaTarget', () => {
   });
 
   it('should reflect a target alias added after an earlier unqualified resolution', () => {
-    const functionObj = {};
+    const functionObj: Record<string, any> = {};
     const functionName = 'foo';
 
     expect(resolveLambdaTarget(functionName, functionObj)).to.deep.equal({

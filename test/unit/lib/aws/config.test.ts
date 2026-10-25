@@ -19,6 +19,8 @@ describe('test/unit/lib/aws/config.test.ts', () => {
     }
 
     class FakeHttpsAgent {
+      declare options: any;
+
       constructor(options) {
         this.options = options;
       }
@@ -119,12 +121,12 @@ describe('test/unit/lib/aws/config.test.ts', () => {
   it('enforces the socket inactivity timeout with the real transport', async () => {
     await overrideEnv(async () => {
       process.env.AWS_CLIENT_TIMEOUT = '500';
-      const sockets = new Set();
+      const sockets = new Set<net.Socket>();
       const server = net.createServer((socket) => {
         // Accept the connection and never respond
         sockets.add(socket);
       });
-      await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
       const handler = new NodeHttpHandler(buildHttpOptions());
 
       try {
@@ -132,11 +134,11 @@ describe('test/unit/lib/aws/config.test.ts', () => {
           .handle({
             protocol: 'http:',
             hostname: '127.0.0.1',
-            port: server.address().port,
+            port: (server.address() as net.AddressInfo).port,
             method: 'GET',
             path: '/',
             headers: {},
-          })
+          } as Parameters<NodeHttpHandler['handle']>[0])
           .then(
             () => null,
             (handleError) => handleError

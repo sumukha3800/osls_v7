@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as yaml from 'js-yaml';
 import cloudformationSchema from '../../../../../lib/utils/serverless-utils/cloudformation-schema.ts';
 
-const load = (input) => yaml.load(input, { schema: cloudformationSchema });
+const load = (input) => yaml.load(input, { schema: cloudformationSchema }) as Record<string, any>;
 
 describe('serverless-utils/cloudformation-schema', () => {
   it('should keep date-shaped plain scalars and mapping keys as strings', () => {

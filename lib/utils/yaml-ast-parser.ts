@@ -28,7 +28,7 @@ const serializeBranch = (headKey, branchValue) => {
   return yaml.dump({ [headKey]: branchValue }, { lineWidth: -1, noRefs: true });
 };
 
-const isTopLevelKeyLine = (line, key) => {
+const isTopLevelKeyLine = (line, key?) => {
   const normalizedLine = stripLineEnding(line);
 
   if (key) {
@@ -178,7 +178,7 @@ const removeExistingArrayItem = async (ymlFile, pathInYml, removeValue) => {
     return;
   }
 
-  for (let index = 0; index < arrayProperty.length;) {
+  for (let index = 0; index < arrayProperty.length; ) {
     if (isSameValueZero(arrayProperty[index], removeValue)) {
       arrayProperty.splice(index, 1);
     } else {

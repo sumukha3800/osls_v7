@@ -19,7 +19,7 @@ export default {
         event.http.request &&
         event.http.request.parameters &&
         // check if any parameters are marked as required
-        Object.values(event.http.request.parameters || {}).some((x) => {
+        Object.values<any>(event.http.request.parameters || {}).some((x) => {
           if (!isObject(x)) return x;
           return x.required != null ? x.required : true;
         })
@@ -33,7 +33,7 @@ export default {
       }
 
       if (event.http.request && event.http.request.schemas) {
-        for (const [contentType, schemaConfig] of Object.entries(event.http.request.schemas)) {
+        for (const [contentType, schemaConfig] of Object.entries<any>(event.http.request.schemas)) {
           let modelLogicalId;
 
           const referencedDefinitionFromProvider =

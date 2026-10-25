@@ -34,7 +34,7 @@ export default {
       }
     }
 
-    const EndpointConfiguration = {
+    const EndpointConfiguration: Record<string, any> = {
       Types: [endpointType],
     };
 
@@ -45,7 +45,7 @@ export default {
     const DisableExecuteApiEndpoint =
       apiGateway.disableDefaultEndpoint == null ? undefined : apiGateway.disableDefaultEndpoint;
 
-    const properties = {
+    const properties: Record<string, any> = {
       Name: this.provider.naming.getApiGatewayName(),
       BinaryMediaTypes,
       DisableExecuteApiEndpoint,

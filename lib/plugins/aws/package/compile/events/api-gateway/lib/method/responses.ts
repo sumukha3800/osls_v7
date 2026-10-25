@@ -30,7 +30,7 @@ export default {
           safeShallowAssign(methodResponseHeaders, http.response.headers);
         }
 
-        Object.entries(http.response.statusCodes).forEach(([statusCode, config]) => {
+        Object.entries<any>(http.response.statusCodes).forEach(([statusCode, config]) => {
           const methodResponse = {
             ResponseParameters: {},
             ResponseModels: {},

@@ -67,7 +67,7 @@ function createDefaultCompiledCloudFormationTemplate() {
   };
 }
 
-function createAwsCompileStreamEvents(config = {}) {
+function createAwsCompileStreamEvents(config: Record<string, any> = {}) {
   const { awsCompileEvents } = createAwsEventCompilerContext(AwsCompileStreamEvents, {
     ...config,
     provider: {
@@ -145,7 +145,7 @@ describe('AwsCompileStreamEvents', () => {
       },
     ]) {
       it(`sets EventSourceMapping DependsOn for ${label}`, () => {
-        const functionConfig = {
+        const functionConfig: Record<string, any> = {
           events: [{ stream: dynamodbStreamArn }],
         };
         if (functionRole) functionConfig.role = functionRole;

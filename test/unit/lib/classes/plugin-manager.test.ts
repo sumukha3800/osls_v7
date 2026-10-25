@@ -19,6 +19,11 @@ import esmock from 'esmock';
 const expect = chai.expect;
 
 class PromisePluginMock {
+  declare commands: any;
+  declare deployedFunctions: any;
+  declare deployedResources: any;
+  declare hooks: any;
+
   constructor() {
     this.commands = {
       deploy: {
@@ -73,6 +78,11 @@ class PromisePluginMock {
 }
 
 class SynchronousPluginMock {
+  declare commands: any;
+  declare deployedFunctions: any;
+  declare deployedResources: any;
+  declare hooks: any;
+
   constructor() {
     this.commands = {
       deploy: {
@@ -130,7 +140,9 @@ describe('PluginManager', () => {
   let pluginManager;
   let serverless;
 
-  class ServicePluginMock1 {}
+  class ServicePluginMock1 {
+    declare asyncInit: any;
+  }
 
   class ServicePluginMock2 {}
 
@@ -147,6 +159,11 @@ describe('PluginManager', () => {
   }
 
   class Provider1PluginMock {
+    declare commands: any;
+    declare deployedFunctions: any;
+    declare hooks: any;
+    declare provider: any;
+
     constructor() {
       this.provider = 'provider1';
 
@@ -170,6 +187,11 @@ describe('PluginManager', () => {
   }
 
   class Provider2PluginMock {
+    declare commands: any;
+    declare deployedFunctions: any;
+    declare hooks: any;
+    declare provider: any;
+
     constructor() {
       this.provider = 'provider2';
 
@@ -193,6 +215,11 @@ describe('PluginManager', () => {
   }
 
   class AliasPluginMock {
+    declare commands: any;
+    declare deployedFunctions: any;
+    declare deployedResources: any;
+    declare hooks: any;
+
     constructor() {
       this.commands = {
         deploy: {
@@ -248,6 +275,10 @@ describe('PluginManager', () => {
   }
 
   class EntrypointPluginMock {
+    declare callResult: any;
+    declare commands: any;
+    declare hooks: any;
+
     constructor() {
       this.commands = {
         myep: {
@@ -337,6 +368,10 @@ describe('PluginManager', () => {
   }
 
   class ContainerPluginMock {
+    declare callResult: any;
+    declare commands: any;
+    declare hooks: any;
+
     constructor() {
       this.commands = {
         // not a public command because its declared as a Container
@@ -369,6 +404,8 @@ describe('PluginManager', () => {
   }
 
   class DeprecatedLifecycleEventsPluginMock {
+    declare hooks: any;
+
     constructor() {
       this.hooks = {
         'deprecated:deprecated': async () => this.deprecated(), // NOTE: we assume that this is deprecated
@@ -542,6 +579,8 @@ describe('PluginManager', () => {
     it('should skip service related plugins which not match the services provider', () => {
       pluginManager.serverless.service.provider.name = 'someProvider';
       class Plugin {
+        declare provider: any;
+
         constructor() {
           this.provider = 'someOtherProvider';
         }
@@ -555,6 +594,8 @@ describe('PluginManager', () => {
     it('should add service related plugins when provider property is the providers name', () => {
       pluginManager.serverless.service.provider.name = 'someProvider';
       class Plugin {
+        declare provider: any;
+
         constructor() {
           this.provider = 'someProvider';
         }
@@ -574,6 +615,8 @@ describe('PluginManager', () => {
       }
       const providerPlugin = new ProviderPlugin();
       class Plugin {
+        declare provider: any;
+
         constructor() {
           this.provider = providerPlugin;
         }
@@ -657,7 +700,7 @@ describe('PluginManager', () => {
     it('should suggest installing the package for unknown package subpath plugins', () => {
       return expect(pluginManager.loadAllPlugins(['@scope/package/lib/plugin']))
         .to.be.eventually.rejected.and.have.property('message')
-        .that.includes('serverless plugin install -n @scope/package');
+        .that.include('serverless plugin install -n @scope/package');
     });
 
     it('should not throw error when trying to load unknown plugin with help flag', async () => {
@@ -1294,6 +1337,10 @@ describe('PluginManager', () => {
 
     it('should run the hooks in the correct order', async () => {
       class CorrectHookOrderPluginMock {
+        declare commands: any;
+        declare hooks: any;
+        declare hookStatus: any;
+
         constructor() {
           this.commands = {
             run: {
@@ -1738,7 +1785,7 @@ describe('test/unit/lib/classes/PluginManager.test.ts', () => {
       fixture: 'plugin',
       command: 'print',
     });
-    const plugin = Array.from(serverless.pluginManager.externalPlugins).find(
+    const plugin: Record<string, any> = Array.from(serverless.pluginManager.externalPlugins).find(
       (externalPlugin) => externalPlugin.constructor.name === 'TestPlugin'
     );
     expect(typeof plugin.utils.log).to.equal('function');

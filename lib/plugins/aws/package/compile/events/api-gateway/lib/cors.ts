@@ -1,7 +1,7 @@
 export default {
   compileCors() {
     if (this.validated.corsPreflight) {
-      Object.entries(this.validated.corsPreflight).forEach(([path, config]) => {
+      Object.entries<any>(this.validated.corsPreflight).forEach(([path, config]) => {
         const resourceName = this.getResourceName(path);
         const resourceRef = this.getResourceId(path);
         const corsMethodLogicalId = this.provider.naming.getMethodLogicalId(

@@ -114,7 +114,7 @@ const normalizeMetaVariables = (metaValue, metaVariables) => {
 };
 
 const generateMeta = (metaValue, metaVariables) => {
-  const meta = { value: metaValue || null };
+  const meta: Record<string, any> = { value: metaValue || null };
   if (!metaVariables || !metaVariables.length) return meta;
   meta.variables = normalizeMetaVariables(metaValue, metaVariables);
   return meta;

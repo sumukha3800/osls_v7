@@ -20,7 +20,9 @@ describe('test/unit/bin/serverless.test.ts', () => {
   });
 
   it('exits before CLI triage on unsupported Node versions', async () => {
-    const isSupportedNodeVersion = sinon.stub().returns(false);
+    const isSupportedNodeVersion: sinon.SinonStub & { supportedRange?: string } = sinon
+      .stub()
+      .returns(false);
     isSupportedNodeVersion.supportedRange = '^20.19.0 || ^22.13.0 || >=24';
     const triage = sinon.stub();
     const stderrWrite = sinon.stub(process.stderr, 'write');
@@ -59,7 +61,9 @@ describe('test/unit/bin/serverless.test.ts', () => {
       resolveRunCompose = resolve;
     });
     const runCompose = sinon.stub().callsFake(async () => resolveRunCompose());
-    const isSupportedNodeVersion = sinon.stub().returns(true);
+    const isSupportedNodeVersion: sinon.SinonStub & { supportedRange?: string } = sinon
+      .stub()
+      .returns(true);
     isSupportedNodeVersion.supportedRange = '^20.19.0 || ^22.13.0 || >=24';
 
     await loadBin({

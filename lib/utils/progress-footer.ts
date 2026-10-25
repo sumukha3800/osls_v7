@@ -27,9 +27,25 @@ const getVisibleLength = (value) => [...stripVTControlCharacters(value)].length;
 const areEmptyLines = (value) => emptyLinesPattern.test(value);
 
 class ProgressFooter {
+  declare _progressAnimationPrefixFrames: any;
+  declare _shouldAddProgressAnimationPrefix: any;
+  declare animationIntervalId: any;
+  declare frameIndex: any;
+  declare hasLeadingProgressSpacer: any;
+  declare hasTerminatedPartialLine: any;
+  declare isActive: any;
+  declare lastOutCharacters: any;
+  declare lastOutLineLength: any;
+  declare originalStderrWrite: any;
+  declare originalStdoutWrite: any;
+  declare rawRows: any;
+  declare renderedLineCount: any;
+  declare stderr: any;
+  declare stdout: any;
+
   constructor(options = {}) {
     if (!options || typeof options !== 'object') options = {};
-    const { stdout = process.stdout, stderr = process.stderr } = options;
+    const { stdout = process.stdout, stderr = process.stderr }: Record<string, any> = options;
 
     this.stdout = stdout;
     this.stderr = stderr;
@@ -79,7 +95,7 @@ class ProgressFooter {
     this.repaint();
   }
 
-  updateProgress(rows) {
+  updateProgress(rows?) {
     this.rawRows = splitRows(rows);
 
     if (!this.rawRows.length) {
@@ -267,4 +283,4 @@ class ProgressFooter {
   }
 }
 
-export default (options) => new ProgressFooter(options);
+export default (options?) => new ProgressFooter(options);

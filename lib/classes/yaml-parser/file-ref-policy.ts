@@ -54,7 +54,7 @@ const normalizeAllowedRoot = async (documentDir, rootPath) => {
   };
 };
 
-const normalizeFileRefOptions = async (documentDir, options = {}) => {
+const normalizeFileRefOptions = async (documentDir, options: Record<string, any> = {}) => {
   assertOptionsObject(options, 'externalRefs.file');
   assertKnownOptions(options, 'externalRefs.file', ['allowedRoots']);
 

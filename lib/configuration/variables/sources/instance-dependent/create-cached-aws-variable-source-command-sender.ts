@@ -21,12 +21,29 @@ function createCacheKey({ commandName, region, input }) {
   });
 }
 
+interface TransformResultInput {
+  result: any;
+  commandName: string;
+  input: unknown;
+  region: string | undefined;
+  effectiveRegion: string | null;
+}
+
+interface CommandSenderOptions {
+  // Returns the AWS provider plugin instance
+  getProvider: () => any;
+  // An AWS SDK v3 client class
+  Client: new (config: any) => { send: (command: any) => Promise<any> };
+  clientOptions?: Record<string, unknown>;
+  transformResult?: (input: TransformResultInput) => unknown;
+}
+
 function createCachedAwsVariableSourceCommandSender({
   getProvider,
   Client,
   clientOptions,
   transformResult = ({ result }) => result,
-}) {
+}: CommandSenderOptions) {
   const clients = new Map();
   const requests = new Map();
   const sendQueue = promiseLimit(maxConcurrentVariableSourceCommands, async (task) => task());
@@ -63,7 +80,7 @@ function createCachedAwsVariableSourceCommandSender({
   }
 
   async function send(Command, input, options = {}) {
-    const { region } = options;
+    const { region }: Record<string, any> = options;
     const effectiveRegion = getEffectiveRegion(region);
     const commandName = getCommandName(Command);
     const cacheKey = createCacheKey({

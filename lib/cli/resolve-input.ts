@@ -2,13 +2,29 @@ import ensureMap from 'type/map/ensure.js';
 import parseArgs from './parse-args.ts';
 import paramRegExp from './param-reg-exp.ts';
 import commandsSchema2 from './commands-schema/index.ts';
+import type { CommandSchema, CommandsSchema, OptionsSchema } from './commands-schema/types.ts';
+
+export interface ResolvedInput {
+  commands: string[];
+  command: string;
+  options: Record<string, any>;
+  commandSchema: CommandSchema | undefined;
+  commandsSchema: CommandsSchema;
+  isContainerCommand?: boolean;
+  isHelpRequest?: boolean;
+}
 
 const isParamName = RegExp.prototype.test.bind(paramRegExp);
 
-let cachedResult;
+let cachedResult: ResolvedInput | undefined;
 
-const resolveArgsSchema = (commandOptionsSchema) => {
-  const options = { boolean: new Set(), string: new Set(), alias: new Map(), multiple: new Set() };
+const resolveArgsSchema = (commandOptionsSchema: OptionsSchema) => {
+  const options = {
+    boolean: new Set<string>(),
+    string: new Set<string>(),
+    alias: new Map<string, string>(),
+    multiple: new Set<string>(),
+  };
   for (const [name, optionSchema] of Object.entries(commandOptionsSchema)) {
     switch (optionSchema.type) {
       case 'boolean':
@@ -27,10 +43,15 @@ const resolveArgsSchema = (commandOptionsSchema) => {
   return options;
 };
 
-const resolveInput = function (commandsSchema, argv = process.argv.slice(2)) {
+const resolveInput = function (
+  commandsSchema?: CommandsSchema,
+  argv: string[] = process.argv.slice(2)
+): ResolvedInput {
   if (arguments.length === 0 && cachedResult !== undefined) return cachedResult;
 
-  commandsSchema = ensureMap(commandsSchema === undefined ? commandsSchema2 : commandsSchema);
+  commandsSchema = ensureMap(
+    commandsSchema === undefined ? commandsSchema2 : commandsSchema
+  ) as CommandsSchema;
   const firstParamIndex = argv.findIndex(isParamName);
 
   const commands = argv.slice(0, firstParamIndex === -1 ? Infinity : firstParamIndex);
@@ -42,7 +63,7 @@ const resolveInput = function (commandsSchema, argv = process.argv.slice(2)) {
   );
   delete options._;
 
-  const result = { commands, options, command, commandSchema, commandsSchema };
+  const result: ResolvedInput = { commands, options, command, commandSchema, commandsSchema };
   if (!commandSchema) {
     result.isContainerCommand = Array.from(commandsSchema.keys()).some((commandName) =>
       commandName.startsWith(`${command} `)

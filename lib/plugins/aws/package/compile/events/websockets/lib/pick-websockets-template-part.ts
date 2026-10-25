@@ -1,6 +1,6 @@
 export default (cfTemplate, token) =>
   Object.fromEntries(
-    Object.entries(cfTemplate.Resources).filter(([resourceKey, resource]) => {
+    Object.entries<any>(cfTemplate.Resources).filter(([resourceKey, resource]) => {
       if (resourceKey === token) return true;
       if (
         resource &&

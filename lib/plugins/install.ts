@@ -3,7 +3,12 @@ import download from '../utils/download-template-from-repo.ts';
 import { log, progress, style } from '../utils/serverless-utils/log.ts';
 
 class Install {
-  constructor(serverless, options) {
+  declare commands: any;
+  declare hooks: any;
+  declare options: any;
+  declare serverless: any;
+
+  constructor(serverless, options?) {
     this.serverless = serverless;
     this.options = options;
 

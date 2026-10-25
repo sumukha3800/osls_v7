@@ -14,6 +14,8 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/get-c
   let credentials;
 
   class DescribeStacksCommand {
+    declare input: any;
+
     constructor(input) {
       this.input = input;
     }
@@ -29,6 +31,8 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/get-c
     }));
 
     class CloudFormationClient {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         clientInstances.push(this);

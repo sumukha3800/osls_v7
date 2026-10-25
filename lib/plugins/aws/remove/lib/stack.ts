@@ -3,6 +3,7 @@ import {
   DeleteStackCommand,
   DescribeStacksCommand,
 } from '@aws-sdk/client-cloudformation';
+import type { DeleteStackCommandInput } from '@aws-sdk/client-cloudformation';
 import ServerlessError from '../../../../serverless-error.ts';
 import { log } from '../../../../utils/serverless-utils/log.ts';
 import {
@@ -51,7 +52,7 @@ export default {
 
   async remove() {
     const stackName = this.provider.naming.getStackName();
-    const params = {
+    const params: DeleteStackCommandInput = {
       StackName: stackName,
     };
 

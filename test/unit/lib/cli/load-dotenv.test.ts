@@ -94,7 +94,9 @@ describe('test/unit/lib/cli/load-dotenv.test.ts', () => {
 
   it('should throw ServerlessError if dotenv returns error other than missing file', () => {
     const errorMessage = 'Unexpected error while loading env';
-    const dotenvResult = sinon.stub(dotenv, 'config').returns({ error: new Error(errorMessage) });
+    const dotenvResult = sinon.stub(dotenv, 'config').returns({
+      error: new Error(errorMessage) as ReturnType<typeof dotenv.config>['error'],
+    });
 
     try {
       expect(() => loadEnv('testing'))

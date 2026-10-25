@@ -2,6 +2,7 @@ import * as chai from 'chai';
 import path from 'node:path';
 import fs from 'node:fs';
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import { overrideEnv } from '../../../../utils/process.ts';
 import AwsProvider from '../../../../../lib/plugins/aws/provider.ts';
 import awsCredentialsDocsUrl from '../../../../../lib/aws/credentials-help-url.ts';
@@ -51,7 +52,10 @@ describe('AwsProvider', () => {
     return serverlessInstance;
   };
 
-  const createAwsProvider = ({ serverlessOptions, providerOptions = options } = {}) => {
+  const createAwsProvider = ({
+    serverlessOptions,
+    providerOptions = options,
+  }: Record<string, any> = {}) => {
     const serverlessInstance = createServerless(serverlessOptions);
     return {
       serverless: serverlessInstance,
@@ -65,8 +69,8 @@ describe('AwsProvider', () => {
     serverless = awsProvider.serverless;
   });
   afterEach(() => {
-    if (CloudFormationClient.prototype.send.restore) {
-      CloudFormationClient.prototype.send.restore();
+    if ((CloudFormationClient.prototype.send as SinonStub).restore) {
+      (CloudFormationClient.prototype.send as SinonStub).restore();
     }
     restoreEnv();
   });
@@ -299,7 +303,7 @@ describe('AwsProvider', () => {
       for (const [description, deletionProtection, message] of [
         ['empty stages', { stages: [] }, 'must NOT have fewer than 1 items'],
         ['enabled property', { enabled: true }, 'unrecognized property'],
-      ]) {
+      ] satisfies [string, Record<string, unknown>, string][]) {
         it(`rejects ${description}`, async () => {
           await expect(
             runServerless({
@@ -788,7 +792,7 @@ describe('AwsProvider', () => {
           LogicalResourceId: awsProvider.naming.getDeploymentBucketLogicalId(),
         });
       } finally {
-        CloudFormationClient.prototype.send.restore();
+        (CloudFormationClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -809,7 +813,7 @@ describe('AwsProvider', () => {
         expect(describeStackResourcesStub.called).to.be.equal(false);
         expect(bucketName).to.equal('custom-bucket');
       } finally {
-        CloudFormationClient.prototype.send.restore();
+        (CloudFormationClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -844,7 +848,7 @@ describe('AwsProvider', () => {
           describeStackResourceStub.secondCall.thisValue
         );
       } finally {
-        CloudFormationClient.prototype.send.restore();
+        (CloudFormationClient.prototype.send as SinonStub).restore();
         awsProvider.getAwsSdkV3Config.restore();
       }
     });
@@ -995,7 +999,7 @@ describe('AwsProvider', () => {
         expect(result.accountId).to.equal(accountId);
         expect(result.partition).to.equal(partition);
       } finally {
-        STSClient.prototype.send.restore();
+        (STSClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -1015,7 +1019,7 @@ describe('AwsProvider', () => {
         expect(secondResult).to.equal(firstResult);
         expect(stsGetCallerIdentityStub).to.have.been.calledOnce;
       } finally {
-        STSClient.prototype.send.restore();
+        (STSClient.prototype.send as SinonStub).restore();
       }
     });
   });
@@ -1041,7 +1045,7 @@ describe('AwsProvider', () => {
         expect(stsGetCallerIdentityStub.calledOnce).to.equal(true);
         expect(result).to.equal(accountId);
       } finally {
-        STSClient.prototype.send.restore();
+        (STSClient.prototype.send as SinonStub).restore();
       }
     });
   });
@@ -1164,8 +1168,8 @@ describe('test/unit/lib/plugins/aws/provider.test.ts', () => {
         fixture: 'function',
         command: 'package',
       });
-      const functions = Object.values(cfTemplate.Resources).filter(
-        (r) => r.Type === 'AWS::Lambda::Function'
+      const functions = Object.values<Record<string, any>>(cfTemplate.Resources).filter(
+        (r: Record<string, any>) => r.Type === 'AWS::Lambda::Function'
       );
       expect(functions.length).to.be.greaterThanOrEqual(1);
       for (const f of functions) {
@@ -1185,8 +1189,8 @@ describe('test/unit/lib/plugins/aws/provider.test.ts', () => {
           },
         },
       });
-      const functions = Object.values(cfTemplate.Resources).filter(
-        (r) => r.Type === 'AWS::Lambda::Function'
+      const functions = Object.values<Record<string, any>>(cfTemplate.Resources).filter(
+        (r: Record<string, any>) => r.Type === 'AWS::Lambda::Function'
       );
       expect(functions.length).to.be.greaterThanOrEqual(1);
       for (const f of functions) {
@@ -1230,8 +1234,8 @@ describe('test/unit/lib/plugins/aws/provider.test.ts', () => {
           },
         },
       });
-      const targetGroups = Object.values(cfTemplate.Resources).filter(
-        (r) => r.Type === 'AWS::ElasticLoadBalancingV2::TargetGroup'
+      const targetGroups = Object.values<Record<string, any>>(cfTemplate.Resources).filter(
+        (r: Record<string, any>) => r.Type === 'AWS::ElasticLoadBalancingV2::TargetGroup'
       );
       expect(targetGroups.length).to.be.greaterThanOrEqual(1);
       for (const t of targetGroups) {
@@ -1578,8 +1582,8 @@ describe('test/unit/lib/plugins/aws/provider.test.ts', () => {
     });
 
     const findVersionCfConfig = (cfResources, fnLogicalId) =>
-      Object.values(cfResources).find(
-        (resource) =>
+      Object.values<Record<string, any>>(cfResources).find(
+        (resource: Record<string, any>) =>
           resource.Type === 'AWS::Lambda::Version' &&
           resource.Properties.FunctionName.Ref === fnLogicalId
       ).Properties;
@@ -2332,8 +2336,8 @@ describe('test/unit/lib/plugins/aws/provider.test.ts', () => {
 
         const functionCfLogicalId = awsNaming.getLambdaLogicalId('foo');
         const functionCfConfig = cfTemplate.Resources[functionCfLogicalId].Properties;
-        const versionCfConfig = Object.values(cfTemplate.Resources).find(
-          (resource) =>
+        const versionCfConfig = Object.values<Record<string, any>>(cfTemplate.Resources).find(
+          (resource: Record<string, any>) =>
             resource.Type === 'AWS::Lambda::Version' &&
             resource.Properties.FunctionName.Ref === functionCfLogicalId
         ).Properties;
@@ -2380,8 +2384,8 @@ describe('test/unit/lib/plugins/aws/provider.test.ts', () => {
 
         const functionCfLogicalId = awsNaming.getLambdaLogicalId('foo');
         const functionCfConfig = cfTemplate.Resources[functionCfLogicalId].Properties;
-        const versionCfConfig = Object.values(cfTemplate.Resources).find(
-          (resource) =>
+        const versionCfConfig = Object.values<Record<string, any>>(cfTemplate.Resources).find(
+          (resource: Record<string, any>) =>
             resource.Type === 'AWS::Lambda::Version' &&
             resource.Properties.FunctionName.Ref === functionCfLogicalId
         ).Properties;
@@ -2437,8 +2441,8 @@ describe('test/unit/lib/plugins/aws/provider.test.ts', () => {
 
         const functionCfLogicalId = awsNaming.getLambdaLogicalId('foo');
         const functionCfConfig = cfTemplate.Resources[functionCfLogicalId].Properties;
-        const versionCfConfig = Object.values(cfTemplate.Resources).find(
-          (resource) =>
+        const versionCfConfig = Object.values<Record<string, any>>(cfTemplate.Resources).find(
+          (resource: Record<string, any>) =>
             resource.Type === 'AWS::Lambda::Version' &&
             resource.Properties.FunctionName.Ref === functionCfLogicalId
         ).Properties;
@@ -2496,8 +2500,8 @@ describe('test/unit/lib/plugins/aws/provider.test.ts', () => {
 
         const functionCfLogicalId = awsNaming.getLambdaLogicalId('foo');
         const functionCfConfig = cfTemplate.Resources[functionCfLogicalId].Properties;
-        const versionCfConfig = Object.values(cfTemplate.Resources).find(
-          (resource) =>
+        const versionCfConfig = Object.values<Record<string, any>>(cfTemplate.Resources).find(
+          (resource: Record<string, any>) =>
             resource.Type === 'AWS::Lambda::Version' &&
             resource.Properties.FunctionName.Ref === functionCfLogicalId
         ).Properties;
@@ -2557,8 +2561,8 @@ describe('test/unit/lib/plugins/aws/provider.test.ts', () => {
 
         const functionCfLogicalId = awsNaming.getLambdaLogicalId('foo');
         const functionCfConfig = cfTemplate.Resources[functionCfLogicalId].Properties;
-        const versionCfConfig = Object.values(cfTemplate.Resources).find(
-          (resource) =>
+        const versionCfConfig = Object.values<Record<string, any>>(cfTemplate.Resources).find(
+          (resource: Record<string, any>) =>
             resource.Type === 'AWS::Lambda::Version' &&
             resource.Properties.FunctionName.Ref === functionCfLogicalId
         ).Properties;
@@ -2616,8 +2620,8 @@ describe('test/unit/lib/plugins/aws/provider.test.ts', () => {
 
         const functionCfLogicalId = awsNaming.getLambdaLogicalId('foo');
         const functionCfConfig = cfTemplate.Resources[functionCfLogicalId].Properties;
-        const versionCfConfig = Object.values(cfTemplate.Resources).find(
-          (resource) =>
+        const versionCfConfig = Object.values<Record<string, any>>(cfTemplate.Resources).find(
+          (resource: Record<string, any>) =>
             resource.Type === 'AWS::Lambda::Version' &&
             resource.Properties.FunctionName.Ref === functionCfLogicalId
         ).Properties;

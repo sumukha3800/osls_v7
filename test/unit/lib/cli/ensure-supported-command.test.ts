@@ -4,6 +4,7 @@ import ServerlessError from '../../../../lib/serverless-error.ts';
 import logDeprecation from '../../../../lib/utils/log-deprecation.ts';
 import ensureSupportedCommand from '../../../../lib/cli/ensure-supported-command.ts';
 import resolveInput from '../../../../lib/cli/resolve-input.ts';
+import type { CommandsSchema } from '../../../../lib/cli/commands-schema/types.ts';
 const { triggeredDeprecations } = logDeprecation;
 
 describe('test/unit/lib/cli/ensure-supported-command.test.ts', () => {
@@ -71,7 +72,7 @@ describe('test/unit/lib/cli/ensure-supported-command.test.ts', () => {
   });
 
   it('should accept plugin command from explicit resolved input', () => {
-    const commandsSchema = new Map();
+    const commandsSchema: CommandsSchema = new Map();
     commandsSchema.commonOptions = {};
     commandsSchema.set('customCommand', {
       usage: 'Description of custom command',
@@ -91,7 +92,7 @@ describe('test/unit/lib/cli/ensure-supported-command.test.ts', () => {
   });
 
   it('should validate plugin command options from explicit resolved input', () => {
-    const commandsSchema = new Map();
+    const commandsSchema: CommandsSchema = new Map();
     commandsSchema.commonOptions = {};
     commandsSchema.set('customCommand', {
       usage: 'Description of custom command',

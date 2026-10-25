@@ -11,7 +11,7 @@ const normalizeTimeout = (value) => {
   return Math.max(0, timeout);
 };
 
-export default (timeout) => {
+export default (timeout?) => {
   if (timeout == null) {
     return new Promise((resolve) => process.nextTick(resolve));
   }

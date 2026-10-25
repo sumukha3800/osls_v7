@@ -14,7 +14,7 @@ export default {
       .forEach((functionName) => {
         const functionObject = this.serverless.service.getFunction(functionName);
         const logGroupLogicalId = this.provider.naming.getLogGroupLogicalId(functionName);
-        const newLogGroup = {
+        const newLogGroup: Record<string, any> = {
           [logGroupLogicalId]: {
             Type: 'AWS::Logs::LogGroup',
             Properties: {

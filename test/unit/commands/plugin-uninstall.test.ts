@@ -36,7 +36,7 @@ const readParsedConfiguration = async (configurationFilePath) =>
     schema: cloudformationSchema,
   });
 
-const writeJsonConfiguration = async (serviceDir, configuration, rawJson) => {
+const writeJsonConfiguration = async (serviceDir, configuration, rawJson?) => {
   const configurationFilePath = path.join(serviceDir, 'serverless.json');
   await fsp.writeFile(configurationFilePath, rawJson || JSON.stringify(configuration));
   return {
@@ -103,9 +103,12 @@ describe('test/unit/commands/plugin-uninstall.test.ts', () => {
   it('should remove plugin from serverless file', async () => {
     const { configurationFilePath } = await uninstallFromPluginFixture();
 
-    const serverlessFileObj = yaml.load(await fsp.readFile(configurationFilePath, 'utf8'), {
-      filename: configurationFilePath,
-    });
+    const serverlessFileObj: Record<string, any> = yaml.load(
+      await fsp.readFile(configurationFilePath, 'utf8'),
+      {
+        filename: configurationFilePath,
+      }
+    );
     expect(serverlessFileObj.plugins).to.be.undefined;
   });
 
@@ -329,7 +332,7 @@ describe('test/unit/commands/plugin-uninstall.test.ts', () => {
       });
 
       const fileText = await fsp.readFile(fixtureConfigurationPath, 'utf8');
-      const parsed = await readParsedConfiguration(fixtureConfigurationPath);
+      const parsed: Record<string, any> = await readParsedConfiguration(fixtureConfigurationPath);
 
       expect(fileText).to.include('pluginLogGroupArn: !GetAtt PluginLogGroup.Arn');
       expect(fileText).to.not.include(`- ${pluginName}`);
@@ -374,7 +377,7 @@ describe('test/unit/commands/plugin-uninstall.test.ts', () => {
       });
 
       const fileText = await fsp.readFile(fixtureConfigurationPath, 'utf8');
-      const parsed = await readParsedConfiguration(fixtureConfigurationPath);
+      const parsed: Record<string, any> = await readParsedConfiguration(fixtureConfigurationPath);
 
       expect(fileText).to.include('taggedValue: !Sub ${AWS::Region}');
       expect(fileText).to.not.include(`- ${pluginName}`);
@@ -420,7 +423,7 @@ describe('test/unit/commands/plugin-uninstall.test.ts', () => {
       });
 
       const fileText = await fsp.readFile(fixtureConfigurationPath, 'utf8');
-      const parsed = await readParsedConfiguration(fixtureConfigurationPath);
+      const parsed: Record<string, any> = await readParsedConfiguration(fixtureConfigurationPath);
 
       expect(fileText).to.include('localPath: ./.serverless_plugins');
       expect(fileText).to.include('taggedValue: !Sub ${AWS::Region}');
@@ -465,7 +468,7 @@ describe('test/unit/commands/plugin-uninstall.test.ts', () => {
       });
 
       const fileText = await fsp.readFile(fixtureConfigurationPath, 'utf8');
-      const parsed = await readParsedConfiguration(fixtureConfigurationPath);
+      const parsed: Record<string, any> = await readParsedConfiguration(fixtureConfigurationPath);
 
       expect(fileText.match(/^(?:"plugins"|plugins):/gm)).to.equal(null);
       expect(parsed.plugins).to.equal(undefined);

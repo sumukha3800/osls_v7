@@ -87,11 +87,13 @@ export default defineConfig([
     },
   },
   {
-    // Declarations reference the compiled layout of the published package (`lib/*.js`)
+    // Declarations reference the compiled layout of the published package (`lib/*.js`), and
+    // globals on `globalThis` can only be declared with `var`
     name: 'osls/declarations',
-    files: ['types/**/*.d.ts'],
+    files: ['types/**/*.d.ts', 'typings/**/*.d.ts'],
     rules: {
       'import-x/no-unresolved': 'off',
+      'no-var': 'off',
     },
   },
   {

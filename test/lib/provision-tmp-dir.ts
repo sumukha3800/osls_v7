@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import processTmpDir from './process-tmp-dir.ts';
 const { mkdir } = fs.promises;
 
-const provisionTmpDir = () =>
+const provisionTmpDir = (): Promise<string> =>
   new Promise((resolve) => {
     const tmpDirName = path.join(processTmpDir, crypto.randomBytes(12).toString('hex'));
     resolve(

@@ -8,7 +8,7 @@ describe('test/unit/lib/configuration/variables/defer-irrelevant-stage-params.te
     params = { dev: {}, prod: {}, default: {} },
     provider,
     options,
-  } = {}) => deferIrrelevantStageParams({ params, provider }, { options });
+  }: Record<string, any> = {}) => deferIrrelevantStageParams({ params, provider }, { options });
 
   it('should defer params of not effective stages', () => {
     const isPropertyDeferred = buildPredicate({ options: { stage: 'dev' } });
@@ -97,7 +97,7 @@ describe('test/unit/lib/configuration/variables/defer-irrelevant-stage-params.te
   });
 
   it('should read configuration and options live', () => {
-    const configuration = { params: { dev: {}, prod: {} } };
+    const configuration: Record<string, any> = { params: { dev: {}, prod: {} } };
     const resolverConfiguration = { options: {} };
     const isPropertyDeferred = deferIrrelevantStageParams(configuration, resolverConfiguration);
     expect(isPropertyDeferred(p('params', 'prod', 'secret'))).to.be.true;

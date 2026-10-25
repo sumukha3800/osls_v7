@@ -9,6 +9,22 @@ import compileStage from './lib/stage.ts';
 import compileAuthorizers from './lib/authorizers.ts';
 
 class AwsCompileWebsockets {
+  declare compileApi: any;
+  declare compileAuthorizers: any;
+  declare compileDeployment: any;
+  declare compileIntegrations: any;
+  declare compilePermissions: any;
+  declare compileRouteResponses: any;
+  declare compileRoutes: any;
+  declare compileStage: any;
+  declare hooks: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare validate: any;
+  declare validated: any;
+  declare websocketsApiLogicalId: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

@@ -42,7 +42,7 @@ const withLocalDir = async (homeDir, name, callback) => {
 
 describe('serverless-utils/config', () => {
   afterEach(() => {
-    delete Object.prototype.polluted;
+    delete (Object.prototype as { polluted?: unknown }).polluted;
   });
 
   it('exports the generic config helpers only', () => {
@@ -399,7 +399,7 @@ describe('serverless-utils/config', () => {
         config.set('__proto__.polluted', 'yes');
 
         expect(config.get('__proto__.polluted')).to.equal(undefined);
-        expect({}.polluted).to.equal(undefined);
+        expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
       });
     });
   });
@@ -411,7 +411,7 @@ describe('serverless-utils/config', () => {
       await withLocalDir(homeDir, 'service', async () => {
         config.set('constructor.prototype.polluted', 'yes');
 
-        expect({}.polluted).to.equal(undefined);
+        expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
       });
     });
   });
@@ -436,7 +436,7 @@ describe('serverless-utils/config', () => {
           featureFlag: true,
           releaseChannel: 'stable',
         });
-        expect({}.polluted).to.equal(undefined);
+        expect(({} as { polluted?: unknown }).polluted).to.equal(undefined);
       });
     });
   });

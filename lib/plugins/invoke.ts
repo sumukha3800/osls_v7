@@ -1,7 +1,12 @@
 import cliCommandsSchema from '../cli/commands-schema/index.ts';
 
 class Invoke {
-  constructor(serverless, options) {
+  declare commands: any;
+  declare hooks: any;
+  declare options: any;
+  declare serverless: any;
+
+  constructor(serverless, options?) {
     this.serverless = serverless;
     this.options = options || {};
 

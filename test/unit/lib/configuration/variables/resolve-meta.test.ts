@@ -3,7 +3,7 @@ import resolveMeta from '../../../../../lib/configuration/variables/resolve-meta
 
 describe('test/unit/lib/configuration/variables/resolve-meta.test.ts', () => {
   it('should resolve variables map', () => {
-    const meta = Array.from(
+    const meta: Array<[string, Record<string, any>]> = Array.from(
       resolveMeta({
         string: 'bar',
         number: 12,

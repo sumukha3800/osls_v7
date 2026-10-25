@@ -1,4 +1,5 @@
 import * as sinon from 'sinon';
+import type { SinonStub } from 'sinon';
 import { expect } from 'chai';
 import AwsDeployList from '../../../../../lib/plugins/aws/deploy-list.ts';
 import ServerlessError from '../../../../../lib/serverless-error.ts';
@@ -11,13 +12,15 @@ import {
 import releasePendingRequestsUntilSettled from '../../../../utils/release-pending-requests-until-settled.ts';
 import esmock from 'esmock';
 
+type TestError = Error & { code?: string; providerError?: Record<string, unknown> };
+
 function formatDeploymentDate(dateString) {
   const date = new Date(Date.parse(dateString));
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, 0)}-${String(
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(
     date.getUTCDate()
-  ).padStart(2, 0)} ${String(date.getUTCHours()).padStart(2, 0)}:${String(
+  ).padStart(2, '0')} ${String(date.getUTCHours()).padStart(2, '0')}:${String(
     date.getUTCMinutes()
-  ).padStart(2, 0)}:${String(date.getUTCSeconds()).padStart(2, 0)} UTC`;
+  ).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')} UTC`;
 }
 
 function createServerlessContext(options) {
@@ -108,7 +111,8 @@ describe('AwsDeployList', () => {
     }
 
     afterEach(() => {
-      if (S3Client.prototype.send.restore) S3Client.prototype.send.restore();
+      if ((S3Client.prototype.send as SinonStub).restore)
+        (S3Client.prototype.send as SinonStub).restore();
     });
 
     it('should print no deployments in case there are none', async () => {
@@ -282,7 +286,7 @@ describe('AwsDeployList', () => {
     });
 
     it('should preserve specific S3 list authentication failures', async () => {
-      const listError = new Error('signature mismatch');
+      const listError: TestError = new Error('signature mismatch');
       listError.providerError = {
         code: 'SignatureDoesNotMatch',
         statusCode: 403,
@@ -298,7 +302,7 @@ describe('AwsDeployList', () => {
     });
 
     it('should translate wrapped status-only S3 list access denied errors', async () => {
-      const listError = new Error('forbidden');
+      const listError: TestError = new Error('forbidden');
       listError.code = 'AWS_S3_LIST_OBJECTS_V2_ERROR';
       listError.providerError = { statusCode: 403 };
       sinon.stub(S3Client.prototype, 'send').rejects(listError);
@@ -348,27 +352,29 @@ describe('AwsDeployList', () => {
           name: 'listDeployments-dev-func2',
         },
       };
-      listFunctionsStub = sinon.stub(LambdaClient.prototype, 'send').callsFake(async (command) => {
-        if (command.input.FunctionName === 'listDeployments-dev-func1') {
-          return {
-            Configuration: {
-              FunctionName: 'listDeployments-dev-func1',
-            },
-          };
-        }
-        if (command.input.FunctionName === 'listDeployments-dev-func2') {
-          return {
-            Configuration: {
-              FunctionName: 'listDeployments-dev-func2',
-            },
-          };
-        }
-        throw new Error(`Unexpected function lookup ${command.input.FunctionName}`);
-      });
+      listFunctionsStub = sinon
+        .stub(LambdaClient.prototype, 'send')
+        .callsFake(async (command: GetFunctionCommand) => {
+          if (command.input.FunctionName === 'listDeployments-dev-func1') {
+            return {
+              Configuration: {
+                FunctionName: 'listDeployments-dev-func1',
+              },
+            };
+          }
+          if (command.input.FunctionName === 'listDeployments-dev-func2') {
+            return {
+              Configuration: {
+                FunctionName: 'listDeployments-dev-func2',
+              },
+            };
+          }
+          throw new Error(`Unexpected function lookup ${command.input.FunctionName}`);
+        });
     });
 
     afterEach(() => {
-      LambdaClient.prototype.send.restore();
+      (LambdaClient.prototype.send as SinonStub).restore();
     });
 
     it('should get all service related functions', async () => {
@@ -434,7 +440,7 @@ describe('AwsDeployList', () => {
     });
 
     afterEach(() => {
-      LambdaClient.prototype.send.restore();
+      (LambdaClient.prototype.send as SinonStub).restore();
     });
 
     it('should return the versions for the provided function when response is paginated', async () => {
@@ -451,13 +457,13 @@ describe('AwsDeployList', () => {
       };
 
       expect(result).to.deep.equal(expectedResult);
-      expect(LambdaClient.prototype.send.firstCall.args[0]).to.be.instanceOf(
+      expect((LambdaClient.prototype.send as SinonStub).firstCall.args[0]).to.be.instanceOf(
         ListVersionsByFunctionCommand
       );
-      expect(LambdaClient.prototype.send.firstCall.args[0].input).to.deep.equal({
+      expect((LambdaClient.prototype.send as SinonStub).firstCall.args[0].input).to.deep.equal({
         FunctionName: 'listDeployments-dev-func',
       });
-      expect(LambdaClient.prototype.send.secondCall.args[0].input).to.deep.equal({
+      expect((LambdaClient.prototype.send as SinonStub).secondCall.args[0].input).to.deep.equal({
         FunctionName: 'listDeployments-dev-func',
         Marker: '123',
       });
@@ -474,7 +480,7 @@ describe('AwsDeployList', () => {
     });
 
     afterEach(() => {
-      LambdaClient.prototype.send.restore();
+      (LambdaClient.prototype.send as SinonStub).restore();
     });
 
     it('should return the versions for the provided functions', async () => {
@@ -538,13 +544,21 @@ describe('AwsDeployList', () => {
       const lambdaClients = [];
       const sends = [];
       class FakeCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
       }
-      class FakeGetFunctionCommand extends FakeCommand {}
-      class FakeListVersionsByFunctionCommand extends FakeCommand {}
+      class FakeGetFunctionCommand extends FakeCommand {
+        declare input: any;
+      }
+      class FakeListVersionsByFunctionCommand extends FakeCommand {
+        declare input: any;
+      }
       class FakeLambdaClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           lambdaClients.push(this);

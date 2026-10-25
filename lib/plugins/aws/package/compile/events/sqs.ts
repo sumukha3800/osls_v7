@@ -1,6 +1,10 @@
 import resolveLambdaTarget from '../../../utils/resolve-lambda-target.ts';
 
 class AwsCompileSQSEvents {
+  declare hooks: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');
@@ -82,7 +86,7 @@ class AwsCompileSQSEvents {
               dependsOn.push(targetAlias.logicalId);
             }
 
-            const sqsTemplate = {
+            const sqsTemplate: Record<string, any> = {
               Type: 'AWS::Lambda::EventSourceMapping',
               DependsOn: dependsOn,
               Properties: {

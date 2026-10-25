@@ -148,7 +148,7 @@ export default {
     const integrationResponses = [];
     const mapHeaders = (headers) =>
       Object.fromEntries(
-        Object.entries(headers).map(([header, value]) => [
+        Object.entries<any>(headers).map(([header, value]) => [
           `method.response.header.${header}`,
           value,
         ])
@@ -179,7 +179,7 @@ export default {
         safeShallowAssign(integrationResponseHeaders, http.response.headers);
       }
 
-      Object.entries(http.response.statusCodes).forEach(([statusCode, config]) => {
+      Object.entries<any>(http.response.statusCodes).forEach(([statusCode, config]) => {
         const responseParameters = mapHeaders(integrationResponseHeaders);
 
         const integrationResponse = {
@@ -246,7 +246,7 @@ export default {
   getIntegrationRequestParameters(http) {
     const parameters = {};
     if (http.request && http.request.parameters) {
-      Object.entries(http.request.parameters).forEach(([key, value]) => {
+      Object.entries<any>(http.request.parameters).forEach(([key, value]) => {
         parameters[`integration.${key.substring('method.'.length)}`] = value.mappedValue || key;
       });
     }

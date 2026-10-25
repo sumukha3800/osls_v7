@@ -1,4 +1,8 @@
 class Plugin {
+  declare commands: any;
+  declare options: any;
+  declare serverless: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

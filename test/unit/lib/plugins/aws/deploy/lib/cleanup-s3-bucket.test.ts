@@ -4,6 +4,13 @@ import { S3Client, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/c
 import cleanupS3BucketMixin from '../../../../../../../lib/plugins/aws/deploy/lib/cleanup-s3-bucket.ts';
 import retry from '../../../../../../../lib/aws/retry.ts';
 import esmock from 'esmock';
+
+type TestError = Error & {
+  code?: string;
+  providerError?: Record<string, unknown>;
+  statusCode?: number;
+};
+
 const { retryOnThrottlingError } = retry;
 
 const fastRetry = {
@@ -60,7 +67,7 @@ describe('cleanupS3Bucket', () => {
   });
 
   const createSignatureMismatchListError = () => {
-    const error = new Error('signature mismatch');
+    const error: TestError = new Error('signature mismatch');
     error.providerError = {
       code: 'SignatureDoesNotMatch',
       statusCode: 403,
@@ -69,7 +76,7 @@ describe('cleanupS3Bucket', () => {
   };
 
   const createAccessDeniedListError = () => {
-    const error = new Error('access denied');
+    const error: TestError = new Error('access denied');
     error.providerError = {
       code: 'AccessDenied',
       statusCode: 403,
@@ -78,7 +85,7 @@ describe('cleanupS3Bucket', () => {
   };
 
   const createStatusOnlyListError = () => {
-    const error = new Error('forbidden');
+    const error: TestError = new Error('forbidden');
     error.providerError = {
       statusCode: 403,
     };
@@ -108,6 +115,8 @@ describe('cleanupS3Bucket', () => {
   it('reuses one S3 client across cleanup list and delete steps', async () => {
     const s3Clients = [];
     class FakeCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -115,6 +124,8 @@ describe('cleanupS3Bucket', () => {
     class FakeListObjectsV2Command extends FakeCommand {}
     class FakeDeleteObjectsCommand extends FakeCommand {}
     class FakeS3Client {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         s3Clients.push(this);
@@ -736,7 +747,7 @@ describe('cleanupS3Bucket', () => {
     it('should not rewrite delete failures as list failures', async () => {
       const deploymentDirectory = '151224711231-2016-08-18T15:42:00';
       const artifactKey = `${s3Key}/${deploymentDirectory}/artifact.zip`;
-      const deleteError = new Error('delete denied');
+      const deleteError: TestError = new Error('delete denied');
       deleteError.statusCode = 403;
       awsDeploy.serverless.service.package.artifactDirectoryName = `${s3Key}/${deploymentDirectory}`;
       s3SendStub.onFirstCall().resolves({

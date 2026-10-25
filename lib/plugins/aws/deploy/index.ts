@@ -25,6 +25,32 @@ import memoize from 'memoizee';
 const mainProgress = progress.get('main');
 
 class AwsDeploy {
+  declare bucketName: any;
+  declare checkForChanges: any;
+  declare cleanupS3Bucket: any;
+  declare cloudFormationClientPromise: any;
+  declare cloudWatchLogsClientPromise: any;
+  declare commands: any;
+  declare createStack: any;
+  declare ensureValidBucketExists: any;
+  declare extendedValidate: any;
+  declare fixLogGroupSubscriptionFilters: any;
+  declare getFileStats: any;
+  declare getFunctionsEarliestLastModifiedDate: any;
+  declare getMostRecentObjects: any;
+  declare getObjectMetadata: any;
+  declare hooks: any;
+  declare isInternalSubscriptionFilter: any;
+  declare options: any;
+  declare packagePath: any;
+  declare provider: any;
+  declare serverless: any;
+  declare servicePath: any;
+  declare state: any;
+  declare updateStack: any;
+  declare uploadArtifacts: any;
+  declare validateTemplate: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

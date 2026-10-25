@@ -2,6 +2,10 @@ import resolveLambdaTarget from '../../../utils/resolve-lambda-target.ts';
 import ServerlessError from '../../../../../serverless-error.ts';
 
 class AwsCompileStreamEvents {
+  declare hooks: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');
@@ -219,7 +223,7 @@ class AwsCompileStreamEvents {
               dependsOn.push(targetAlias.logicalId);
             }
 
-            const streamResource = {
+            const streamResource: Record<string, any> = {
               Type: 'AWS::Lambda::EventSourceMapping',
               DependsOn: dependsOn,
               Properties: {

@@ -16,7 +16,8 @@ const HTTP_REF_POLICY_HINT =
   'The code calling yamlParser.parse can allow this host by adding it to ' +
   'externalRefs.http.allowedUnsafeHosts.';
 const UNSAFE_HOSTNAME_SUFFIXES = ['.local', '.internal', '.intranet', '.corp', '.home', '.lan'];
-const UNSAFE_IP_BLOCKS = [
+type IpFamily = 'ipv4' | 'ipv6';
+const UNSAFE_IP_BLOCKS: (['subnet', string, number, IpFamily] | ['address', string, IpFamily])[] = [
   ['subnet', '0.0.0.0', 8, 'ipv4'],
   ['subnet', '10.0.0.0', 8, 'ipv4'],
   ['subnet', '100.64.0.0', 10, 'ipv4'],
@@ -131,7 +132,16 @@ const getSafeHttpAgent = () => {
   if (!safeHttpAgent) {
     safeHttpAgent = new Agent({
       connect: {
-        lookup(hostname, options, callback) {
+        lookup(
+          hostname,
+          options,
+          // Called with the error only when the lookup fails
+          callback: (
+            error: Error | null,
+            address?: string | dns.LookupAddress[],
+            family?: number
+          ) => void
+        ) {
           dns.lookup(hostname, options, (error, address, family) => {
             if (error) {
               callback(error);
@@ -195,7 +205,7 @@ const requestHttpDocument = async (documentUrl, dispatcher) => {
   }
 
   try {
-    const fetchOptions = {
+    const fetchOptions: Record<string, any> = {
       method: 'GET',
       redirect: 'manual',
       signal: controller ? controller.signal : null,

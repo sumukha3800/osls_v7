@@ -1,5 +1,7 @@
 class VariableSourceResolutionError extends Error {
-  constructor(message, code) {
+  declare code: any;
+
+  constructor(message, code?) {
     super(message);
     this.code = code;
   }

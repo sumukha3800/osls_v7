@@ -14,7 +14,11 @@ describe('test/unit/lib/configuration/variables/sources/instance-dependent/get-s
     instanceId: 'test-instance-id',
   });
 
-  const initializeServerless = async ({ configExt, options, setupOptions = {} } = {}) => {
+  const initializeServerless = async ({
+    configExt,
+    options,
+    setupOptions = {},
+  }: Record<string, any> = {}) => {
     configuration = {
       service: 'foo',
       provider: {

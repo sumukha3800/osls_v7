@@ -5,6 +5,16 @@ import zipService from './lib/zip-service.ts';
 import packageService from './lib/package-service.ts';
 
 class Package {
+  declare commands: any;
+  declare hooks: any;
+  declare options: any;
+  declare packageFunction: any;
+  declare packagePath: any;
+  declare packageService: any;
+  declare serverless: any;
+  declare servicePath: any;
+  declare zipFiles: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

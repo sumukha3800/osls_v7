@@ -18,7 +18,7 @@ const runWithRestore = (callback, callbackArgs, restore) => {
   return result;
 };
 
-const createEnv = (options = {}) => {
+const createEnv = (options: Record<string, any> = {}) => {
   if (!options || typeof options !== 'object') options = {};
 
   if (options.asCopy && options.whitelist) {
@@ -101,7 +101,7 @@ const overrideCwd = (counterpart, callback = null) => {
   return runWithRestore(callback, [originalCwd], restoreCwd);
 };
 
-const overrideArgv = (options = {}, callback = null) => {
+const overrideArgv = (options: Record<string, any> = {}, callback = null) => {
   if (typeof options === 'function') {
     callback = options;
     options = {};

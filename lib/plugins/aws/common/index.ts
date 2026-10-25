@@ -10,6 +10,16 @@ import cleanupTempDir from './lib/cleanup-temp-dir.ts';
 import artifacts from './lib/artifacts.ts';
 
 class AwsCommon {
+  declare cleanupTempDir: any;
+  declare commands: any;
+  declare hooks: any;
+  declare moveArtifactsToPackage: any;
+  declare moveArtifactsToTemp: any;
+  declare options: any;
+  declare provider: any;
+  declare serverless: any;
+  declare validate: any;
+
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;

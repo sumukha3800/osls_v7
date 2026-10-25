@@ -16,7 +16,7 @@ export default {
       );
 
       const functionObj = this.serverless.service.getFunction(functionName);
-      const albInvokePermission = {
+      const albInvokePermission: Record<string, any> = {
         Type: 'AWS::Lambda::Permission',
         Properties: {
           FunctionName: resolveLambdaTarget(functionName, functionObj),

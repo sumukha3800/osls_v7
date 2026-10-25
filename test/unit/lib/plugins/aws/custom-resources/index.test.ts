@@ -24,7 +24,7 @@ describe('#addCustomResourceToService()', () => {
   ];
 
   const createProviderContext = () => {
-    const serverless = {
+    const serverless: Record<string, any> = {
       serviceDir: tmpDirPath,
       service: {
         service: serviceName,

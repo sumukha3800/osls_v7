@@ -773,6 +773,8 @@ describe('#updateStage()', () => {
     const apiGatewayClients = [];
     const cloudWatchLogsClients = [];
     class FakeCommand {
+      declare input: any;
+
       constructor(input) {
         this.input = input;
       }
@@ -786,6 +788,8 @@ describe('#updateStage()', () => {
     class FakeUntagResourceCommand extends FakeCommand {}
     class FakeDeleteLogGroupCommand extends FakeCommand {}
     class FakeAPIGatewayClient {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         apiGatewayClients.push(this);
@@ -807,6 +811,8 @@ describe('#updateStage()', () => {
       }
     }
     class FakeCloudWatchLogsClient {
+      declare config: any;
+
       constructor(config) {
         this.config = config;
         cloudWatchLogsClients.push(this);

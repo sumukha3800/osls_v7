@@ -5,7 +5,13 @@ import tokenizeException from '../utils/tokenize-exception.ts';
 import isLocallyInstalled from './is-locally-installed.ts';
 const slsVersion = packageModule.version;
 
-export default (exception) => {
+// `scripts/serverless.ts` also passes `{ serverless }`, which is not used
+type HandleError = (
+  exception: unknown,
+  options?: { serverless?: unknown }
+) => Record<string, never>;
+
+const handleError: HandleError = (exception) => {
   const exceptionTokens = tokenizeException(exception);
   const isUserError = exceptionTokens.isUserError;
 
@@ -44,3 +50,5 @@ export default (exception) => {
 
   return {};
 };
+
+export default handleError;

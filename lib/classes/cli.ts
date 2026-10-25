@@ -23,7 +23,11 @@ const formatLegacyMessage = (message, opts) => {
 };
 
 class CLI {
-  constructor(serverless) {
+  declare loadedCommands: any;
+  declare loadedPlugins: any;
+  declare serverless: any;
+
+  constructor(serverless?) {
     this.serverless = serverless;
     this.loadedPlugins = [];
     this.loadedCommands = {};

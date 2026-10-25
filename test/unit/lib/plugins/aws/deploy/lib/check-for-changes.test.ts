@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import glob from '../../../../../../../lib/utils/glob.ts';
 import * as sandbox from 'sinon';
+import type { SinonStub } from 'sinon';
 import normalizeFiles from '../../../../../../../lib/plugins/aws/lib/normalize-files.ts';
 import AwsProvider from '../../../../../../../lib/plugins/aws/provider.ts';
 import AwsDeploy from '../../../../../../../lib/plugins/aws/deploy/index.ts';
@@ -153,7 +154,7 @@ describe('checkForChanges', () => {
     });
 
     afterEach(() => {
-      S3Client.prototype.send.restore();
+      (S3Client.prototype.send as SinonStub).restore();
     });
 
     it('should translate error if rejected due to missing bucket', () => {
@@ -412,7 +413,7 @@ describe('checkForChanges', () => {
     });
 
     afterEach(() => {
-      LambdaClient.prototype.send.restore();
+      (LambdaClient.prototype.send as SinonStub).restore();
       awsDeploy.serverless.service.getAllFunctions.restore();
       awsDeploy.serverless.service.getFunction.restore();
     });
@@ -438,11 +439,15 @@ describe('checkForChanges', () => {
       const lambdaClients = [];
       const sentInputs = [];
       class FakeGetFunctionCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
       }
       class FakeLambdaClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           lambdaClients.push(this);
@@ -515,7 +520,7 @@ describe('checkForChanges', () => {
     });
 
     afterEach(() => {
-      S3Client.prototype.send.restore();
+      (S3Client.prototype.send as SinonStub).restore();
     });
 
     it('should resolve if no objects are provided as input', async () => {
@@ -574,11 +579,15 @@ describe('checkForChanges', () => {
       const paginatorClients = [];
       const sentInputs = [];
       class FakeHeadObjectCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
       }
       class FakeS3Client {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           s3Clients.push(this);
@@ -666,7 +675,7 @@ describe('checkForChanges', () => {
     beforeEach(async () => {
       normalizeCloudFormationTemplateStub = sandbox
         .stub(normalizeFiles, 'normalizeCloudFormationTemplate')
-        .returns();
+        .returns(undefined);
       globSyncStub = sandbox.stub(glob, 'sync');
       readFileStub = sandbox
         .stub(fsp, 'readFile')
@@ -674,9 +683,9 @@ describe('checkForChanges', () => {
     });
 
     afterEach(() => {
-      normalizeFiles.normalizeCloudFormationTemplate.restore();
-      glob.sync.restore();
-      fsp.readFile.restore();
+      (normalizeFiles.normalizeCloudFormationTemplate as SinonStub).restore();
+      (glob.sync as SinonStub).restore();
+      (fsp.readFile as SinonStub).restore();
     });
 
     it('should resolve if no input is provided', async () =>
@@ -755,7 +764,9 @@ describe('checkForChanges', () => {
         { Metadata: { filesha256: 'remote-hash-cf-template' } },
         { Metadata: { filesha256: 'remote-hash-zip-file-1' } },
         {
-          Metadata: {/* no filesha256 available */},
+          Metadata: {
+            /* no filesha256 available */
+          },
         }, // will be translated to ''
       ];
 
@@ -1118,7 +1129,7 @@ const getDeploymentObjectBasenames = async (serverless) => {
   return Array.from(new Set(artifactNames));
 };
 
-const createDeploymentObjects = (serverless, artifactNames, options = {}) => {
+const createDeploymentObjects = (serverless, artifactNames, options: Record<string, any> = {}) => {
   const deploymentBase = getDeploymentBase(serverless);
   const directory = options.directory || checkForChangesDeploymentDirectory;
   const lastModified = options.lastModified || remoteArtifactLastModified;
@@ -1129,7 +1140,10 @@ const createDeploymentObjects = (serverless, artifactNames, options = {}) => {
   }));
 };
 
-const generateMatchingListObjectsResponse = async (serverless, options = {}) => {
+const generateMatchingListObjectsResponse = async (
+  serverless,
+  options: Record<string, any> = {}
+) => {
   const deploymentBase = getDeploymentBase(serverless);
   const artifactNames = options.artifactNames || (await getDeploymentObjectBasenames(serverless));
 
@@ -1265,7 +1279,10 @@ const generateMatchingRemoteState = async (serverless) => {
   };
 };
 
-const createCheckForChangesAwsSdkV3StubMap = (getServerless, overrides = {}) => ({
+const createCheckForChangesAwsSdkV3StubMap = (
+  getServerless,
+  overrides: Record<string, any> = {}
+) => ({
   CloudFormation: {
     ...commonAwsSdkV3StubMap.CloudFormation,
     ...overrides.CloudFormation,
@@ -1293,14 +1310,14 @@ const runCheckForChanges = async ({
   awsSdkV3StubMap,
   awsSdkV3StubMapOverrides,
   lastLifecycleHookName = 'aws:deploy:deploy:checkForChanges',
-} = {}) => {
+}: Record<string, any> = {}) => {
   let serverless;
   const getServerless = () => serverless;
   const resolvedAwsSdkV3StubMapOverrides =
     typeof awsSdkV3StubMapOverrides === 'function'
       ? awsSdkV3StubMapOverrides(getServerless)
       : awsSdkV3StubMapOverrides;
-  const runOptions = {
+  const runOptions: Record<string, any> = {
     command: 'deploy',
     options,
     lastLifecycleHookName: lastLifecycleHookName || undefined,
@@ -1678,8 +1695,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
         );
         expect(cloudFormationStub).to.not.have.been.called;
       } finally {
-        CloudWatchLogsClient.prototype.send.restore();
-        CloudFormationClient.prototype.send.restore();
+        (CloudWatchLogsClient.prototype.send as SinonStub).restore();
+        (CloudFormationClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -1771,7 +1788,7 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
         expect(observedMaxActiveRequests).to.equal(2);
         expect(describeSubscriptionFiltersStub).to.have.callCount(10);
       } finally {
-        CloudWatchLogsClient.prototype.send.restore();
+        (CloudWatchLogsClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -1824,8 +1841,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
         expect(cloudWatchLogsStub).to.have.been.calledOnce;
         expect(describeStackResourceStub).to.have.callCount(10);
       } finally {
-        CloudWatchLogsClient.prototype.send.restore();
-        CloudFormationClient.prototype.send.restore();
+        (CloudWatchLogsClient.prototype.send as SinonStub).restore();
+        (CloudFormationClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -1863,7 +1880,7 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
         });
       const cloudFormationStub = sandbox
         .stub(CloudFormationClient.prototype, 'send')
-        .callsFake(async (command) => {
+        .callsFake(async (command: DescribeStackResourceCommand) => {
           expect(command).to.be.instanceOf(DescribeStackResourceCommand);
           return {
             StackResourceDetail: {
@@ -1892,8 +1909,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
         ).to.have.length(6);
         expect(cloudFormationStub).to.have.callCount(6);
       } finally {
-        CloudWatchLogsClient.prototype.send.restore();
-        CloudFormationClient.prototype.send.restore();
+        (CloudWatchLogsClient.prototype.send as SinonStub).restore();
+        (CloudFormationClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -1920,7 +1937,7 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
         expect(result).to.equal(false);
         expect(cloudWatchLogsStub).to.have.been.calledOnce;
       } finally {
-        CloudWatchLogsClient.prototype.send.restore();
+        (CloudWatchLogsClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -1942,7 +1959,7 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
           })
         ).to.be.rejectedWith('denied');
       } finally {
-        CloudWatchLogsClient.prototype.send.restore();
+        (CloudWatchLogsClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -1962,7 +1979,7 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
 
         expect(result).to.equal(false);
       } finally {
-        CloudFormationClient.prototype.send.restore();
+        (CloudFormationClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -2020,8 +2037,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
             .filter((command) => command instanceof DeleteSubscriptionFilterCommand)
         ).to.have.length(0);
       } finally {
-        CloudWatchLogsClient.prototype.send.restore();
-        CloudFormationClient.prototype.send.restore();
+        (CloudWatchLogsClient.prototype.send as SinonStub).restore();
+        (CloudFormationClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -2041,7 +2058,7 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
           )
         ).to.be.rejectedWith('denied');
       } finally {
-        CloudFormationClient.prototype.send.restore();
+        (CloudFormationClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -2063,7 +2080,7 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
           )
         ).to.be.rejectedWith('credentials file does not exist');
       } finally {
-        CloudFormationClient.prototype.send.restore();
+        (CloudFormationClient.prototype.send as SinonStub).restore();
       }
     });
 
@@ -2073,6 +2090,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
       const cloudWatchLogsClients = [];
       const cloudFormationClients = [];
       class FakeCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
@@ -2084,6 +2103,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
       const logicalResourceId = awsDeploy.provider.naming.getCloudWatchLogLogicalId('Fn1', 1);
       const filterName = `${stackName}-${logicalResourceId}-xxxxx`;
       class FakeCloudWatchLogsClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           cloudWatchLogsClients.push(this);
@@ -2105,6 +2126,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
         }
       }
       class FakeCloudFormationClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           cloudFormationClients.push(this);
@@ -2158,6 +2181,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
       const cloudWatchLogsClients = [];
       const cloudFormationClients = [];
       class FakeCommand {
+        declare input: any;
+
         constructor(input) {
           this.input = input;
         }
@@ -2169,6 +2194,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
       const logicalResourceId = 'Fn1LogSubscriptionFilter';
       const filterName = `${stackName}-${logicalResourceId}-xxxxx`;
       class FakeCloudWatchLogsClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           cloudWatchLogsClients.push(this);
@@ -2190,6 +2217,8 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
         }
       }
       class FakeCloudFormationClient {
+        declare config: any;
+
         constructor(config) {
           this.config = config;
           cloudFormationClients.push(this);
@@ -2270,7 +2299,7 @@ describe('test/unit/lib/plugins/aws/deploy/lib/checkForChanges.test.ts', () => {
           },
         },
       });
-      expect({}.polluted).to.equal(undefined);
+      expect(({} as Record<string, unknown>).polluted).to.equal(undefined);
     });
 
     it('does not crash when cloudwatchLog event uses constructor as the log group name', async () => {

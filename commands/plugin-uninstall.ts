@@ -54,7 +54,7 @@ const removePluginFromServerlessFile = async ({ configurationFilePath, pluginNam
       : serverlessFileObj.plugins && serverlessFileObj.plugins.modules;
 
     if (plugins) {
-      for (let index = plugins.indexOf(pluginName); index !== -1;) {
+      for (let index = plugins.indexOf(pluginName); index !== -1; ) {
         plugins.splice(index, 1);
         index = plugins.indexOf(pluginName);
       }
@@ -70,10 +70,13 @@ const removePluginFromServerlessFile = async ({ configurationFilePath, pluginNam
     return;
   }
 
-  const serverlessFileObj = yaml.load(await fsp.readFile(configurationFilePath, 'utf8'), {
-    filename: configurationFilePath,
-    schema: cloudformationSchema,
-  });
+  const serverlessFileObj: Record<string, any> = yaml.load(
+    await fsp.readFile(configurationFilePath, 'utf8'),
+    {
+      filename: configurationFilePath,
+      schema: cloudformationSchema,
+    }
+  );
   if (serverlessFileObj.plugins != null) {
     // Plugins section can be behind variables, opt-out in such case
     if (isPlainObject(serverlessFileObj.plugins)) {

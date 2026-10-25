@@ -1,7 +1,7 @@
 export default {
   addExportNameForOutputs() {
     const outputs = this.serverless.service.provider.compiledCloudFormationTemplate.Outputs;
-    for (const [key, data] of Object.entries(outputs)) {
+    for (const [key, data] of Object.entries<any>(outputs)) {
       if (!data.Export) {
         data.Export = {
           Name: `sls-${this.serverless.service.service}-${this.provider.getStage()}-${key}`,

@@ -2,6 +2,10 @@ import ServerlessError from '../../../../../serverless-error.ts';
 import resolveLambdaTarget from '../../../utils/resolve-lambda-target.ts';
 
 class AwsCompileIotFleetProvisioningEvents {
+  declare hooks: any;
+  declare provider: any;
+  declare serverless: any;
+
   constructor(serverless) {
     this.serverless = serverless;
     this.provider = this.serverless.getProvider('aws');
@@ -45,7 +49,7 @@ class AwsCompileIotFleetProvisioningEvents {
         const lambdaPermissionLogicalId =
           this.provider.naming.getLambdaIotFleetProvisioningPermissionLogicalId(functionName);
 
-        const provisioningTemplateResource = {
+        const provisioningTemplateResource: Record<string, any> = {
           Type: 'AWS::IoT::ProvisioningTemplate',
           Properties: {
             Enabled: true,

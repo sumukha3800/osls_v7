@@ -1,6 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
+import type { FileHandle } from 'node:fs/promises';
 import yazl from 'yazl';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
@@ -13,7 +14,7 @@ const loadExtractZipWithFs = async (fsStub) =>
   (await esmock('../../../../lib/utils/extract-zip.ts', { 'node:fs': fsStub })).default;
 
 const createZipBuffer = (entries) =>
-  new Promise((resolve, reject) => {
+  new Promise<Buffer>((resolve, reject) => {
     const zip = new yazl.ZipFile();
     const chunks = [];
 
@@ -272,20 +273,21 @@ describe('extractZip', () => {
       ...fs,
       promises: {
         ...fs.promises,
-        async open(...args) {
+        async open(...args: Parameters<typeof fs.promises.open>) {
           openedPath = args[0];
           const handle = await fs.promises.open(...args);
           return {
-            chmod: (...chmodArgs) => handle.chmod(...chmodArgs),
+            chmod: (...chmodArgs: Parameters<FileHandle['chmod']>) => handle.chmod(...chmodArgs),
             close: async () => {
               closeSpy();
               return handle.close();
             },
-            utimes: (...utimesArgs) => handle.utimes(...utimesArgs),
-            write: (...writeArgs) => handle.write(...writeArgs),
+            utimes: (...utimesArgs: Parameters<FileHandle['utimes']>) =>
+              handle.utimes(...utimesArgs),
+            write: (...writeArgs: Parameters<FileHandle['write']>) => handle.write(...writeArgs),
           };
         },
-        async rename(...args) {
+        async rename(...args: Parameters<typeof fs.promises.rename>) {
           expect(closeSpy.calledOnce).to.equal(true);
           return fs.promises.rename(...args);
         },
@@ -307,12 +309,13 @@ describe('extractZip', () => {
       ...fs,
       promises: {
         ...fs.promises,
-        async open(...args) {
+        async open(...args: Parameters<typeof fs.promises.open>) {
           const handle = await fs.promises.open(...args);
           return {
-            chmod: (...chmodArgs) => handle.chmod(...chmodArgs),
+            chmod: (...chmodArgs: Parameters<FileHandle['chmod']>) => handle.chmod(...chmodArgs),
             close: () => handle.close(),
-            utimes: (...utimesArgs) => handle.utimes(...utimesArgs),
+            utimes: (...utimesArgs: Parameters<FileHandle['utimes']>) =>
+              handle.utimes(...utimesArgs),
             write: sinon.stub().rejects(writeError),
           };
         },

@@ -5,7 +5,7 @@ import { expect } from 'chai';
 const METHOD_SCHEDULER = 'scheduler';
 const METHOD_EVENT_BUS = 'eventBus';
 
-async function run(events, options = {}) {
+async function run(events, options: Record<string, any> = {}) {
   const params = {
     fixture: 'function',
     command: 'package',
