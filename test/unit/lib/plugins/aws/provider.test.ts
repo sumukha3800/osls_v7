@@ -197,7 +197,7 @@ describe('AwsProvider', () => {
   describe('runtime schema parity', () => {
     it('should keep `awsLambdaRuntime` in sync with `AwsLambdaRuntime`', () => {
       const localServerless = createServerless();
-      const runtimeTypePath = path.resolve(import.meta.dirname, '../../../../../types/index.d.ts');
+      const runtimeTypePath = path.resolve(import.meta.dirname, '../../../../../types/aws.d.ts');
       const runtimeTypeSource = fs.readFileSync(runtimeTypePath, 'utf8');
 
       localServerless.service.provider.name = 'aws';

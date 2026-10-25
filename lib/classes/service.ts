@@ -7,29 +7,58 @@ import mergePlainObjects from '../utils/merge-plain-objects.ts';
 import { hasOwn } from '../utils/safe-object.ts';
 import { log } from '../utils/serverless-utils/log.ts';
 import validateStage from '../utils/validate-stage.ts';
+import type { AWS } from '../../types/aws.d.ts';
+import type Serverless from '../serverless.ts';
+
+// A function, a function event and a layer of the service configuration
+export type AwsFunction = NonNullable<AWS['functions']>[string];
+export type AwsFunctionEvent = NonNullable<AwsFunction['events']>[number];
+export type AwsLayer = NonNullable<AWS['layers']>[string];
+
+// A CloudFormation template, as osls compiles it
+export interface CloudFormationTemplate {
+  AWSTemplateFormatVersion?: string;
+  Description?: string;
+  Resources: Record<string, any>;
+  Outputs?: Record<string, any>;
+  [key: string]: any;
+}
+
+// `service.provider` at run time: the provider configuration, with the stage and region resolved
+// and the templates osls compiles. Other providers than AWS share the shape loosely
+export type ServiceProvider = Omit<AWS['provider'], 'name' | 'region' | 'stage'> & {
+  name: string;
+  stage: string;
+  region?: string;
+  compiledCloudFormationTemplate?: CloudFormationTemplate;
+  coreCloudFormationTemplate?: CloudFormationTemplate;
+  [key: string]: any;
+};
+
 // const currentVersion = require('../../package').version;
 // const isLocallyInstalled = require('../cli/is-locally-installed');
 
 class Service {
   declare app: any;
   declare configValidationMode: any;
-  declare custom: any;
+  declare custom: Record<string, any>;
   declare deprecationNotificationMode: any;
   declare disabledDeprecations: any;
-  declare functions: any;
+  declare functions: Record<string, AwsFunction>;
   declare initialServerlessConfig: any;
-  declare layers: any;
+  declare layers: AWS['layers'];
   declare org: any;
   declare outputs: any;
-  declare package: any;
+  declare package: AWS['package'];
   declare plugins: any;
   declare pluginsData: any;
-  declare provider: any;
-  declare resources: any;
-  declare serverless: any;
-  declare service: any;
+  declare provider: ServiceProvider;
+  declare resources: AWS['resources'];
+  declare serverless: Serverless;
+  // The service name
+  declare service: string | null;
   declare serviceFilename: any;
-  declare serviceObject: any;
+  declare serviceObject: { name: string; [key: string]: any } | null;
 
   constructor(serverless, data?) {
     // #######################################################################
@@ -40,9 +69,10 @@ class Service {
     // Default properties
     this.service = null;
     this.serviceObject = null;
+    // Placeholder until the configuration is loaded
     this.provider = {
       stage: 'dev',
-    };
+    } as ServiceProvider;
     this.custom = {};
     this.plugins = [];
     this.pluginsData = {};
@@ -104,9 +134,9 @@ class Service {
       const providerName = configurationInput.provider;
       this.provider = {
         name: providerName,
-      };
+      } as ServiceProvider;
     } else {
-      this.provider = configurationInput.provider;
+      this.provider = configurationInput.provider as ServiceProvider;
     }
     if (this.provider.stage == null) {
       this.provider.stage = 'dev';
@@ -319,7 +349,7 @@ class Service {
     return mergePlainObjects(this, data);
   }
 
-  getServiceName() {
+  getServiceName(): string {
     return this.serviceObject.name;
   }
 
@@ -339,7 +369,7 @@ class Service {
     return this.getAllFunctions().map((func) => this.getFunction(func).name);
   }
 
-  getFunction(functionName) {
+  getFunction(functionName: string): AwsFunction {
     if (hasOwn(this.functions, functionName)) {
       return this.functions[functionName];
     }
@@ -349,7 +379,7 @@ class Service {
     );
   }
 
-  getLayer(layerName) {
+  getLayer(layerName: string): AwsLayer {
     if (hasOwn(this.layers, layerName)) {
       return this.layers[layerName];
     }
@@ -359,7 +389,7 @@ class Service {
     );
   }
 
-  getEventInFunction(eventName, functionName) {
+  getEventInFunction(eventName: string, functionName: string): AwsFunctionEvent {
     const event = this.getFunction(functionName).events.find(
       (e) => Object.keys(e)[0] === eventName
     );
@@ -372,7 +402,7 @@ class Service {
     );
   }
 
-  getAllEventsInFunction(functionName) {
+  getAllEventsInFunction(functionName: string): AwsFunctionEvent[] {
     return this.getFunction(functionName).events;
   }
 

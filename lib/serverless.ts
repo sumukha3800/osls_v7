@@ -26,6 +26,7 @@ import { parseEntries } from './configuration/variables/resolve-meta.ts';
 import validateStage from './utils/validate-stage.ts';
 import colors from './utils/colors.ts';
 import type { CommandSchema, CommandsSchema } from './cli/commands-schema/types.ts';
+import type AwsProvider from './plugins/aws/provider.ts';
 
 // What the CLI passes to the constructor; every property is optional
 export interface ServerlessConfig {
@@ -311,6 +312,8 @@ class Serverless {
     this.providers[name] = provider;
   }
 
+  getProvider(name: 'aws'): AwsProvider;
+  getProvider(name: string): any;
   getProvider(name: string) {
     return this.providers[name] ? this.providers[name] : false;
   }

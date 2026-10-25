@@ -149,18 +149,14 @@ export default {
 
             if (http.integration === 'HTTP' || http.integration === 'HTTP_PROXY') {
               if (!http.request || !http.request.uri) {
-                const errorMessage = [
-                  `You need to set the request uri when using the ${http.integration} integration.`,
-                ];
+                const errorMessage = `You need to set the request uri when using the ${http.integration} integration.`;
                 throw new ServerlessError(errorMessage, 'API_GATEWAY_MISSING_REQUEST_URI');
               }
 
               http.connectionType = this.getConnectionType(http);
 
               if (http.connectionType && http.connectionType === 'VPC_LINK' && !http.connectionId) {
-                const errorMessage = [
-                  `You need to set connectionId when using ${http.connectionType} connectionType.`,
-                ];
+                const errorMessage = `You need to set connectionId when using ${http.connectionType} connectionType.`;
                 throw new ServerlessError(errorMessage, 'API_GATEWAY_MISSING_CONNECTION_ID');
               }
             }
@@ -378,9 +374,8 @@ export default {
       claims &&
       claims.length > 0
     ) {
-      const errorMessage = [
-        'Cognito claims can only be filtered when using the lambda integration type',
-      ];
+      const errorMessage =
+        'Cognito claims can only be filtered when using the lambda integration type';
       throw new ServerlessError(errorMessage, 'API_GATEWAY_INVALID_COGNITO_CLAIMS');
     }
 

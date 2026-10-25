@@ -8,8 +8,13 @@ const { stderrColors } = colors;
 const WARNING_LEVEL_INDEX = logLevels.indexOf('warning');
 const ERROR_LEVEL_INDEX = logLevels.indexOf('error');
 
+interface LogReporterConfig {
+  logLevelIndex: number;
+  debugNamespaces?: string;
+}
+
 class ServerlessLogReporter extends NodeLogReporter {
-  constructor({ logLevelIndex, debugNamespaces }) {
+  constructor({ logLevelIndex, debugNamespaces }: LogReporterConfig) {
     if (debugNamespaces) {
       debugNamespaces = debugNamespaces
         .split(',')
@@ -67,4 +72,6 @@ ServerlessLogReporter.resolveNamespaceMessagePrefix = function (logger) {
   return `${logger.namespaceTokens.slice(1).join(':')}:`;
 };
 
-export default (config) => new ServerlessLogReporter(config);
+// Returns `object`: the reporter class extends the `log-node` writer, whose types are declared only
+// in this repository (typings/vendor.d.ts), so the class cannot appear in the published declarations
+export default (config: LogReporterConfig): object => new ServerlessLogReporter(config);

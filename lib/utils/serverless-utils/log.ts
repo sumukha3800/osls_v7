@@ -3,9 +3,10 @@ import memoizee from 'memoizee';
 import logLevels from 'log/levels.json' with { type: 'json' };
 import { getterDescriptor } from '../property-descriptors.ts';
 import globalState from './lib/global-state.ts';
-import getOutputReporter from './lib/log/get-output-reporter.ts';
-import getProgressReporter from './lib/log/get-progress-reporter.ts';
+import getOutputReporter, { type OutputWriter } from './lib/log/get-output-reporter.ts';
+import getProgressReporter, { type ProgressReporter } from './lib/log/get-progress-reporter.ts';
 import logModule from 'log';
+import type { Logger } from '../../plugin-types.ts';
 
 const log = (() => {
   if (!globalState.log) globalState.log = logModule.get('serverless').notice;
@@ -41,8 +42,18 @@ const progress: Record<string, any> = getProgressReporter('serverless');
 // Overridden with intended logic in reporter
 progress.clear = () => {};
 
-const getPluginWriters = memoizee(
-  (pluginName) => {
+interface PluginWriters {
+  log: Logger;
+  writeText: OutputWriter;
+  progress: ProgressReporter;
+}
+
+// Typed without memoizee's types: they come from a dev dependency, so they cannot appear in the
+// published declarations
+type GetPluginWriters = ((pluginName: string) => PluginWriters) & { clear: () => void };
+
+const getPluginWriters: GetPluginWriters = memoizee(
+  (pluginName: string): PluginWriters => {
     pluginName = ensureString(pluginName, { name: 'pluginName' });
     // "log" namespace can contain only [a-z0-9-] chars, therefore we normalize plugin name to
     // avoid exceptions

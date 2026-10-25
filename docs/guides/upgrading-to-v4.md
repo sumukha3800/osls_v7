@@ -55,7 +55,8 @@ osls is written in TypeScript and published as ES modules with type declarations
 - Plugins written as CommonJS or ES modules keep working. The `@serverless/utils/config` and `@serverless/utils/log` compatibility aliases keep working for `require()` and `import`.
 - Plugins that deep-require osls internal modules (`osls/lib/...`) get ES modules through Node.js's `require()` of ES modules: a module's default export is on `.default`. Internal modules are not part of the public plugin API.
 - TypeScript service configurations (`serverless.ts`, `serverless.mts`) run on Node.js's built-in type stripping, with [tsx](https://tsx.is) as the fallback for syntax Node.js cannot strip (such as `enum`), extensionless relative imports and tsconfig `paths`. The `typescript` package is no longer a dependency of osls.
-- Configuration types: `import type { AWS } from 'osls'`.
+- Configuration types: `import type { AWS } from 'osls'`. They are generated from the configuration schema, so they no longer include `org`, `app`, `outputs`, `dashboard` or `provider.enterprise`, which the schema rejects.
+- Plugin API types (`Plugin`, `PluginUtils`, `CliOptions` and more) are exported from `osls`: see [TypeScript](typescript.md).
 - The custom resource Lambda functions osls deploys are ES modules (Node.js Lambda runtimes support them).
 
 ### Update a pinned `frameworkVersion`

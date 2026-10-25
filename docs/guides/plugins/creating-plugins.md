@@ -26,6 +26,8 @@ class MyPlugin {
 module.exports = MyPlugin;
 ```
 
+Plugins can also be written in TypeScript, with the plugin API types exported from `osls`: see [Plugins in TypeScript](../typescript.md#plugins-in-typescript).
+
 The plugin can then be loaded in `serverless.yml` via a local path:
 
 ```yaml

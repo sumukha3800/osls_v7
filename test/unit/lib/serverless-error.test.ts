@@ -18,7 +18,8 @@ describe('test/unit/lib/serverless-error.test.ts', () => {
   });
 
   it('message should always resolve as string', () => {
-    const error = new ServerlessError({});
+    // A non-string message, as from JavaScript callers
+    const error = new ServerlessError({} as any);
     expect(typeof error.message).to.be.equal('string');
   });
 

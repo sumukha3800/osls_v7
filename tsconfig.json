@@ -31,5 +31,13 @@
     "prettier.config.ts",
     "eslint.config.ts"
   ],
-  "exclude": ["dist", "node_modules", "test/fixtures", "**/fixtures/**", "**/fixture/**"]
+  // test/typescript-consumers resolve `osls` from the built package (scripts/check-typescript-consumers.ts)
+  "exclude": [
+    "dist",
+    "node_modules",
+    "test/fixtures",
+    "test/typescript-consumers",
+    "**/fixtures/**",
+    "**/fixture/**"
+  ]
 }

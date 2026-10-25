@@ -11,7 +11,7 @@ env:
 
 jobs:
   checks:
-    name: '[Linux] Node 24: Formatting, lint, types, build & packaging tests'
+    name: '[Linux] Node 24: Formatting, lint, build & packaging tests'
     runs-on: ubuntu-latest
     env:
       SLS_SCHEMA_CACHE_BASE_DIR: /home/runner
@@ -46,9 +46,6 @@ jobs:
       - name: Validate lint rules
         run: pnpm run lint:updated
 
-      - name: Type check
-        run: pnpm run typecheck
-
       - name: Build
         run: pnpm run build
 
@@ -71,6 +68,68 @@ jobs:
           npm install "$RUNNER_TEMP"/osls-*.tgz
           npx osls --version
           npx osls print
+
+      - name: Smoke test a TypeScript service configuration with the packed package
+        run: |
+          mkdir "$RUNNER_TEMP/typescript-consumer"
+          cp test/typescript-consumers/esm/package.json test/typescript-consumers/esm/serverless.ts "$RUNNER_TEMP/typescript-consumer"
+          cd "$RUNNER_TEMP/typescript-consumer"
+          npm install "$RUNNER_TEMP"/osls-*.tgz
+          npx osls print
+
+  typescript:
+    name: '[Linux] Node 24: TypeScript 7 types, consumers & dependency types'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm run typecheck
+
+      - name: Validate configuration types match the configuration schema
+        run: pnpm run generate-types --check
+
+      - name: Build
+        run: pnpm run build
+
+      # TypeScript 7 projects (ES modules, CommonJS, bundler) type check against the built package
+      - name: Type check TypeScript consumer projects
+        run: pnpm run typecheck:consumers
+
+      - name: Audit dependency types
+        run: pnpm run audit:types
+
+  audit:
+    name: '[Linux] Security audit of dependencies'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      # Reads the lockfile: fails on high and critical advisories
+      - name: Audit dependencies
+        run: pnpm audit --audit-level high
 
   unit:
     name: '[${{ matrix.os }}] Node ${{ matrix.node }}: Unit tests'
