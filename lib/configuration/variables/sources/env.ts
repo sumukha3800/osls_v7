@@ -1,12 +1,13 @@
 import ensureString from 'type/string/ensure.js';
 import ServerlessError from '../../../serverless-error.ts';
+import type { VariableSourceResolverContext } from '../../../plugin-types.ts';
 
 // Used to track env variable dependencies in specific resolution phases
 // This collection is cleared on demand externally
-const missingEnvVariables = new Set();
+const missingEnvVariables = new Set<string>();
 
 export default {
-  resolve: ({ address, isSourceFulfilled }) => {
+  resolve: ({ address, isSourceFulfilled }: VariableSourceResolverContext) => {
     if (!address) {
       throw new ServerlessError(
         'Missing address argument in variable "env" source',

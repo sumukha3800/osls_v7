@@ -2,16 +2,26 @@ import ensureString from 'type/string/ensure.js';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import ServerlessError from '../../../../serverless-error.ts';
 import { hasOwn } from '../../../../utils/safe-object.ts';
-import createCachedAwsVariableSourceCommandSender from './create-cached-aws-variable-source-command-sender.ts';
+import createCachedAwsVariableSourceCommandSender, {
+  type AwsProviderHost,
+} from './create-cached-aws-variable-source-command-sender.ts';
+import type { VariableSourceResolverContext } from '../../../../plugin-types.ts';
 
-export default (serverlessInstance) => {
+export default (serverlessInstance: AwsProviderHost) => {
   const sender = createCachedAwsVariableSourceCommandSender({
     getProvider: () => serverlessInstance.getProvider('aws'),
     Client: STSClient,
   });
 
   return {
-    resolve: async ({ address, options, resolveConfigurationProperty }) => {
+    resolve: async ({
+      address,
+      options,
+      resolveConfigurationProperty,
+    }: Pick<
+      VariableSourceResolverContext,
+      'address' | 'options' | 'resolveConfigurationProperty'
+    >) => {
       if (!address) {
         throw new ServerlessError(
           'Missing address argument in variable "aws" source',

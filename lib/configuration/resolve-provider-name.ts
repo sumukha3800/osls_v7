@@ -3,7 +3,7 @@ import isObject from 'type/object/is.js';
 import ServerlessError from '../serverless-error.ts';
 import resolveCliInput from '../cli/resolve-input.ts';
 
-export default (configuration, options: Record<string, any> = {}) => {
+export default (configuration: Record<string, any>, options: Record<string, any> = {}) => {
   if (!options) options = {};
   const isHelpRequest =
     options.isHelpRequest == null ? resolveCliInput().isHelpRequest : options.isHelpRequest;

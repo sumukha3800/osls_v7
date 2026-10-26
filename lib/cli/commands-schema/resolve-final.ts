@@ -4,7 +4,10 @@ import awsServiceCommands from './aws-service.ts';
 import serviceOptions from './common-options/service.ts';
 import awsServiceOptions from './common-options/aws-service.ts';
 import ServerlessError from '../../serverless-error.ts';
-import type { CommandSchema, CommandsSchema, PluginCommandConfig } from './types.ts';
+import type { CommandSchema, CommandsSchema, OptionsSchema, PluginCommandConfig } from './types.ts';
+
+// Resolved schemas always carry options (core schemas define them, plugin ones get `{}`)
+type ResolvedCommandSchema = CommandSchema & { options: OptionsSchema };
 
 // Plugin instances; only the properties read here are described
 interface LoadedPlugin {
@@ -53,7 +56,7 @@ export default (
       for (const hookName of Object.keys(loadedPlugin.hooks)) {
         const awsCommandName = optionalServiceCommandsHooksMap.get(hookName);
         if (awsCommandName && !commands.has(awsCommandName)) {
-          const schema: CommandSchema = Object.assign(
+          const schema: ResolvedCommandSchema = Object.assign(
             mergePlainObjects({}, awsServiceCommands.get(awsCommandName)),
             {
               isExtension: true,
@@ -69,7 +72,7 @@ export default (
     }
   }
 
-  const missingOptionTypes = [];
+  const missingOptionTypes: { pluginName: string; commandName: string; optionName: string }[] = [];
   const commonOptions = providerName === 'aws' ? awsServiceOptions : serviceOptions;
   commands.commonOptions = commonOptions;
   const resolveCommands = (
@@ -82,7 +85,7 @@ export default (
       if (commandConfig.type === 'entrypoint') continue;
       const fullCommandName = `${commandPrefix}${commandName}`;
       if (commandConfig.type !== 'container') {
-        const schema: CommandSchema = commands.has(fullCommandName)
+        const schema: ResolvedCommandSchema = commands.has(fullCommandName)
           ? mergePlainObjects({}, commands.get(fullCommandName))
           : {
               usage: commandConfig.usage,

@@ -1,8 +1,16 @@
 import ensurePlainObject from 'type/plain-object/ensure.js';
 import ensurePlainFunction from 'type/plain-function/ensure.js';
 import ServerlessError from '../../../serverless-error.ts';
+import type { PluginInstance } from '../../../classes/plugin-manager.ts';
 
-export default (configuration, resolverConfiguration, externalPlugins) => {
+export default (
+  configuration: unknown,
+  resolverConfiguration: {
+    sources: Record<string, unknown>;
+    fulfilledSources: { add: (sourceName: string) => unknown };
+  },
+  externalPlugins: Iterable<PluginInstance>
+) => {
   for (const externalPlugin of externalPlugins) {
     const pluginName = externalPlugin.constructor.name;
     if (externalPlugin.configurationVariablesSources != null) {

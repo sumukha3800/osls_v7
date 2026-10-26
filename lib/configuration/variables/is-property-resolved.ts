@@ -1,6 +1,7 @@
-export default (variablesMeta, propertyPath) => {
+export default (variablesMeta: Map<string, unknown>, propertyPath: string) => {
   const propertyPathKeys = propertyPath.split('\0');
-  let propertyPathPart = propertyPathKeys.shift();
+  // `split()` returns at least one key
+  let propertyPathPart = propertyPathKeys.shift()!;
   while (propertyPathKeys[0]) {
     if (variablesMeta.has(propertyPathPart)) return false;
     propertyPathPart += `\0${propertyPathKeys.shift()}`;

@@ -10,7 +10,7 @@ export default (
   { commandSchema, providerName }: { commandSchema?: CommandSchema; providerName?: string }
 ) => {
   const supportedNames = (() => {
-    if (commandSchema) return Object.keys(commandSchema.options);
+    if (commandSchema) return Object.keys(commandSchema.options!);
     return providerName === 'aws' ? awsServiceOptionsNames : serviceOptionsNames;
   })();
   const result = Object.create(null);

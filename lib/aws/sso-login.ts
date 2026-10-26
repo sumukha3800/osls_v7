@@ -9,6 +9,13 @@ import {
   SSOOIDCClient,
   StartDeviceAuthorizationCommand,
 } from '@aws-sdk/client-sso-oidc';
+import type {
+  CreateTokenCommandOutput,
+  RegisterClientCommandOutput,
+  StartDeviceAuthorizationCommandOutput,
+} from '@aws-sdk/client-sso-oidc';
+import type { fromIni } from '@aws-sdk/credential-providers';
+import type { NodeHttpHandler } from '@smithy/node-http-handler';
 
 import ServerlessError from '../serverless-error.ts';
 import { isAwsCredentialProviderError } from './aws-sdk-v3-error.ts';
@@ -20,13 +27,24 @@ const DEFAULT_SSO_REGISTRATION_SCOPES = ['sso:account:access'];
 const DEVICE_CODE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:device_code';
 const LOGIN_ATTEMPTS = new Map();
 
-function splitScopes(value) {
+type ParsedIniData = Awaited<ReturnType<typeof parseKnownFiles>>;
+type CredentialsProvider = ReturnType<typeof fromIni>;
+
+function splitScopes(value: string | undefined) {
   if (!value) return DEFAULT_SSO_REGISTRATION_SCOPES;
   const scopes = value.split(/[,\s]+/).filter(Boolean);
   return scopes.length ? scopes : DEFAULT_SSO_REGISTRATION_SCOPES;
 }
 
-async function resolveSsoProfileConfig({ profile, filepath, configFilepath }) {
+async function resolveSsoProfileConfig({
+  profile,
+  filepath,
+  configFilepath,
+}: {
+  profile: string;
+  filepath: string;
+  configFilepath: string;
+}) {
   const profiles = await parseKnownFiles({ filepath, configFilepath, ignoreCache: true });
   const profileConfig = findSsoRoutedProfile(profiles, profile, new Set());
   if (!profileConfig) return null;
@@ -58,7 +76,11 @@ async function resolveSsoProfileConfig({ profile, filepath, configFilepath }) {
 // source_profile) are followed to the profile holding the SSO configuration,
 // while profiles resolving through static keys, web identity, credential_source
 // or credential_process never trigger a login.
-function findSsoRoutedProfile(profiles, profileName, visitedProfiles) {
+function findSsoRoutedProfile(
+  profiles: ParsedIniData,
+  profileName: string,
+  visitedProfiles: Set<string>
+): ParsedIniData[string] | null {
   const profileConfig = profiles[profileName];
   if (!profileConfig || visitedProfiles.has(profileName)) return null;
   visitedProfiles.add(profileName);
@@ -89,7 +111,7 @@ function findSsoRoutedProfile(profiles, profileName, visitedProfiles) {
   return profileConfig;
 }
 
-function isCompleteSsoConfig(ssoConfig) {
+function isCompleteSsoConfig(ssoConfig: Record<string, any>) {
   return Boolean(
     ssoConfig &&
     ssoConfig.accountId &&
@@ -100,13 +122,13 @@ function isCompleteSsoConfig(ssoConfig) {
   );
 }
 
-function assertInteractiveSsoLoginAllowed(originalError) {
+function assertInteractiveSsoLoginAllowed(originalError: unknown) {
   // stdin is deliberately not required: the device flow only displays a URL
   // and user code, so a piped stdin (git hooks, wrapper scripts) is fine
   if (!isInteractive({ requireStdin: false })) throw createUnavailableError(originalError);
 }
 
-function createUnavailableError(originalError) {
+function createUnavailableError(originalError: any) {
   return new ServerlessError(
     'AWS SSO login requires an interactive terminal. Run `aws sso login` for this profile, ' +
       'or re-run this command in an interactive terminal.\n' +
@@ -116,7 +138,15 @@ function createUnavailableError(originalError) {
   );
 }
 
-async function performSsoDeviceLogin({ ssoConfig, requestHandler, originalError }) {
+async function performSsoDeviceLogin({
+  ssoConfig,
+  requestHandler,
+  originalError,
+}: {
+  ssoConfig: Record<string, any>;
+  requestHandler: NodeHttpHandler;
+  originalError: unknown;
+}) {
   assertInteractiveSsoLoginAllowed(originalError);
 
   const oidcClient = new SSOOIDCClient({
@@ -154,10 +184,19 @@ async function performSsoDeviceLogin({ ssoConfig, requestHandler, originalError 
   return writeSsoTokenCache(ssoConfig, registration, token);
 }
 
-async function pollForToken({ authorization, oidcClient, registration }) {
+async function pollForToken({
+  authorization,
+  oidcClient,
+  registration,
+}: {
+  authorization: StartDeviceAuthorizationCommandOutput;
+  oidcClient: SSOOIDCClient;
+  registration: RegisterClientCommandOutput;
+}): Promise<CreateTokenCommandOutput> {
   // Guard against a malformed interval of 0 busy-polling
   let intervalSeconds = Math.max(authorization.interval ?? 5, 1);
-  const expiresAt = Date.now() + authorization.expiresIn * 1000;
+  // Required by the API; the SDK types it optional (a missing value yields NaN: expired)
+  const expiresAt = Date.now() + authorization.expiresIn! * 1000;
 
   while (Date.now() < expiresAt) {
     await wait(Math.min(intervalSeconds * 1000, Math.max(expiresAt - Date.now(), 0)));
@@ -170,7 +209,7 @@ async function pollForToken({ authorization, oidcClient, registration }) {
           grantType: DEVICE_CODE_GRANT_TYPE,
         })
       );
-    } catch (error) {
+    } catch (error: any) {
       if (error && error.name === 'AuthorizationPendingException') continue;
       if (error && error.name === 'SlowDownException') {
         intervalSeconds += 5;
@@ -189,13 +228,18 @@ async function pollForToken({ authorization, oidcClient, registration }) {
   throw new ServerlessError('AWS SSO device authorization expired.', 'AWS_SSO_LOGIN_EXPIRED');
 }
 
-async function writeSsoTokenCache(ssoConfig, registration, token) {
+async function writeSsoTokenCache(
+  ssoConfig: Record<string, any>,
+  registration: RegisterClientCommandOutput,
+  token: CreateTokenCommandOutput
+) {
   validateTokenCacheInputs(registration, token);
 
   const cachePath = getSSOTokenFilepath(ssoConfig.cacheKey);
   await fs.promises.mkdir(path.dirname(cachePath), { recursive: true, mode: 0o700 });
 
-  const expiresAtMs = Date.now() + token.expiresIn * 1000;
+  // Checked by validateTokenCacheInputs
+  const expiresAtMs = Date.now() + token.expiresIn! * 1000;
   const cachedToken: Record<string, any> = {
     startUrl: ssoConfig.startUrl,
     region: ssoConfig.region,
@@ -203,7 +247,7 @@ async function writeSsoTokenCache(ssoConfig, registration, token) {
     expiresAt: new Date(expiresAtMs).toISOString(),
     clientId: registration.clientId,
     clientSecret: registration.clientSecret,
-    registrationExpiresAt: new Date(registration.clientSecretExpiresAt * 1000).toISOString(),
+    registrationExpiresAt: new Date(registration.clientSecretExpiresAt! * 1000).toISOString(),
   };
   if (token.refreshToken) cachedToken.refreshToken = token.refreshToken;
 
@@ -213,7 +257,10 @@ async function writeSsoTokenCache(ssoConfig, registration, token) {
   return expiresAtMs;
 }
 
-function validateTokenCacheInputs(registration, token) {
+function validateTokenCacheInputs(
+  registration: RegisterClientCommandOutput,
+  token: CreateTokenCommandOutput
+) {
   if (
     !registration.clientId ||
     !registration.clientSecret ||
@@ -228,7 +275,19 @@ function validateTokenCacheInputs(registration, token) {
   }
 }
 
-function withInteractiveSsoLogin({ profile, provider, filepath, configFilepath, requestHandler }) {
+function withInteractiveSsoLogin({
+  profile,
+  provider,
+  filepath,
+  configFilepath,
+  requestHandler,
+}: {
+  profile: string;
+  provider: CredentialsProvider;
+  filepath: string;
+  configFilepath: string;
+  requestHandler: NodeHttpHandler;
+}): CredentialsProvider {
   return async (providerOptions) => {
     try {
       return await provider(providerOptions);
@@ -263,7 +322,7 @@ function withInteractiveSsoLogin({ profile, provider, filepath, configFilepath, 
 // cannot fix it — the provider's error surfaces instead of a re-prompt.
 // Failed logins are evicted so a later resolution can retry; an expired
 // token's entry is replaced so long-lived processes can log in again.
-function runSingleFlightLogin(ssoConfig, login) {
+function runSingleFlightLogin(ssoConfig: Record<string, any>, login: () => Promise<number>) {
   const cachePath = getSSOTokenFilepath(ssoConfig.cacheKey);
   const activeAttempt = LOGIN_ATTEMPTS.get(cachePath);
   const hasExpired =

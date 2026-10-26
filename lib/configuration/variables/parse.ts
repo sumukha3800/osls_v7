@@ -6,28 +6,71 @@ const alphaNumericChars = new Set(
 );
 const isType = RegExp.prototype.test.bind(/^[a-z][a-zA-Z0-9]*$/);
 
-let value;
-let index;
-let char;
+// A `ServerlessError` or a `VariableSourceResolutionError`
+export type VariableResolutionError = Error & { code?: string };
 
-let state;
-let stringContext;
-let variables;
-let sources;
-let contexts;
-let currentSource;
+// A string value, or a part of it (a param or an address), with the variables it holds
+export interface ValueMeta {
+  value?: unknown;
+  // Unset once all variables are resolved (or one of them errored)
+  variables?: VariableMeta[] | null;
+  error?: VariableResolutionError;
+  // String values joined into `value`, when it is resolved from more than one variable
+  sourceValues?: string[];
+}
 
-let contextStart;
-let contextVariables;
-let escapeVarStart;
-let variableStart;
-let sourceStart;
-let paramStart;
-let addressStart;
+// A `${...}` variable. `start` and `end` (its position in the string) are not set when the
+// variable is the whole string. An escaped `${` is registered as a variable with a `value`
+export interface VariableMeta {
+  start?: number;
+  end?: number;
+  // First choice and fallback sources, unset once the variable is resolved
+  sources?: VariableSourceMeta[];
+  value?: unknown;
+  error?: VariableResolutionError;
+}
+
+// A variable source: `type(params):address`, or a literal `value` (eg. `'foo'` or `1`)
+export interface VariableSourceMeta {
+  type?: string;
+  params?: ValueMeta[];
+  address?: ValueMeta;
+  value?: unknown;
+}
+
+interface ParseContext {
+  state: string;
+  variableStart: number;
+  contextStart: number;
+  variables: VariableMeta[] | null;
+  contextVariables: VariableMeta[] | null;
+  currentSource: VariableSourceMeta | null;
+  sources: VariableSourceMeta[] | null;
+}
+
+let value: string;
+let index: number;
+let char: string;
+
+let state: string;
+let stringContext: string;
+let variables: VariableMeta[] | null;
+let sources: VariableSourceMeta[] | null;
+let contexts: ParseContext[] | null;
+// Set in the states that follow a source type or literal (the state machine guarantees it)
+let currentSource: VariableSourceMeta | null;
+
+let contextStart: number;
+let contextVariables: VariableMeta[] | null;
+let escapeVarStart: number | null;
+let variableStart: number;
+let sourceStart: number;
+let paramStart: number;
+let addressStart: number;
 
 const finalizeSource = () => {
   if (!sources) sources = [];
-  sources.push(currentSource);
+  sources.push(currentSource!);
   currentSource = null;
   state = 'maybeNextSourceStart';
 };
@@ -35,17 +78,23 @@ const finalizeSource = () => {
 const finalizeVariable = () => {
   finalizeSource();
   if (!variables) variables = [];
-  variables.push({ start: variableStart - contextStart, end: index + 1 - contextStart, sources });
+  // `finalizeSource()` sets `sources`
+  variables.push({
+    start: variableStart - contextStart,
+    end: index + 1 - contextStart,
+    sources: sources!,
+  });
   sources = null;
   releaseContext();
 };
 
+// Called in the states that follow an escape, which set `escapeVarStart`
 const registerVarEscape = () => {
   if (!variables) variables = [];
   variables.push({
-    start: escapeVarStart - contextStart,
+    start: escapeVarStart! - contextStart,
     end: index - contextStart,
-    value: '\\'.repeat(Math.ceil((index - 1 - escapeVarStart - 1) / 2)) + value[index - 1],
+    value: '\\'.repeat(Math.ceil((index - 1 - escapeVarStart! - 1) / 2)) + value[index - 1],
   });
   escapeVarStart = null;
 };
@@ -53,9 +102,9 @@ const registerVarEscape = () => {
 const registerSlashEscape = () => {
   if (!variables) variables = [];
   variables.push({
-    start: escapeVarStart - contextStart,
+    start: escapeVarStart! - contextStart,
     end: index - 1 - contextStart,
-    value: '\\'.repeat(Math.ceil((index - 1 - escapeVarStart - 1) / 2)),
+    value: '\\'.repeat(Math.ceil((index - 1 - escapeVarStart! - 1) / 2)),
   });
   escapeVarStart = null;
 };
@@ -89,14 +138,14 @@ const releaseContext = () => {
     state = 'out';
     return;
   }
-  if (!contexts.length) contexts = null;
+  if (!contexts!.length) contexts = null;
   ({ state, variableStart, variables, contextVariables, currentSource, sources } = context);
   if (state === 'param') paramStart = contextStart;
   if (state === 'address') addressStart = contextStart;
   ({ contextStart } = context);
 };
 
-const normalizeMetaVariables = (metaValue, metaVariables) => {
+const normalizeMetaVariables = (metaValue: string, metaVariables: VariableMeta[]) => {
   switch (metaVariables.length) {
     case 0:
       return null;
@@ -113,18 +162,19 @@ const normalizeMetaVariables = (metaValue, metaVariables) => {
   }
 };
 
-const generateMeta = (metaValue, metaVariables) => {
-  const meta: Record<string, any> = { value: metaValue || null };
+const generateMeta = (metaValue: unknown, metaVariables: VariableMeta[] | null) => {
+  const meta: ValueMeta = { value: metaValue || null };
   if (!metaVariables || !metaVariables.length) return meta;
-  meta.variables = normalizeMetaVariables(metaValue, metaVariables);
+  // Values with variables are strings (literals are parsed only when there are none)
+  meta.variables = normalizeMetaVariables(metaValue as string, metaVariables);
   return meta;
 };
 
-const parseString = (start) => {
+const parseString = (start: number) => {
   if (value[start] === "'") return value.slice(start, index).trim().slice(1, -1);
   try {
     return JSON.parse(value.slice(start, index));
-  } catch (error) {
+  } catch (error: any) {
     throw new ServerlessError(
       `Invalid string literal at index ${start} in "${value}": ${error.message}`,
       'INVALID_VARIABLE_STRING_LITERAL'
@@ -132,7 +182,7 @@ const parseString = (start) => {
   }
 };
 
-const parseLiteralSource = (literal, shouldFallbackToInput = false) => {
+const parseLiteralSource = (literal: string, shouldFallbackToInput = false) => {
   switch (literal) {
     case 'true':
       return true;
@@ -142,7 +192,7 @@ const parseLiteralSource = (literal, shouldFallbackToInput = false) => {
       return null;
     default: {
       const numberValue = Number(literal);
-      if (!isNaN(literal)) return numberValue;
+      if (!isNaN(numberValue)) return numberValue;
       if (shouldFallbackToInput) return literal;
       throw new ServerlessError(
         `Invalid literal source "${literal}" at index ${sourceStart} in "${value}"`,
@@ -152,7 +202,7 @@ const parseLiteralSource = (literal, shouldFallbackToInput = false) => {
   }
 };
 
-export default (inputValue) => {
+export default (inputValue: string): VariableMeta[] | null => {
   // State machine design pattern
   try {
     value = inputValue;
@@ -300,7 +350,7 @@ export default (inputValue) => {
           if (char === ')') {
             state = 'maybeAddressOpen';
           } else if (char === ',') {
-            currentSource.params.push({ value: null });
+            currentSource!.params!.push({ value: null });
           } else if (char === '}') {
             throw new ServerlessError(
               `Invalid variable param at index ${index} in "${value}"`,
@@ -323,16 +373,16 @@ export default (inputValue) => {
           break;
         case 'param':
           if (char === ')') {
-            let paramValue = value.slice(paramStart, index).trim();
+            let paramValue: unknown = value.slice(paramStart, index).trim();
             if (paramValue) {
-              if (!contextVariables) paramValue = parseLiteralSource(paramValue, true);
-              currentSource.params.push(generateMeta(paramValue, contextVariables));
+              if (!contextVariables) paramValue = parseLiteralSource(paramValue as string, true);
+              currentSource!.params!.push(generateMeta(paramValue, contextVariables));
             }
             state = 'maybeAddressOpen';
           } else if (char === ',') {
-            let paramValue = value.slice(paramStart, index).trim();
-            if (!contextVariables) paramValue = parseLiteralSource(paramValue, true);
-            currentSource.params.push(generateMeta(paramValue, contextVariables));
+            let paramValue: unknown = value.slice(paramStart, index).trim();
+            if (!contextVariables) paramValue = parseLiteralSource(paramValue as string, true);
+            currentSource!.params!.push(generateMeta(paramValue, contextVariables));
             state = 'paramStart';
           } else if (char === '}') {
             throw new ServerlessError(
@@ -346,10 +396,10 @@ export default (inputValue) => {
         case 'afterParamString':
           if (char === ' ') continue;
           if (char === ')') {
-            currentSource.params.push({ value: parseString(paramStart) });
+            currentSource!.params!.push({ value: parseString(paramStart) });
             state = 'maybeAddressOpen';
           } else if (char === ',') {
-            currentSource.params.push({ value: parseString(paramStart) });
+            currentSource!.params!.push({ value: parseString(paramStart) });
             state = 'paramStart';
           } else {
             throw new ServerlessError(
@@ -383,7 +433,7 @@ export default (inputValue) => {
             addressStart = index;
             if (char === ':') {
               if (
-                !currentSource.params &&
+                !currentSource!.params &&
                 (!contexts || contexts.every((context) => context.state === 'foreign'))
               ) {
                 currentSource = null;
@@ -409,7 +459,7 @@ export default (inputValue) => {
           break;
         case 'address':
           if (char === '}') {
-            currentSource.address = generateMeta(
+            currentSource!.address = generateMeta(
               value.slice(addressStart, index).trim(),
               contextVariables
             );
@@ -417,7 +467,7 @@ export default (inputValue) => {
           } else if (char === '$') {
             registerContext(addressStart);
           } else if (char === ',') {
-            currentSource.address = generateMeta(
+            currentSource!.address = generateMeta(
               value.slice(addressStart, index).trim(),
               contextVariables
             );
@@ -427,10 +477,10 @@ export default (inputValue) => {
         case 'afterAddressString':
           if (char === ' ') continue;
           if (char === '}') {
-            currentSource.address = { value: parseString(addressStart) };
+            currentSource!.address = { value: parseString(addressStart) };
             finalizeVariable();
           } else if (char === ',') {
-            currentSource.address = { value: parseString(addressStart) };
+            currentSource!.address = { value: parseString(addressStart) };
             finalizeSource();
           } else {
             throw new ServerlessError(

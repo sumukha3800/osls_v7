@@ -278,7 +278,7 @@ for (const schema of commands.values()) {
 
 for (const [name, schema] of serviceCommands) commands.set(name, schema);
 
-const packageCommandConfig = commands.get('package');
+const packageCommandConfig = commands.get('package')!;
 commands.set('package', {
   ...packageCommandConfig,
   options: {

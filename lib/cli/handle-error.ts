@@ -18,7 +18,7 @@ const handleError: HandleError = (exception) => {
   const platform = process.platform;
   const nodeVersion = process.version.replace(/^[v|V]/, '');
   const installationModePostfix = (() => {
-    return isLocallyInstalled ? ' (local)' : '';
+    return isLocallyInstalled() ? ' (local)' : '';
   })();
   const globalInstallationPostfix = (() => {
     if (EvalError.$serverlessInitInstallationVersion) {

@@ -1,4 +1,10 @@
-const processVariables = (propertyPath, variablesMeta, resultMap) => {
+import type { ValueMeta } from './parse.ts';
+
+const processVariables = (
+  propertyPath: string,
+  variablesMeta: ValueMeta,
+  resultMap: Map<string, Set<string>>
+) => {
   if (!variablesMeta.variables) return;
   for (const variableMeta of variablesMeta.variables) {
     if (!variableMeta.sources) continue;
@@ -13,12 +19,12 @@ const processVariables = (propertyPath, variablesMeta, resultMap) => {
       processVariables(propertyPath, sourceData.address, resultMap);
     }
     if (!resultMap.has(sourceData.type)) resultMap.set(sourceData.type, new Set());
-    resultMap.get(sourceData.type).add(propertyPath);
+    resultMap.get(sourceData.type)!.add(propertyPath);
   }
 };
 
-export default (propertiesVariablesMeta) => {
-  const resultMap = new Map();
+export default (propertiesVariablesMeta: Map<string, ValueMeta>) => {
+  const resultMap = new Map<string, Set<string>>();
   for (const [propertyPath, propertyVariablesMeta] of propertiesVariablesMeta) {
     processVariables(propertyPath, propertyVariablesMeta, resultMap);
   }

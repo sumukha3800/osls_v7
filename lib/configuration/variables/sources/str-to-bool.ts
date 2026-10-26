@@ -1,12 +1,13 @@
 import ensureString from 'type/string/ensure.js';
 import toShortString from 'type/lib/to-short-string.js';
 import ServerlessError from '../../../serverless-error.ts';
+import type { VariableSourceResolverContext } from '../../../plugin-types.ts';
 
 const trueStrings = new Set(['true', '1']);
 const falseStrings = new Set(['false', '0']);
 
 export default {
-  resolve: ({ params }) => {
+  resolve: ({ params }: VariableSourceResolverContext) => {
     if (!params || params[0] == null) {
       throw new ServerlessError('Missing "strToBool" input', 'MISSING_STR_TO_BOOL_SOURCE_VALUE');
     }

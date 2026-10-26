@@ -1,17 +1,27 @@
 import ensureString from 'type/string/ensure.js';
-import { CloudFormationClient, DescribeStacksCommand } from '@aws-sdk/client-cloudformation';
+import {
+  CloudFormationClient,
+  DescribeStacksCommand,
+  type Output,
+} from '@aws-sdk/client-cloudformation';
 import ServerlessError from '../../../../serverless-error.ts';
-import createCachedAwsVariableSourceCommandSender from './create-cached-aws-variable-source-command-sender.ts';
+import createCachedAwsVariableSourceCommandSender, {
+  type AwsProviderHost,
+} from './create-cached-aws-variable-source-command-sender.ts';
+import type { VariableSourceResolverContext } from '../../../../plugin-types.ts';
 import { isCloudFormationValidationErrorWithMessage } from '../../../../aws/aws-sdk-v3-error.ts';
 
-export default (serverlessInstance) => {
+export default (serverlessInstance: AwsProviderHost) => {
   const sender = createCachedAwsVariableSourceCommandSender({
     getProvider: () => serverlessInstance.getProvider('aws'),
     Client: CloudFormationClient,
   });
 
   return {
-    resolve: async ({ address, params }) => {
+    resolve: async ({
+      address,
+      params,
+    }: Pick<VariableSourceResolverContext, 'address' | 'params'>) => {
       // cf(region = null):stackName.outputLogicalId
       if (!address) {
         throw new ServerlessError(
@@ -40,7 +50,7 @@ export default (serverlessInstance) => {
           return await sender.send(
             DescribeStacksCommand,
             { StackName: stackName },
-            { region: params && params[0] }
+            { region: params && (params[0] as string | null | undefined) }
           );
         } catch (error) {
           if (isCloudFormationValidationErrorWithMessage(error, 'does not exist')) return null;
@@ -50,7 +60,7 @@ export default (serverlessInstance) => {
 
       if (!result) return { value: null };
       const outputs = result.Stacks[0].Outputs || [];
-      const output = outputs.find((x) => x.OutputKey === outputLogicalId);
+      const output = outputs.find((x: Output) => x.OutputKey === outputLogicalId);
 
       return { value: output ? output.OutputValue : null };
     },

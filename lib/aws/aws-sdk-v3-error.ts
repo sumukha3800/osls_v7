@@ -10,22 +10,22 @@ const alreadyNormalizedErrorCodePattern = /^[A-Z0-9_]+$/;
 const acronymBoundaryPattern = /([A-Z]+)([A-Z][a-z])/g;
 const camelCaseBoundaryPattern = /([a-z0-9])([A-Z])/g;
 
-function getOwnValue(object, key) {
+function getOwnValue(object: any, key: string): any {
   return object != null && hasOwn(object, key) ? object[key] : undefined;
 }
 
-function getAwsErrorName(error) {
+function getAwsErrorName(error: unknown) {
   const name = getOwnValue(error, 'name');
   if (!name || name === 'Error' || name === ServerlessError.name) return undefined;
   return name;
 }
 
-function getAwsErrorMessage(error) {
+function getAwsErrorMessage(error: unknown) {
   const message = getOwnValue(error, 'message');
   return typeof message === 'string' ? message : undefined;
 }
 
-function getAwsErrorCode(error?) {
+function getAwsErrorCode(error?: unknown) {
   if (!error) return undefined;
 
   const providerError = getOwnValue(error, 'providerError');
@@ -46,7 +46,7 @@ function getAwsErrorCode(error?) {
   return getOwnValue(error, 'code');
 }
 
-function getAwsErrorStatusCode(error?) {
+function getAwsErrorStatusCode(error?: unknown) {
   if (!error) return undefined;
   const providerError = getOwnValue(error, 'providerError');
   const providerMetadata = getOwnValue(providerError, '$metadata');
@@ -59,30 +59,30 @@ function getAwsErrorStatusCode(error?) {
   );
 }
 
-function isAwsErrorCode(error, ...codes) {
+function isAwsErrorCode(error: unknown, ...codes: string[]) {
   return codes.includes(getAwsErrorCode(error));
 }
 
-function isAwsErrorStatusCode(error, ...statusCodes) {
+function isAwsErrorStatusCode(error: unknown, ...statusCodes: number[]) {
   return statusCodes.includes(getAwsErrorStatusCode(error));
 }
 
-function isAwsCredentialProviderError(error) {
+function isAwsCredentialProviderError(error: unknown) {
   return getOwnValue(error, 'name') === 'CredentialsProviderError';
 }
 
-function isAwsCredentialsNotFoundError(error) {
+function isAwsCredentialsNotFoundError(error: unknown) {
   return getOwnValue(error, 'code') === 'AWS_CREDENTIALS_NOT_FOUND';
 }
 
-function isAwsSdkV3MissingCredentialsError(error) {
+function isAwsSdkV3MissingCredentialsError(error: unknown) {
   const message = getAwsErrorMessage(error);
   return message ? message.includes('Could not load credentials from any providers') : false;
 }
 
 const unrecognizedProfilePattern = /Could not resolve credentials using profile: \[([^\]]+)\]/;
 
-function getAwsSdkV3UnrecognizedProfile(error) {
+function getAwsSdkV3UnrecognizedProfile(error: unknown) {
   if (!isAwsCredentialProviderError(error)) return undefined;
   const message = getAwsErrorMessage(error);
   const match = message ? message.match(unrecognizedProfilePattern) : undefined;
@@ -91,12 +91,12 @@ function getAwsSdkV3UnrecognizedProfile(error) {
 
 // Errors raised by the interactive SSO login wrapper during credential
 // resolution (lib/aws/sso-login.js)
-function isAwsSsoLoginError(error) {
+function isAwsSsoLoginError(error: unknown) {
   const code = getOwnValue(error, 'code');
   return typeof code === 'string' && code.startsWith('AWS_SSO_LOGIN_');
 }
 
-function isAwsCredentialError(error) {
+function isAwsCredentialError(error: unknown) {
   return (
     isAwsCredentialsNotFoundError(error) ||
     isAwsCredentialProviderError(error) ||
@@ -117,12 +117,12 @@ const throttlingErrorCodes = new Set([
   'ProvisionedThroughputExceededException',
 ]);
 
-function hasThrottlingRetryableFlag(error) {
+function hasThrottlingRetryableFlag(error: unknown) {
   const retryable = getOwnValue(error, '$retryable');
   return Boolean(retryable && retryable.throttling);
 }
 
-function isAwsThrottlingError(error) {
+function isAwsThrottlingError(error: unknown) {
   if (hasThrottlingRetryableFlag(error)) return true;
   if (hasThrottlingRetryableFlag(getOwnValue(error, 'providerError'))) return true;
   if (isAwsErrorStatusCode(error, 429)) return true;
@@ -132,28 +132,28 @@ function isAwsThrottlingError(error) {
 
 const transientNetworkErrorCodes = new Set(['ECONNRESET', 'EPIPE', 'ETIMEDOUT']);
 
-function isTransientNetworkError(error) {
+function isTransientNetworkError(error: unknown) {
   const code = getOwnValue(error, 'code');
   if (code && transientNetworkErrorCodes.has(code)) return true;
   return getAwsErrorMessage(error) === 'aborted';
 }
 
-function isApiGatewayNotFoundError(error) {
+function isApiGatewayNotFoundError(error: unknown) {
   return isAwsErrorCode(error, 'NotFoundException') || isAwsErrorStatusCode(error, 404);
 }
 
-function isCloudFormationValidationError(error) {
+function isCloudFormationValidationError(error: unknown) {
   return isAwsErrorCode(error, 'ValidationError');
 }
 
-function isCloudFormationValidationErrorWithMessage(error, messageFragment) {
+function isCloudFormationValidationErrorWithMessage(error: unknown, messageFragment: string) {
   const message = getAwsErrorMessage(error);
   return (
     isCloudFormationValidationError(error) && Boolean(message && message.includes(messageFragment))
   );
 }
 
-function isCloudFormationMissingResourceError(error) {
+function isCloudFormationMissingResourceError(error: unknown) {
   const message = getAwsErrorMessage(error);
   return (
     isCloudFormationValidationError(error) &&
@@ -166,7 +166,7 @@ function isCloudFormationMissingResourceError(error) {
   );
 }
 
-function isCloudFormationMissingStackError(error) {
+function isCloudFormationMissingStackError(error: unknown) {
   const message = getAwsErrorMessage(error);
   return (
     isCloudFormationValidationError(error) &&
@@ -175,35 +175,35 @@ function isCloudFormationMissingStackError(error) {
   );
 }
 
-function isCloudFormationNoUpdateError(error) {
+function isCloudFormationNoUpdateError(error: unknown) {
   return isCloudFormationValidationErrorWithMessage(error, 'No updates are to be performed.');
 }
 
-function isCloudWatchLogsResourceNotFoundError(error) {
+function isCloudWatchLogsResourceNotFoundError(error: unknown) {
   return isAwsErrorCode(error, 'ResourceNotFoundException') || isAwsErrorStatusCode(error, 404);
 }
 
-function isEcrAccessDeniedError(error) {
+function isEcrAccessDeniedError(error: unknown) {
   return isAwsErrorCode(error, 'AccessDeniedException');
 }
 
-function isEcrRepositoryNotFoundError(error) {
+function isEcrRepositoryNotFoundError(error: unknown) {
   return isAwsErrorCode(error, 'RepositoryNotFoundException');
 }
 
-function isLambdaAccessDeniedError(error) {
+function isLambdaAccessDeniedError(error: unknown) {
   return isAwsErrorCode(error, 'AccessDeniedException') || isAwsErrorStatusCode(error, 403);
 }
 
-function isLambdaResourceConflictError(error) {
+function isLambdaResourceConflictError(error: unknown) {
   return isAwsErrorCode(error, 'ResourceConflictException');
 }
 
-function isLambdaResourceNotFoundError(error) {
+function isLambdaResourceNotFoundError(error: unknown) {
   return isAwsErrorCode(error, 'ResourceNotFoundException');
 }
 
-function normalizeErrorCodePostfix(code) {
+function normalizeErrorCodePostfix(code: string | number) {
   if (typeof code === 'number') return `HTTP_${code}_ERROR`;
   const stringCode = String(code);
   if (alreadyNormalizedErrorCodePattern.test(stringCode)) return stringCode;
@@ -214,7 +214,7 @@ function normalizeErrorCodePostfix(code) {
     .toUpperCase();
 }
 
-function createS3UploadError(error) {
+function createS3UploadError(error: unknown) {
   if (error instanceof ServerlessError) return error;
 
   const providerErrorCode = getAwsErrorCode(error) || getAwsErrorStatusCode(error);
@@ -234,7 +234,7 @@ function createS3UploadError(error) {
   );
 }
 
-function getHeader(headers, headerName) {
+function getHeader(headers: any, headerName: string) {
   if (!headers) return undefined;
   if (hasOwn(headers, headerName) && headers[headerName]) return headers[headerName];
   const normalizedHeaderName = headerName.toLowerCase();
@@ -244,12 +244,12 @@ function getHeader(headers, headerName) {
   return undefined;
 }
 
-function normalizeS3BucketRegion(region) {
+function normalizeS3BucketRegion(region: string | undefined) {
   if (region === 'EU') return 'eu-west-1';
   return region;
 }
 
-function getS3BucketRegion(resultOrError?) {
+function getS3BucketRegion(resultOrError?: unknown) {
   if (!resultOrError) return undefined;
   const metadata = getOwnValue(resultOrError, '$metadata');
   const response = getOwnValue(resultOrError, '$response');
@@ -264,32 +264,32 @@ function getS3BucketRegion(resultOrError?) {
   );
 }
 
-function isS3GetObjectNoSuchKeyError(error) {
+function isS3GetObjectNoSuchKeyError(error: unknown) {
   return isAwsErrorCode(error, 'AWS_S3_GET_OBJECT_NO_SUCH_KEY', 'NoSuchKey');
 }
 
-function isS3HeadBucketForbiddenError(error) {
+function isS3HeadBucketForbiddenError(error: unknown) {
   return (
     isAwsErrorCode(error, 'AWS_S3_HEAD_BUCKET_FORBIDDEN', 'Forbidden', 'AccessDenied') ||
     isAwsErrorStatusCode(error, 403)
   );
 }
 
-function isS3HeadBucketNotFoundError(error) {
+function isS3HeadBucketNotFoundError(error: unknown) {
   return (
     isAwsErrorCode(error, 'AWS_S3_HEAD_BUCKET_NOT_FOUND', 'NotFound', 'NoSuchBucket') ||
     isAwsErrorStatusCode(error, 404)
   );
 }
 
-function isS3HeadObjectForbiddenError(error) {
+function isS3HeadObjectForbiddenError(error: unknown) {
   return (
     isAwsErrorCode(error, 'AWS_S3_HEAD_OBJECT_FORBIDDEN', 'Forbidden', 'AccessDenied') ||
     isAwsErrorStatusCode(error, 403)
   );
 }
 
-function isS3ListObjectsAccessDeniedError(error) {
+function isS3ListObjectsAccessDeniedError(error: unknown) {
   const errorCode = getAwsErrorCode(error);
 
   return (
@@ -299,7 +299,7 @@ function isS3ListObjectsAccessDeniedError(error) {
   );
 }
 
-function isS3ListObjectsNoSuchBucketError(error) {
+function isS3ListObjectsNoSuchBucketError(error: unknown) {
   const message = getAwsErrorMessage(error);
   return (
     isAwsErrorCode(error, 'AWS_S3_LIST_OBJECTS_V2_NO_SUCH_BUCKET', 'NoSuchBucket') ||
@@ -308,7 +308,7 @@ function isS3ListObjectsNoSuchBucketError(error) {
   );
 }
 
-function isSsmParameterNotFoundError(error) {
+function isSsmParameterNotFoundError(error: unknown) {
   return isAwsErrorCode(error, 'ParameterNotFound', 'AWS_S_S_M_GET_PARAMETER_PARAMETER_NOT_FOUND');
 }
 

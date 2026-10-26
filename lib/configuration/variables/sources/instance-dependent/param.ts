@@ -3,6 +3,13 @@ import ensureString from 'type/string/ensure.js';
 import ServerlessError from '../../../../serverless-error.ts';
 import { hasOwn } from '../../../../utils/safe-object.ts';
 import validateStage from '../../../../utils/validate-stage.ts';
+import type { VariableSourceResolverContext } from '../../../../plugin-types.ts';
+
+// What the source needs from the `Serverless` instance
+interface ParamsHost {
+  configurationInput?: Record<string, any>;
+  processedInput: { options: Record<string, any> };
+}
 
 const resolveParams = memoizee(async (stage, serverlessInstance) => {
   const configParams = new Map(
@@ -42,9 +49,16 @@ const resolveParams = memoizee(async (stage, serverlessInstance) => {
   return resultParams;
 });
 
-export default (serverlessInstance?) => {
+export default (serverlessInstance?: ParamsHost) => {
   return {
-    resolve: async ({ address, resolveConfigurationProperty, options }) => {
+    resolve: async ({
+      address,
+      resolveConfigurationProperty,
+      options,
+    }: Pick<
+      VariableSourceResolverContext,
+      'address' | 'resolveConfigurationProperty' | 'options'
+    >) => {
       if (!address) {
         throw new ServerlessError(
           'Missing address argument in variable "param" source',

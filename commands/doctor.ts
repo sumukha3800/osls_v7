@@ -6,7 +6,7 @@ export default async () => {
   const healthStatus = await (async () => {
     try {
       return await fsp.readFile(healthStatusFilename);
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 'ENOENT') return null;
       throw error;
     }

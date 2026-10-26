@@ -1,8 +1,9 @@
 class VariableSourceResolutionError extends Error {
-  declare code: any;
+  declare code: string | undefined;
 
-  constructor(message, code?) {
-    super(message);
+  // `Error` converts a non-string message to a string
+  constructor(message: unknown, code?: string) {
+    super(message as string);
     this.code = code;
   }
 }

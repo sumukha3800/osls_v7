@@ -7,8 +7,9 @@ import * as yaml from 'js-yaml';
 import cloudformationSchema from '../../../utils/serverless-utils/cloudformation-schema.ts';
 import ServerlessError from '../../../serverless-error.ts';
 import { canFollowProperty } from '../../../utils/safe-object.ts';
+import type { VariableSourceResolverContext } from '../../../plugin-types.ts';
 
-const isFile = async (filePath) => {
+const isFile = async (filePath: string) => {
   try {
     return (await fsp.stat(filePath)).isFile();
   } catch {
@@ -16,10 +17,10 @@ const isFile = async (filePath) => {
   }
 };
 
-const readFile = async (filePath, serviceDir) => {
+const readFile = async (filePath: string, serviceDir: string) => {
   try {
     return await fsp.readFile(filePath, 'utf8');
-  } catch (error) {
+  } catch (error: any) {
     if (error.code === 'ENOENT') return null;
     throw new ServerlessError(
       `Cannot parse "${filePath.slice(serviceDir.length + 1)}": ${error.message}`,
@@ -37,7 +38,7 @@ export default {
     resolveVariable,
     resolveVariablesInString,
     options,
-  }) => {
+  }: VariableSourceResolverContext) => {
     if (!params || !params[0]) {
       throw new ServerlessError(
         'Missing path argument in variable "file" source',
@@ -73,7 +74,7 @@ export default {
               filename: filePath,
               schema: cloudformationSchema,
             });
-          } catch (error) {
+          } catch (error: any) {
             throw new ServerlessError(
               `Cannot parse "${filePath.slice(serviceDir.length + 1)}": ${error.message}`,
               'FILE_PARSE_ERROR'
@@ -87,7 +88,7 @@ export default {
           if (jsonContent == null) return null;
           try {
             return JSON.parse(jsonContent);
-          } catch (error) {
+          } catch (error: any) {
             throw new ServerlessError(
               `Cannot parse "${filePath.slice(serviceDir.length + 1)}": JSON parse error: ${
                 error.message
@@ -104,7 +105,7 @@ export default {
           try {
             const namespace = await import(pathToFileURL(filePath).href);
             result = 'default' in namespace ? namespace.default : namespace;
-          } catch (error) {
+          } catch (error: any) {
             throw new ServerlessError(
               `Cannot load "${filePath.slice(serviceDir.length + 1)}": Initialization error: ${
                 error && error.stack ? error.stack : error
@@ -116,7 +117,7 @@ export default {
             try {
               isResolvedByFunction = true;
               return await result({ options, resolveConfigurationProperty, resolveVariable });
-            } catch (error) {
+            } catch (error: any) {
               if (error.code === 'MISSING_VARIABLE_DEPENDENCY') throw error;
               if (
                 error.constructor.name === 'ServerlessError' &&
@@ -134,7 +135,7 @@ export default {
           }
           try {
             return await result;
-          } catch (error) {
+          } catch (error: any) {
             throw new ServerlessError(
               `Cannot resolve "${path.basename(filePath)}": Received rejection: ${
                 error && error.stack ? error.stack : error
@@ -159,7 +160,7 @@ export default {
       try {
         if (!canFollowProperty(result, propertyKey)) return { value: null };
         result = result[propertyKey];
-      } catch (error) {
+      } catch (error: any) {
         throw new ServerlessError(
           `Cannot resolve "${address}" out of "${path.basename(
             filePath
@@ -173,7 +174,7 @@ export default {
           isResolvedByFunction = true;
           try {
             result = await result({ options, resolveConfigurationProperty, resolveVariable });
-          } catch (error) {
+          } catch (error: any) {
             if (error.code === 'MISSING_VARIABLE_DEPENDENCY') throw error;
             if (
               error.constructor.name === 'ServerlessError' &&
@@ -191,7 +192,7 @@ export default {
         } else {
           try {
             result = await result;
-          } catch (error) {
+          } catch (error: any) {
             throw new ServerlessError(
               `Cannot resolve "${address}" out of "${path.basename(
                 filePath

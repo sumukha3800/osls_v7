@@ -7,10 +7,10 @@ import * as yaml from 'js-yaml';
 import cloudformationSchema from '../utils/serverless-utils/cloudformation-schema.ts';
 import ServerlessError from '../serverless-error.ts';
 
-const readConfigurationFile = async (configurationPath) => {
+const readConfigurationFile = async (configurationPath: string) => {
   try {
     return await fsp.readFile(configurationPath, 'utf8');
-  } catch (error) {
+  } catch (error: any) {
     if (error.code === 'ENOENT') {
       throw new ServerlessError(
         `Cannot parse "${path.basename(configurationPath)}": File not found`,
@@ -24,7 +24,7 @@ const readConfigurationFile = async (configurationPath) => {
   }
 };
 
-const ensureConfigurationFile = async (configurationPath) => {
+const ensureConfigurationFile = async (configurationPath: string) => {
   try {
     if ((await fsp.stat(configurationPath)).isFile()) return;
   } catch {
@@ -39,12 +39,12 @@ const ensureConfigurationFile = async (configurationPath) => {
 // CommonJS configurations come through Node's interop as the default export. ES modules
 // transpiled to CommonJS (eg. by tsx, when the service is not `"type": "module"`) carry
 // their default export one level deeper, marked with `__esModule`
-const unwrapDefaultExport = (namespace) => {
+const unwrapDefaultExport = (namespace: Record<string, any>) => {
   const value = namespace.default;
   return value && value.__esModule && 'default' in value ? value.default : value;
 };
 
-const importConfiguration = async (configurationPath) =>
+const importConfiguration = async (configurationPath: string) =>
   unwrapDefaultExport(await import(pathToFileURL(configurationPath).href));
 
 // Errors that Node raises while loading or linking a TypeScript module, before any of its code
@@ -59,11 +59,11 @@ const nativeTypeScriptLimitationCodes = new Set([
   'ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING',
 ]);
 
-const importTypeScriptConfiguration = async (configurationPath) => {
+const importTypeScriptConfiguration = async (configurationPath: string) => {
   try {
     // Node.js 22.18+ and 24 run TypeScript natively through type stripping
     return await importConfiguration(configurationPath);
-  } catch (error) {
+  } catch (error: any) {
     if (
       !(error instanceof SyntaxError) &&
       !nativeTypeScriptLimitationCodes.has(error && error.code)
@@ -77,11 +77,14 @@ const importTypeScriptConfiguration = async (configurationPath) => {
   );
 };
 
-const loadModuleConfiguration = async (configurationPath, load) => {
+const loadModuleConfiguration = async (
+  configurationPath: string,
+  load: (configurationPath: string) => Promise<unknown>
+) => {
   await ensureConfigurationFile(configurationPath);
   try {
     return await load(configurationPath);
-  } catch (error) {
+  } catch (error: any) {
     throw new ServerlessError(
       `Cannot load "${path.basename(configurationPath)}": Initialization error: ${
         error && error.stack ? error.stack : error
@@ -91,7 +94,7 @@ const loadModuleConfiguration = async (configurationPath, load) => {
   }
 };
 
-const parseConfigurationFile = async (configurationPath) => {
+const parseConfigurationFile = async (configurationPath: string) => {
   switch (path.extname(configurationPath)) {
     case '.yml':
     case '.yaml': {
@@ -101,7 +104,7 @@ const parseConfigurationFile = async (configurationPath) => {
           filename: configurationPath,
           schema: cloudformationSchema,
         });
-      } catch (error) {
+      } catch (error: any) {
         throw new ServerlessError(
           `Cannot parse "${path.basename(configurationPath)}": ${error.message}`,
           'CONFIGURATION_PARSE_ERROR'
@@ -112,7 +115,7 @@ const parseConfigurationFile = async (configurationPath) => {
       const content = await readConfigurationFile(configurationPath);
       try {
         return JSON.parse(content);
-      } catch (error) {
+      } catch (error: any) {
         throw new ServerlessError(
           `Cannot parse "${path.basename(configurationPath)}": JSON parse error: ${error.message}`,
           'CONFIGURATION_PARSE_ERROR'
@@ -134,7 +137,7 @@ const parseConfigurationFile = async (configurationPath) => {
   }
 };
 
-export default async (configurationPath) => {
+export default async (configurationPath: string) => {
   configurationPath = path.resolve(
     ensureString(configurationPath, {
       name: 'configurationPath',
@@ -153,7 +156,7 @@ export default async (configurationPath) => {
   // Ensure no internal complex objects and no circural references
   try {
     configuration = JSON.parse(JSON.stringify(configuration));
-  } catch (error) {
+  } catch (error: any) {
     throw new ServerlessError(
       `Invalid configuration at "${path.basename(
         configurationPath

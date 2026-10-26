@@ -1,4 +1,4 @@
-import spawn from '../lib/utils/spawn.ts';
+import spawn, { type SpawnError } from '../lib/utils/spawn.ts';
 import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 import isPlainObject from 'type/plain-object/is.js';
@@ -14,7 +14,20 @@ const { getServerlessFilePath, parsePluginUninstallSpec, validate } = pluginMana
 
 const mainProgress = progress.get('main');
 
-export default async ({ configuration, serviceDir, configurationFilename, options }) => {
+// What `scripts/serverless.ts` passes to standalone commands; `null` values outside a service
+interface CommandContext {
+  configuration: Record<string, any> | null;
+  serviceDir: string | null;
+  configurationFilename: string | null;
+  options: Record<string, any>;
+}
+
+export default async ({
+  configuration,
+  serviceDir,
+  configurationFilename,
+  options,
+}: CommandContext) => {
   const commandRunStartTime = Date.now();
   validate({ serviceDir });
 
@@ -35,11 +48,23 @@ export default async ({ configuration, serviceDir, configurationFilename, option
   );
 };
 
-const uninstallPlugin = async ({ serviceDir, pluginName }) => {
+const uninstallPlugin = async ({
+  serviceDir,
+  pluginName,
+}: {
+  serviceDir: string | null;
+  pluginName: string;
+}) => {
   await npmUninstall(pluginName, { serviceDir });
 };
 
-const removePluginFromServerlessFile = async ({ configurationFilePath, pluginName }) => {
+const removePluginFromServerlessFile = async ({
+  configurationFilePath,
+  pluginName,
+}: {
+  configurationFilePath: string;
+  pluginName: string;
+}) => {
   const fileExtension = path.extname(configurationFilePath);
   if (fileExtension === '.js' || fileExtension === '.ts') {
     requestManualUpdate(configurationFilePath);
@@ -70,13 +95,10 @@ const removePluginFromServerlessFile = async ({ configurationFilePath, pluginNam
     return;
   }
 
-  const serverlessFileObj: Record<string, any> = yaml.load(
-    await fsp.readFile(configurationFilePath, 'utf8'),
-    {
-      filename: configurationFilePath,
-      schema: cloudformationSchema,
-    }
-  );
+  const serverlessFileObj = yaml.load(await fsp.readFile(configurationFilePath, 'utf8'), {
+    filename: configurationFilePath,
+    schema: cloudformationSchema,
+  }) as Record<string, any>;
   if (serverlessFileObj.plugins != null) {
     // Plugins section can be behind variables, opt-out in such case
     if (isPlainObject(serverlessFileObj.plugins)) {
@@ -99,7 +121,7 @@ const removePluginFromServerlessFile = async ({ configurationFilePath, pluginNam
   );
 };
 
-const npmUninstall = async (name, { serviceDir }) => {
+const npmUninstall = async (name: string, { serviceDir }: { serviceDir: string | null }) => {
   const { command, args } = await npmCommandDeferred;
   try {
     await spawn(command, [...args, 'uninstall', '--save-dev', '--', name], {
@@ -107,12 +129,12 @@ const npmUninstall = async (name, { serviceDir }) => {
       stdio: 'pipe',
     });
   } catch (error) {
-    log.error(String(error.stderrBuffer));
+    log.error(String((error as SpawnError).stderrBuffer));
     throw error;
   }
 };
 
-const requestManualUpdate = (configurationFilePath) => {
+const requestManualUpdate = (configurationFilePath: string) => {
   log.notice();
   log.notice.skip(
     `Can't automatically remove plugin from "${path.basename(

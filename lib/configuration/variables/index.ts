@@ -3,6 +3,7 @@ import ensurePlainObject from 'type/plain-object/ensure.js';
 import ServerlessError from '../../serverless-error.ts';
 import resolveMeta from './resolve-meta.ts';
 import resolve from './resolve.ts';
+import type { ValueMeta } from './parse.ts';
 import env2 from './sources/env.ts';
 import file2 from './sources/file.ts';
 import opt2 from './sources/opt.ts';
@@ -19,9 +20,9 @@ const defaultSources = {
   sls: getSls(),
 };
 
-const reportEventualErrors = (variablesMeta) => {
+const reportEventualErrors = (variablesMeta: Map<string, ValueMeta>) => {
   const resolutionErrors = new Set(
-    Array.from(variablesMeta.values(), ({ error }) => error).filter(Boolean)
+    Array.from(variablesMeta.values(), ({ error }) => error).filter(Boolean) as Error[]
   );
 
   if (!resolutionErrors.size) return;
