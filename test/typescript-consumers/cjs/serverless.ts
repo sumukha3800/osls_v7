@@ -1,4 +1,4 @@
-import type { AWS } from 'osls';
+import type { AWS } from 'osls-ts7';
 
 const configuration: AWS = {
   service: 'typescript-consumer',

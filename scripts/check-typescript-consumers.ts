@@ -1,6 +1,6 @@
 // Type checks the TypeScript consumer projects of test/typescript-consumers against the built
 // package (`dist/`, run `pnpm run build` first), with TypeScript 7, as a user installation
-// sees it: `osls` and only its runtime dependencies (plus `@types/node`) in node_modules
+// sees it: the package and only its runtime dependencies (plus `@types/node`) in node_modules
 // Each project also type checks every published declaration file
 // Usage: node scripts/check-typescript-consumers.ts [--keep] (--keep leaves the projects on disk)
 import fs from 'node:fs';
@@ -23,8 +23,10 @@ const nodeModulesPath = path.join(tmpPath, 'node_modules');
 
 // The package is copied (a symlink would resolve to the repository and its devDependencies);
 // dependencies are linked to their installed (real) location
-fs.cpSync(distPath, path.join(nodeModulesPath, 'osls'), { recursive: true });
-const { dependencies } = JSON.parse(fs.readFileSync(path.join(distPath, 'package.json'), 'utf8'));
+const { name: packageName, dependencies } = JSON.parse(
+  fs.readFileSync(path.join(distPath, 'package.json'), 'utf8')
+);
+fs.cpSync(distPath, path.join(nodeModulesPath, packageName), { recursive: true });
 for (const name of [...Object.keys(dependencies), '@types/node']) {
   const linkPath = path.join(nodeModulesPath, name);
   fs.mkdirSync(path.dirname(linkPath), { recursive: true });
@@ -34,7 +36,10 @@ for (const name of [...Object.keys(dependencies), '@types/node']) {
 const declarationSpecifiers = fs
   .readdirSync(distPath, { recursive: true, encoding: 'utf8' })
   .filter((filePath) => filePath.endsWith('.d.ts'))
-  .map((filePath) => `osls/${filePath.split(path.sep).join('/').slice(0, -'.d.ts'.length)}.js`)
+  .map(
+    (filePath) =>
+      `${packageName}/${filePath.split(path.sep).join('/').slice(0, -'.d.ts'.length)}.js`
+  )
   .sort();
 
 const writeDeclarationsImports = (projectPath: string, isCommonJs: boolean) => {

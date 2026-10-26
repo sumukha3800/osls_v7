@@ -143,7 +143,7 @@ The removal process will only remove the service on your provider's infrastructu
 
 ## Version Pinning
 
-osls is usually installed globally via `npm install -g osls@4`. This way you have the osls CLI available for all your services.
+osls is usually installed globally via `npm install -g osls-ts7@4`. This way you have the osls CLI available for all your services.
 
 Installing tools globally has the downside that the version can't be pinned inside `package.json`. This can lead to issues if you upgrade osls, but your colleagues or CI system don't. To guard against this, you can pin the expected osls version in your `serverless.yml` so a mismatched version fails fast instead of deploying unexpectedly.
 
@@ -193,7 +193,7 @@ If you already have a service, and would prefer to lock down the osls version us
 
 ```bash
 # from within a service
-npm install osls@4 --save-dev
+npm install osls-ts7@4 --save-dev
 ```
 
 ### Invoking the CLI locally

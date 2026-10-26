@@ -1,14 +1,14 @@
 {
-  "name": "osls",
+  "name": "osls-ts7",
   "version": "4.0.0-dev",
   "private": true,
-  "description": "osls CLI for deploying serverless applications",
+  "description": "osls CLI for deploying serverless applications, written in TypeScript 7 (ES modules, Node.js 22 and 24)",
   "type": "module",
   "preferGlobal": true,
-  "homepage": "https://github.com/oss-serverless/osls",
+  "homepage": "https://github.com/sumukha3800/osls_v7",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oss-serverless/osls.git"
+    "url": "git+https://github.com/sumukha3800/osls_v7.git"
   },
   "keywords": [
     "serverless",
@@ -18,14 +18,16 @@
     "azure",
     "google-cloud",
     "apache-open-whisk",
-    "iot"
+    "iot",
+    "typescript"
   ],
   "main": "lib/serverless.ts",
   "types": "types/index.d.ts",
   "bin": {
     "serverless": "bin/serverless.ts",
     "sls": "bin/serverless.ts",
-    "osls": "bin/serverless.ts"
+    "osls": "bin/serverless.ts",
+    "osls-ts7": "bin/serverless.ts"
   },
   "packageManager": "pnpm@10.33.0",
   "dependencies": {

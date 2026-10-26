@@ -65,17 +65,17 @@ jobs:
           cp -R test/fixtures/programmatic/function/. "$RUNNER_TEMP/consumer"
           cd "$RUNNER_TEMP/consumer"
           npm init -y > /dev/null
-          npm install "$RUNNER_TEMP"/osls-*.tgz
-          npx osls --version
-          npx osls print
+          npm install "$RUNNER_TEMP"/osls-ts7-*.tgz
+          npx osls-ts7 --version
+          npx osls-ts7 print
 
       - name: Smoke test a TypeScript service configuration with the packed package
         run: |
           mkdir "$RUNNER_TEMP/typescript-consumer"
           cp test/typescript-consumers/esm/package.json test/typescript-consumers/esm/serverless.ts "$RUNNER_TEMP/typescript-consumer"
           cd "$RUNNER_TEMP/typescript-consumer"
-          npm install "$RUNNER_TEMP"/osls-*.tgz
-          npx osls print
+          npm install "$RUNNER_TEMP"/osls-ts7-*.tgz
+          npx osls-ts7 print
 
   typescript:
     name: '[Linux] Node 24: TypeScript 7 types, consumers & dependency types'
