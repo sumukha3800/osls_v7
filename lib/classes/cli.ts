@@ -1,11 +1,20 @@
 import colors from '../utils/colors.ts';
 import { log } from '../utils/serverless-utils/log.ts';
 import renderHelp from '../cli/render-help/index.ts';
+import type Serverless from '../serverless.ts';
+import type { PluginInstance } from './plugin-manager.ts';
 const { stdoutColors, stderrColors } = colors;
 
 const legacyPluginLog = log.get('plugin-legacy');
 
-const formatLegacyMessage = (message, opts) => {
+// Formatting options of the legacy `serverless.cli.log()`
+export interface LegacyLogOptions {
+  underline?: boolean;
+  bold?: boolean;
+  color?: string | null;
+}
+
+const formatLegacyMessage = (message: unknown, opts?: LegacyLogOptions) => {
   const { underline = false, bold = false, color = null } = opts || {};
   let text = String(message);
 
@@ -27,17 +36,17 @@ class CLI {
   declare loadedPlugins: any;
   declare serverless: any;
 
-  constructor(serverless?) {
+  constructor(serverless?: Serverless) {
     this.serverless = serverless;
     this.loadedPlugins = [];
     this.loadedCommands = {};
   }
 
-  setLoadedPlugins(plugins) {
+  setLoadedPlugins(plugins: PluginInstance[]) {
     this.loadedPlugins = plugins;
   }
 
-  setLoadedCommands(commands) {
+  setLoadedCommands(commands: Record<string, any>) {
     this.loadedCommands = commands;
   }
 
@@ -51,13 +60,13 @@ class CLI {
     process.stdout.write(stdoutColors.yellow('.'));
   }
 
-  log(message, entity, opts) {
+  log(message: unknown, entity?: string, opts?: LegacyLogOptions) {
     const formattedMessage = formatLegacyMessage(message, opts);
 
     legacyPluginLog.notice(entity ? `${entity}: ${formattedMessage}` : formattedMessage);
   }
 
-  consoleLog(message) {
+  consoleLog(message: unknown) {
     process.stdout.write(`${message}\n`);
   }
 }

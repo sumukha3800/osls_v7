@@ -10,12 +10,14 @@ import readFile from '../utils/fs/read-file.ts';
 import walkDirSync from '../utils/fs/walk-dir-sync.ts';
 import dirExistsSync from '../utils/fs/dir-exists-sync.ts';
 import { packageJson as packageModule } from '../utils/package-root.ts';
+import type { AwsFunction } from './service.ts';
 const version = packageModule.version;
 
 class Utils {
   declare serverless: any;
 
-  constructor(serverless) {
+  // `serverless`: the Serverless instance, or a stub of it (not read here)
+  constructor(serverless: any) {
     this.serverless = serverless;
   }
 
@@ -23,7 +25,7 @@ class Utils {
     return version;
   }
 
-  dirExistsSync(dirPath) {
+  dirExistsSync(dirPath: string) {
     return dirExistsSync(dirPath);
   }
 
@@ -37,48 +39,48 @@ class Utils {
     return dirPath;
   }
 
-  fileExistsSync(filePath) {
+  fileExistsSync(filePath: string) {
     return fileExistsSync(filePath);
   }
 
-  writeFileDir(filePath) {
+  writeFileDir(filePath: string) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
   }
 
-  writeFileSync(filePath, contents, cycles) {
+  writeFileSync(filePath: string, contents?: unknown, cycles?: boolean) {
     writeFileSync(filePath, contents, cycles);
   }
 
-  async writeFile(filePath, contents, cycles) {
+  async writeFile(filePath: string, contents?: unknown, cycles?: boolean) {
     this.writeFileSync(filePath, contents, cycles);
   }
 
-  async appendFileSync(filePath, conts) {
+  async appendFileSync(filePath: string, conts?: string | Uint8Array) {
     const contents = conts || '';
     fs.appendFileSync(filePath, contents);
   }
 
-  readFileSync(filePath) {
+  readFileSync(filePath: string) {
     return readFileSync(filePath);
   }
 
-  readFile(filePath) {
+  readFile(filePath: string) {
     return readFile(filePath);
   }
 
-  walkDirSync(dirPath) {
+  walkDirSync(dirPath: string) {
     return walkDirSync(dirPath);
   }
 
-  copyDirContentsSync(srcDir, destDir) {
+  copyDirContentsSync(srcDir: string, destDir: string) {
     return copyDirContentsSync(srcDir, destDir);
   }
 
-  generateShortId(length) {
+  generateShortId(length?: number) {
     return Math.random().toString(36).substr(2, length);
   }
 
-  isEventUsed(functions, eventName) {
+  isEventUsed(functions: Record<string, AwsFunction>, eventName: string) {
     return Object.keys(functions).reduce((accum, key) => {
       const events = functions[key].events || [];
       if (events.length) {

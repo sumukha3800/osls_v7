@@ -31,9 +31,10 @@ const filterIrreleventEventConfigurationErrors = (resultErrorsSet: Set<Normalize
   // 3. Process each error group individually
   for (const [instancePath, eventEventTypeErrors] of Object.entries(eventTypeErrorsByEvent)) {
     // 3.1 Resolve error that signals that no event schema was matched
+    // Event types are `anyOf` variants, so AJV reports the `anyOf` failure with their errors
     const noMatchingEventError = eventEventTypeErrors.find(({ keyword }) =>
       oneOfKeywords.has(keyword)
-    );
+    )!;
 
     // 3.2 Group errors by event type
     const eventEventTypeErrorsByTypeIndex = groupBy(eventEventTypeErrors, ({ schemaPath }) => {
@@ -215,7 +216,7 @@ const filterIrrelevantAnyOfErrors = (resultErrorsSet: Set<NormalizedError>) => {
       for (const instancePathOneOfPathVariantErrors of instancePathOneOfPathVariants) {
         const types = new Set<string>();
         for (const instancePathOneOfPathVariantError of instancePathOneOfPathVariantErrors) {
-          const parentSchema = instancePathOneOfPathVariantError.parentSchema;
+          const parentSchema = instancePathOneOfPathVariantError.parentSchema!;
           types.add(parentSchema.const ? 'const' : parentSchema.type);
           resultErrorsSet.delete(instancePathOneOfPathVariantError);
         }
@@ -260,7 +261,7 @@ const improveMessages = (resultErrorsSet: Set<NormalizedError>) => {
         }
         break;
       case 'enum':
-        if (error.params.allowedValues.every((value) => typeof value === 'string')) {
+        if (error.params.allowedValues.every((value: unknown) => typeof value === 'string')) {
           error.message += ` [${error.params.allowedValues.join(', ')}]`;
         }
         break;
@@ -271,7 +272,7 @@ const improveMessages = (resultErrorsSet: Set<NormalizedError>) => {
 };
 
 const filterDuplicateErrors = (resultErrorsSet: Set<NormalizedError>) => {
-  const seenMessages = new Set<string>();
+  const seenMessages = new Set<string | undefined>();
   resultErrorsSet.forEach((item) => {
     if (!seenMessages.has(item.message)) {
       seenMessages.add(item.message);

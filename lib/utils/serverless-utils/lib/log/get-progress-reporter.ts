@@ -53,7 +53,10 @@ const getProgressReporter: GetProgressReporter = memoizee(
             { levelName: 'notice', levelIndex: logLevels.indexOf('notice') },
           ];
           for (const { levelName, levelIndex } of levelsMeta) {
-            progress[levelName] = (textTokens, options = null) => {
+            progress[levelName] = (
+              textTokens: unknown,
+              options: Record<string, any> | null = null
+            ) => {
               progressEmitter.emit('update', {
                 namespace,
                 name,

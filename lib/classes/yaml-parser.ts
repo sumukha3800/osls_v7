@@ -6,12 +6,28 @@ import isPlainObject from 'type/plain-object/is.js';
 import ServerlessError from '../serverless-error.ts';
 import { isExternalRefAccessDeniedError } from './yaml-parser/external-ref-errors.ts';
 import { normalizeExternalRefOptions } from './yaml-parser/external-ref-options.ts';
+import type { ExternalRefOptions } from './yaml-parser/external-ref-options.ts';
 import { readExternalDocument } from './yaml-parser/external-ref-reader.ts';
 import { safeSet } from '../utils/safe-object.ts';
 
-const getDocumentUrl = (yamlFilePath) => pathToFileURL(path.resolve(yamlFilePath)).href;
+// Parsed YAML documents are dynamic, so resolved values are typed `any`
+type MaterializeState = {
+  activeReferences: Set<string>;
+  documents: Map<string, Promise<unknown>>;
+  references: Map<string, any>;
+  materialized: WeakMap<object, any>;
+  inProgress: WeakSet<object>;
+  externalRefs: ExternalRefOptions;
+};
+type MaterializeContext = {
+  documentUrl: string;
+  resolveLocalRefs: boolean;
+  state: MaterializeState;
+};
 
-const splitReference = (absoluteReference) => {
+const getDocumentUrl = (yamlFilePath: string) => pathToFileURL(path.resolve(yamlFilePath)).href;
+
+const splitReference = (absoluteReference: string) => {
   const hashIndex = absoluteReference.indexOf('#');
 
   if (hashIndex === -1) {
@@ -24,14 +40,14 @@ const splitReference = (absoluteReference) => {
   };
 };
 
-const getJsonPointerValue = (source, pointer) => {
+const getJsonPointerValue = (source: unknown, pointer: string) => {
   if (!pointer || pointer === '#') return source;
 
   if (!pointer.startsWith('#/')) {
     throw new Error(`Unsupported JSON pointer: ${pointer}`);
   }
 
-  let current = source;
+  let current: any = source;
 
   for (const rawSegment of pointer.slice(2).split('/')) {
     const segment = decodeURIComponent(rawSegment).replace(/~1/g, '/').replace(/~0/g, '~');
@@ -50,15 +66,15 @@ const getJsonPointerValue = (source, pointer) => {
   return current;
 };
 
-const cloneValue = (value) => {
+const cloneValue = <T>(value: T): T => {
   if (value == null || typeof value !== 'object') return value;
   return structuredClone(value);
 };
 
-const isCircularYamlReferenceError = (error) =>
+const isCircularYamlReferenceError = (error: any) =>
   error && error.code === 'INVALID_YAML_CIRCULAR_REFERENCE';
 
-const loadExternalDocument = (documentUrl, state) => {
+const loadExternalDocument = (documentUrl: string, state: MaterializeState) => {
   if (!state.documents.has(documentUrl)) {
     state.documents.set(
       documentUrl,
@@ -73,7 +89,10 @@ const loadExternalDocument = (documentUrl, state) => {
   return state.documents.get(documentUrl);
 };
 
-const materializeRef = async (refObject, context) => {
+const materializeRef = async (
+  refObject: Record<string, any>,
+  context: MaterializeContext
+): Promise<any> => {
   if (!context.resolveLocalRefs && refObject.$ref.startsWith('#')) {
     return cloneValue(refObject);
   }
@@ -112,7 +131,12 @@ const materializeRef = async (refObject, context) => {
   }
 };
 
-const materializeTarget = async (target, documentUrl, state, absoluteReference) => {
+const materializeTarget = async (
+  target: unknown,
+  documentUrl: string,
+  state: MaterializeState,
+  absoluteReference: string
+): Promise<any> => {
   if (state.references.has(absoluteReference)) {
     return state.references.get(absoluteReference);
   }
@@ -136,7 +160,7 @@ const materializeTarget = async (target, documentUrl, state, absoluteReference) 
 
   try {
     if (Array.isArray(target)) {
-      const resolvedTarget = [];
+      const resolvedTarget: unknown[] = [];
       state.references.set(absoluteReference, resolvedTarget);
       state.materialized.set(target, resolvedTarget);
 
@@ -167,7 +191,7 @@ const materializeTarget = async (target, documentUrl, state, absoluteReference) 
         return resolvedTarget;
       }
 
-      const resolvedTarget = {};
+      const resolvedTarget: Record<string, unknown> = {};
       state.references.set(absoluteReference, resolvedTarget);
       state.materialized.set(target, resolvedTarget);
 
@@ -199,7 +223,7 @@ const materializeTarget = async (target, documentUrl, state, absoluteReference) 
   }
 };
 
-const materializeValue = async (value, context) => {
+const materializeValue = async (value: unknown, context: MaterializeContext): Promise<any> => {
   if (Array.isArray(value)) {
     if (context.state.inProgress.has(value)) {
       throw new ServerlessError(
@@ -214,7 +238,7 @@ const materializeValue = async (value, context) => {
 
     context.state.inProgress.add(value);
     try {
-      const resolvedValue = [];
+      const resolvedValue: unknown[] = [];
       context.state.materialized.set(value, resolvedValue);
 
       for (const item of value) {
@@ -248,7 +272,7 @@ const materializeValue = async (value, context) => {
 
     context.state.inProgress.add(value);
     try {
-      const resolvedValue = {};
+      const resolvedValue: Record<string, unknown> = {};
       context.state.materialized.set(value, resolvedValue);
 
       for (const [key, childValue] of Object.entries(value)) {
@@ -271,11 +295,12 @@ const materializeValue = async (value, context) => {
 class YamlParser {
   declare serverless: any;
 
-  constructor(serverless) {
+  // Tests pass a partial Serverless-like object
+  constructor(serverless: any) {
     this.serverless = serverless;
   }
 
-  async parse(yamlFilePath, options) {
+  async parse(yamlFilePath: string, options?: Record<string, any>) {
     const root = this.serverless.utils.readFileSync(yamlFilePath);
     const externalRefs = await normalizeExternalRefOptions(yamlFilePath, options);
 

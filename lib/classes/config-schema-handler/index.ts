@@ -12,8 +12,8 @@ import type { JsonSchema, ProviderSchemaParts } from '../../plugin-types.ts';
 const FUNCTION_NAME_PATTERN = '^[a-zA-Z0-9-_]+$';
 const ERROR_PREFIX = 'Configuration error';
 
-const getOwnByPath = (source, path) => {
-  let current = source;
+const getOwnByPath = (source: unknown, path: string[]) => {
+  let current: any = source;
 
   for (const segment of path) {
     if (current == null || !Object.prototype.hasOwnProperty.call(current, segment)) {
@@ -26,7 +26,7 @@ const getOwnByPath = (source, path) => {
   return current;
 };
 
-const normalizeSchemaObject = (object, instanceSchema) => {
+const normalizeSchemaObject = (object: Record<string, any>, instanceSchema: unknown) => {
   for (const [key, value] of Object.entries(object)) {
     if (!isObject(value)) continue;
     if (!value.$ref) {
@@ -42,10 +42,10 @@ const normalizeSchemaObject = (object, instanceSchema) => {
 
 // Normalizer is introduced to workaround https://github.com/ajv-validator/ajv/issues/1287
 // normalizedObjectsMap allows to handle circular structures without issues
-const normalizeUserConfig = (userConfig) => {
+const normalizeUserConfig = (userConfig: Record<string, any>) => {
   const normalizedObjectsSet = new WeakSet();
-  const removedValuesMap = [];
-  const normalizeObject = (object, path) => {
+  const removedValuesMap: { path: (string | number)[]; value: unknown }[] = [];
+  const normalizeObject = (object: Record<string, any> | unknown[], path: (string | number)[]) => {
     if (normalizedObjectsSet.has(object)) return;
     normalizedObjectsSet.add(object);
     if (Array.isArray(object)) {
@@ -66,13 +66,16 @@ const normalizeUserConfig = (userConfig) => {
   normalizeObject(userConfig, []);
   return { removedValuesMap };
 };
-const denormalizeUserConfig = (userConfig, { removedValuesMap }) => {
+const denormalizeUserConfig = (
+  userConfig: Record<string, any>,
+  { removedValuesMap }: ReturnType<typeof normalizeUserConfig>
+) => {
   for (const removedValueData of removedValuesMap) {
     setByPath(userConfig, removedValueData.path, removedValueData.value, { arrays: true });
   }
 };
 
-const configurationValidationResults = new WeakMap();
+const configurationValidationResults = new WeakMap<object, boolean>();
 
 class ConfigSchemaHandler {
   // The JSON schema of the service configuration, extended by plugins
@@ -88,14 +91,15 @@ class ConfigSchemaHandler {
     deepFreeze(this.schema.properties.package);
   }
 
-  static getConfigurationValidationResult(configuration) {
+  static getConfigurationValidationResult(configuration: unknown) {
     if (!configurationValidationResults.has(ensurePlainObject(configuration))) return null;
     return configurationValidationResults.get(ensurePlainObject(configuration));
   }
 
-  async validateConfig(userConfig) {
+  // Validates the configuration of the service, which `serverless.configurationInput` holds
+  async validateConfig(userConfig: Record<string, any>) {
     if (!this.schema.properties.provider.properties.name) {
-      configurationValidationResults.set(this.serverless.configurationInput, false);
+      configurationValidationResults.set(this.serverless.configurationInput!, false);
 
       this.relaxProviderSchema();
     }
@@ -107,16 +111,17 @@ class ConfigSchemaHandler {
     const denormalizeOptions = normalizeUserConfig(userConfig);
     validate(userConfig);
     denormalizeUserConfig(userConfig, denormalizeOptions);
-    if (!configurationValidationResults.has(this.serverless.configurationInput)) {
-      configurationValidationResults.set(this.serverless.configurationInput, !validate.errors);
+    if (!configurationValidationResults.has(this.serverless.configurationInput!)) {
+      configurationValidationResults.set(this.serverless.configurationInput!, !validate.errors);
     }
     if (validate.errors && this.serverless.service.configValidationMode !== 'off') {
-      const messages = normalizeAjvErrors(validate.errors).map((err) => err.message);
+      // Normalized errors all have a message
+      const messages = normalizeAjvErrors(validate.errors).map((err) => err.message!);
       this.handleErrorMessages(messages);
     }
   }
 
-  handleErrorMessages(messages) {
+  handleErrorMessages(messages: string[]) {
     if (messages.length) {
       if (this.serverless.service.configValidationMode === 'error') {
         throw new ServerlessError(
@@ -236,7 +241,7 @@ class ConfigSchemaHandler {
     const existingFunctionEvents = new Set(
       this.schema.properties.functions.patternProperties[
         FUNCTION_NAME_PATTERN
-      ].properties.events.items.anyOf.map((functionEventSchema) =>
+      ].properties.events.items.anyOf.map((functionEventSchema: Record<string, any>) =>
         Object.keys(functionEventSchema.properties).pop()
       )
     );
@@ -265,7 +270,9 @@ class ConfigSchemaHandler {
 
     const existingEventDefinition = this.schema.properties.functions.patternProperties[
       FUNCTION_NAME_PATTERN
-    ].properties.events.items.anyOf.find((eventDefinition) => name === eventDefinition.required[0]);
+    ].properties.events.items.anyOf.find(
+      (eventDefinition: Record<string, any>) => name === eventDefinition.required[0]
+    );
 
     if (!existingEventDefinition) {
       throw new ServerlessError(
@@ -281,7 +288,7 @@ class ConfigSchemaHandler {
     } else if (existingEventDefinition.properties[name].anyOf) {
       // Event root definition has multiple definitions. Finding the object definition
       definitionToUpdate = existingEventDefinition.properties[name].anyOf.find(
-        (definition) => definition.type === 'object'
+        (definition: Record<string, any>) => definition.type === 'object'
       );
     }
 
@@ -368,7 +375,8 @@ function addPropertiesToSchema(
 ) {
   let collidingExtensionPropertyKey;
   const existingSubSchemaPropertiesKeys = new Set(Object.keys(subSchema.properties));
-  Object.keys(extension.properties).some((extensionPropertiesKey) => {
+  // Schema parts given by plugins have `properties`
+  Object.keys(extension.properties!).some((extensionPropertiesKey) => {
     const isColliding = existingSubSchemaPropertiesKeys.has(extensionPropertiesKey);
     if (isColliding) collidingExtensionPropertyKey = extensionPropertiesKey;
     return isColliding;
@@ -389,7 +397,7 @@ function addPropertiesToSchema(
  * Deep freezes an object. Stolen from
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze
  */
-function deepFreeze(object) {
+function deepFreeze(object: Record<string, any>) {
   const propNames = Object.getOwnPropertyNames(object);
   for (const name of propNames) {
     const value = object[name];

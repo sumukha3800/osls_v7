@@ -46,7 +46,7 @@ export default {
     const regx = getRegExp(schema);
     cxt.pass(_`${regx}.test(${data})`);
 
-    function getRegExp(sch) {
+    function getRegExp(sch: string | { pattern: string; flags?: string }) {
       if (typeof sch === 'object') return usePattern(cxt, sch.pattern, sch.flags);
       const rx = metaRegexp.exec(sch);
       if (rx) return usePattern(cxt, rx[1], rx[2]);

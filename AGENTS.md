@@ -43,6 +43,9 @@ fork, published on npm as `osls-ts7`, is written in TypeScript 7, ships as ES mo
 - `pnpm test`: all unit tests. One file:
   `node_modules/.bin/mocha --config test/mocha/config.json test/unit/path/to/file.test.ts`
 - `pnpm run lint`, `pnpm run prettier-check`.
+- `pnpm run typecheck:strict`: strict mode (`strict`, `noImplicitAny`) for the files listed in
+  `tsconfig.strict.json`, which grows directory by directory. New and changed code in listed
+  files must pass it; add a directory to the list once it passes.
 - `pnpm run generate-types`: regenerates `types/aws.d.ts` from the configuration schema
   (`--check` fails when it is out of date, as CI does).
 - `pnpm run typecheck:consumers` (after `pnpm run build`): type checks the TypeScript 7 projects of

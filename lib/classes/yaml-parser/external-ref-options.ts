@@ -1,9 +1,13 @@
 import path from 'node:path';
 import { throwOptionsError } from './external-ref-errors.ts';
 import { normalizeFileRefOptions } from './file-ref-policy.ts';
+import type { FileRefOptions } from './file-ref-policy.ts';
+import type { HttpRefOptions } from './http-ref-reader.ts';
 import { assertKnownOptions, assertOptionsObject } from './option-validation.ts';
 
-const normalizeStringArrayOption = (value, optionName) => {
+type ExternalRefOptions = { file: FileRefOptions; http: HttpRefOptions };
+
+const normalizeStringArrayOption = (value: unknown, optionName: string): string[] => {
   if (value === undefined) return [];
 
   const values = Array.isArray(value) ? value : [value];
@@ -17,7 +21,7 @@ const normalizeStringArrayOption = (value, optionName) => {
   });
 };
 
-const normalizeAllowedUnsafeHost = (host) => {
+const normalizeAllowedUnsafeHost = (host: string) => {
   const trimmedHost = host.trim().toLowerCase();
 
   if (!trimmedHost) return trimmedHost;
@@ -30,7 +34,7 @@ const normalizeAllowedUnsafeHost = (host) => {
   }
 };
 
-const normalizeHttpRefOptions = (options: Record<string, any> = {}) => {
+const normalizeHttpRefOptions = (options: Record<string, any> = {}): HttpRefOptions => {
   assertOptionsObject(options, 'externalRefs.http');
   assertKnownOptions(options, 'externalRefs.http', ['allowUnsafeUrls', 'allowedUnsafeHosts']);
 
@@ -49,7 +53,10 @@ const normalizeHttpRefOptions = (options: Record<string, any> = {}) => {
   };
 };
 
-const normalizeExternalRefOptions = async (yamlFilePath, options: Record<string, any> = {}) => {
+const normalizeExternalRefOptions = async (
+  yamlFilePath: string,
+  options: Record<string, any> = {}
+): Promise<ExternalRefOptions> => {
   assertOptionsObject(options, 'options');
   assertKnownOptions(options, 'options', ['externalRefs']);
 
@@ -69,6 +76,7 @@ const normalizeExternalRefOptions = async (yamlFilePath, options: Record<string,
 };
 
 export { normalizeExternalRefOptions, normalizeHttpRefOptions };
+export type { ExternalRefOptions };
 
 export default {
   normalizeExternalRefOptions,

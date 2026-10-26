@@ -99,6 +99,10 @@ jobs:
       - name: Type check
         run: pnpm run typecheck
 
+      # Files listed in tsconfig.strict.json must type check in strict mode
+      - name: Type check strict files
+        run: pnpm run typecheck:strict
+
       - name: Validate configuration types match the configuration schema
         run: pnpm run generate-types --check
 

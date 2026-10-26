@@ -3,7 +3,10 @@ import {
   DescribeStackResourceCommand,
   ListStackResourcesCommand,
 } from '@aws-sdk/client-cloudformation';
-import type { ListStackResourcesCommandInput } from '@aws-sdk/client-cloudformation';
+import type {
+  ListStackResourcesCommandInput,
+  StackResourceSummary,
+} from '@aws-sdk/client-cloudformation';
 
 import {
   ECRClient,
@@ -27,6 +30,8 @@ import ServerlessError from '../../serverless-error.ts';
 import { buildClientConfig } from '../../aws/config.ts';
 import type Serverless from '../../serverless.ts';
 import type { CliOptions } from '../../plugin-types.ts';
+import type { AwsFunction, ServiceProvider } from '../../classes/service.ts';
+import type { AwsLambdaRuntimeManagement } from '../../../types/aws.d.ts';
 import {
   getAwsSdkV3CredentialsProvider,
   getAwsSdkV3CredentialsProviderCacheKey,
@@ -59,10 +64,11 @@ const promiseLimit = promiseLimit2.bind(Promise);
 const { ALB_LISTENER_REGEXP } = validate;
 
 const isLambdaArn = RegExp.prototype.test.bind(/^arn:[^:]+:lambda:/);
+// `test()` converts its argument to a string
 const isEcrUri = RegExp.prototype.test.bind(
   /^\d+\.dkr\.ecr\.[a-z0-9-]+..amazonaws.com\/([^@]+)|([^@:]+@sha256:[a-f0-9]{64})$/
-);
-const createAwsSdkV2SurfaceRemovedError = (surface) =>
+) as (value: unknown) => boolean;
+const createAwsSdkV2SurfaceRemovedError = (surface: string) =>
   new ServerlessError(
     `${surface} is no longer available. Construct AWS SDK v3 clients with configuration from ` +
       'provider.getAwsSdkV3Config() instead. See ' +
@@ -70,11 +76,11 @@ const createAwsSdkV2SurfaceRemovedError = (surface) =>
     'AWS_SDK_V2_SURFACE_REMOVED'
   );
 
-function caseInsensitive(str) {
+function caseInsensitive(str: string) {
   return { type: 'string', regexp: new RegExp(`^${str}$`, 'i').toString() };
 }
 
-function resolveRuntimeManagement(input) {
+function resolveRuntimeManagement(input: AwsLambdaRuntimeManagement | undefined) {
   if (typeof input === 'string') {
     return {
       mode: input,
@@ -86,6 +92,52 @@ function resolveRuntimeManagement(input) {
 const constants = {
   providerName: 'aws',
 };
+
+// A configuration value and the path it was read from (eg. `['options', 'region']`)
+interface SourceValue {
+  path?: string[];
+  value?: any;
+}
+
+// Options of `provider.getAwsSdkV3Config()`: AWS SDK v3 client configuration, where `profile`
+// selects the credentials when `credentials` is not given
+export interface AwsSdkV3ConfigOptions {
+  region?: string;
+  credentials?: unknown;
+  profile?: string;
+  [option: string]: unknown;
+}
+
+export interface AwsAccountInfo {
+  accountId: string;
+  partition: string;
+  arn: string;
+  userId: string;
+}
+
+export interface EcrRepository {
+  repositoryUri: string | undefined;
+  repositoryName: string;
+}
+
+export interface FunctionImageUriAndSha {
+  functionImageUri: string;
+  functionImageSha: string;
+}
+
+// The image build, as `resolveImageUriAndSha()` resolves it from `provider.ecr.images`
+export interface ImageBuildOptions {
+  imageName: string;
+  imagePath: string;
+  imageFilename: string;
+  buildArgs: Record<string, string>;
+  buildOptions: string[];
+  cacheFrom: string[];
+  platform: string;
+  provenance: string;
+  scanOnPush: boolean;
+  maxImageCount: number;
+}
 
 const imageNamePattern = '^[a-z][a-z0-9-_]{1,31}$';
 
@@ -164,8 +216,8 @@ const cognitoAlbAuthorizer = {
 class AwsProvider {
   declare accountId: any;
   declare awsSdkV3CredentialsProviders: any;
-  declare cloudFormationClientPromise: any;
-  declare dockerLoginToEcr: any;
+  declare cloudFormationClientPromise: Promise<CloudFormationClient> | undefined;
+  declare ecrDescribeImagesClientPromise: Promise<ECRClient> | undefined;
   declare hooks: any;
   declare limitEcrRequests: any;
   declare naming: any;
@@ -173,9 +225,25 @@ class AwsProvider {
   declare provider: any;
   declare serverless: Serverless;
 
+  // Memoized methods, defined on the prototype below the class
+  declare getAccountInfo: () => Promise<AwsAccountInfo>;
+  declare getAccountId: () => Promise<string>;
+  declare ensureDockerIsAvailable: () => Promise<void>;
+  declare dockerLoginToEcr: () => Promise<void>;
+  declare getOrCreateEcrRepository: (
+    scanOnPush: boolean,
+    maxImageCount: number
+  ) => Promise<EcrRepository>;
+  declare resolveImageUriAndShaFromPath: (
+    options: ImageBuildOptions
+  ) => Promise<FunctionImageUriAndSha>;
+  declare resolveImageUriAndShaFromUri: (image: string) => Promise<FunctionImageUriAndSha>;
+  declare resolveImageUriAndSha: (functionName: string) => Promise<FunctionImageUriAndSha>;
+
   constructor(serverless: Serverless, options?: CliOptions) {
     this.naming = { provider: this };
-    this.options = options;
+    // Plugins are always constructed with the CLI options; some tests leave them out
+    this.options = options as CliOptions;
     this.provider = this; // only load plugin in an AWS service context
     this.serverless = serverless;
     this.limitEcrRequests = promiseLimit(6, async (task) => task());
@@ -193,7 +261,8 @@ class AwsProvider {
               // (re)set the value of the deploymentBucket property to the name (which is a string)
               provider.deploymentBucket = provider.deploymentBucket.name;
             } else {
-              provider.deploymentBucket = null;
+              // `null` is not part of the configuration type
+              (provider as { deploymentBucket: unknown }).deploymentBucket = null;
             }
           }
         }
@@ -1738,7 +1807,7 @@ class AwsProvider {
     return constants.providerName;
   }
 
-  async getAwsSdkV3Config(options = {}) {
+  async getAwsSdkV3Config(options: AwsSdkV3ConfigOptions = {}): Promise<Record<string, any>> {
     const { credentials, profile, region, ...clientOptions }: Record<string, any> = options;
     delete clientOptions.service;
 
@@ -1749,7 +1818,7 @@ class AwsProvider {
     });
   }
 
-  getCloudFormationClient() {
+  getCloudFormationClient(): Promise<CloudFormationClient> {
     this.cloudFormationClientPromise ||= this.getAwsSdkV3Config().then(
       (config) => new CloudFormationClient(config)
     );
@@ -1771,7 +1840,7 @@ class AwsProvider {
     throw createAwsSdkV2SurfaceRemovedError('provider.sdk');
   }
 
-  getAwsSdkV3CredentialsProvider(options = {}) {
+  getAwsSdkV3CredentialsProvider(options: { profile?: string } = {}) {
     const cacheKey = getAwsSdkV3CredentialsProviderCacheKey({ provider: this, ...options });
 
     if (!this.awsSdkV3CredentialsProviders.has(cacheKey)) {
@@ -1833,20 +1902,20 @@ class AwsProvider {
     delete this.options['aws-s3-accelerate'];
   }
 
-  getValues(source, objectPaths) {
+  getValues(source: object, objectPaths: string[][]): SourceValue[] {
     return objectPaths.map((objectPath) => ({
       path: objectPath,
       value: getByPath(source, objectPath),
     }));
   }
 
-  firstValue(values) {
-    return values.reduce((result, current) => {
+  firstValue(values: SourceValue[]): SourceValue {
+    return values.reduce((result: SourceValue, current) => {
       return result.value ? result : current;
     }, {});
   }
 
-  getRegionSourceValue() {
+  getRegionSourceValue(): SourceValue {
     const values = this.getValues(this, [
       ['options', 'region'],
       ['serverless', 'config', 'region'],
@@ -1861,18 +1930,18 @@ class AwsProvider {
     return regionSourceValue.value || defaultRegion;
   }
 
-  getRuntimeSourceValue() {
+  getRuntimeSourceValue(): SourceValue {
     const values = this.getValues(this, [['serverless', 'service', 'provider', 'runtime']]);
     return this.firstValue(values);
   }
 
-  getRuntime(runtime) {
+  getRuntime(runtime?: string): string {
     const defaultRuntime = 'nodejs24.x';
     const runtimeSourceValue = this.getRuntimeSourceValue();
     return runtime || runtimeSourceValue.value || defaultRuntime;
   }
 
-  resolveFunctionRuntimeManagement(functionRuntimeManagement) {
+  resolveFunctionRuntimeManagement(functionRuntimeManagement?: AwsLambdaRuntimeManagement) {
     return {
       mode: 'auto',
       ...resolveRuntimeManagement(this.serverless.service.provider.runtimeManagement),
@@ -1880,7 +1949,7 @@ class AwsProvider {
     };
   }
 
-  getProfileSourceValue() {
+  getProfileSourceValue(): string | null | undefined {
     const values = this.getValues(this, [
       ['options', 'aws-profile'],
       ['options', 'profile'],
@@ -1891,13 +1960,14 @@ class AwsProvider {
     return firstVal ? firstVal.value : null;
   }
 
-  getProfile() {
+  getProfile(): string | null | undefined {
     return this.getProfileSourceValue();
   }
 
-  async getServerlessDeploymentBucketName() {
+  async getServerlessDeploymentBucketName(): Promise<string> {
     if (this.serverless.service.provider.deploymentBucket) {
-      return this.serverless.service.provider.deploymentBucket;
+      // The initialize hook resolves an object `deploymentBucket` to its name
+      return this.serverless.service.provider.deploymentBucket as string;
     }
     const cloudFormation = await this.getCloudFormationClient();
     const result = await cloudFormation.send(
@@ -1906,10 +1976,10 @@ class AwsProvider {
         LogicalResourceId: this.naming.getDeploymentBucketLogicalId(),
       })
     );
-    return result.StackResourceDetail.PhysicalResourceId;
+    return result.StackResourceDetail!.PhysicalResourceId!;
   }
 
-  getDeploymentPrefix() {
+  getDeploymentPrefix(): string {
     const provider = this.serverless.service.provider;
     if (provider.deploymentPrefix === null || provider.deploymentPrefix === undefined) {
       return 'serverless';
@@ -1926,14 +1996,14 @@ class AwsProvider {
   }
 
   // Check if role is provided as a string or a CF function reference to existing role
-  isExistingRoleProvided(role) {
+  isExistingRoleProvided(role: unknown): boolean {
     return (
       typeof role === 'string' ||
       (isObject(role) && Object.keys(role).some((key) => key.includes('::')))
     );
   }
 
-  getCustomExecutionRole(functionObj) {
+  getCustomExecutionRole(functionObj: AwsFunction) {
     const { provider } = this.serverless.service;
 
     if (hasOwn(functionObj, 'role') && functionObj.role) return functionObj.role;
@@ -1948,7 +2018,7 @@ class AwsProvider {
     return hasOwn(provider, 'role') ? provider.role : undefined;
   }
 
-  resolveFunctionArn(functionAddress) {
+  resolveFunctionArn(functionAddress: string) {
     if (isLambdaArn(functionAddress)) return functionAddress;
     const functionData = this.serverless.service.getFunction(functionAddress);
     if (functionData) return resolveLambdaTarget(functionAddress, functionData);
@@ -1958,18 +2028,18 @@ class AwsProvider {
     );
   }
 
-  resolveLayerArtifactName(layerName) {
+  resolveLayerArtifactName(layerName: string): string {
     const serverlessLayerObject = this.serverless.service.getLayer(layerName);
     return serverlessLayerObject.package && serverlessLayerObject.package.artifact
       ? serverlessLayerObject.package.artifact
       : path.join(
-          this.serverless.serviceDir,
+          this.serverless.serviceDir!,
           '.serverless',
           this.provider.naming.getLayerArtifactName(layerName)
         );
   }
 
-  resolveFunctionIamRoleResourceName(functionObj) {
+  resolveFunctionIamRoleResourceName(functionObj: AwsFunction): string | null {
     const customRole = this.getCustomExecutionRole(functionObj);
     if (customRole) {
       if (typeof customRole === 'string') {
@@ -1977,22 +2047,23 @@ class AwsProvider {
         if (customRole.includes(':')) return null;
         return customRole;
       }
+      const roleObject: Record<string, any> = customRole;
       if (
         // otherwise, check if we have an in-service reference to a role ARN
-        hasOwn(customRole, 'Fn::GetAtt') &&
-        Array.isArray(customRole['Fn::GetAtt']) &&
-        customRole['Fn::GetAtt'].length === 2 &&
-        typeof customRole['Fn::GetAtt'][0] === 'string' &&
-        typeof customRole['Fn::GetAtt'][1] === 'string' &&
-        customRole['Fn::GetAtt'][1] === 'Arn'
+        hasOwn(roleObject, 'Fn::GetAtt') &&
+        Array.isArray(roleObject['Fn::GetAtt']) &&
+        roleObject['Fn::GetAtt'].length === 2 &&
+        typeof roleObject['Fn::GetAtt'][0] === 'string' &&
+        typeof roleObject['Fn::GetAtt'][1] === 'string' &&
+        roleObject['Fn::GetAtt'][1] === 'Arn'
       ) {
-        return customRole['Fn::GetAtt'][0];
+        return roleObject['Fn::GetAtt'][0];
       }
       if (
         // otherwise, check if we have an import, parameters ref or sub
-        hasOwn(customRole, 'Fn::ImportValue') ||
-        hasOwn(customRole, 'Ref') ||
-        hasOwn(customRole, 'Fn::Sub')
+        hasOwn(roleObject, 'Fn::ImportValue') ||
+        hasOwn(roleObject, 'Ref') ||
+        hasOwn(roleObject, 'Fn::Sub')
       ) {
         return null;
       }
@@ -2093,9 +2164,10 @@ class AwsProvider {
       return this.serverless.service.provider.apiGateway.restApiResources;
     }
 
-    return Object.keys(this.serverless.service.provider.apiGateway.restApiResources).map((key) => ({
+    const restApiResources = this.serverless.service.provider.apiGateway.restApiResources;
+    return Object.keys(restApiResources).map((key) => ({
       path: key,
-      resourceId: this.serverless.service.provider.apiGateway.restApiResources[key],
+      resourceId: restApiResources[key],
     }));
   }
 
@@ -2113,7 +2185,10 @@ class AwsProvider {
     return { Ref: this.naming.getWebsocketsApiLogicalId() };
   }
 
-  async getStackResources(next, resourcesParam) {
+  async getStackResources(
+    next?: string,
+    resourcesParam?: StackResourceSummary[]
+  ): Promise<StackResourceSummary[]> {
     let resources = resourcesParam || [];
     let nextToken = next;
     const cloudFormation = await this.getCloudFormationClient();
@@ -2132,7 +2207,10 @@ class AwsProvider {
     return resources;
   }
 
-  async dockerPushToEcr(remoteTag, options: Record<string, any> = {}) {
+  async dockerPushToEcr(
+    remoteTag: string,
+    options: { isLoggedIn?: boolean } = {}
+  ): Promise<string> {
     const pushDockerArgs = ['push', remoteTag];
     try {
       const { stdBuffer: pushDockerStdBuffer }: Record<string, any> = await spawnExt(
@@ -2143,7 +2221,7 @@ class AwsProvider {
         log.info(pushDockerStdBuffer.toString().trimRight());
       }
       return pushDockerStdBuffer.toString();
-    } catch (err) {
+    } catch (err: any) {
       if (
         !options.isLoggedIn &&
         err.stdBuffer &&
@@ -2165,23 +2243,24 @@ Object.defineProperties(
   AwsProvider.prototype,
   memoizeeMethods({
     getAccountInfo: methodDescriptor(
-      async function () {
+      async function (this: AwsProvider): Promise<AwsAccountInfo> {
         const sts = new STSClient(await this.getAwsSdkV3Config());
         const result = await sts.send(new GetCallerIdentityCommand({}));
-        const arn = result.Arn;
-        const accountId = result.Account;
+        // STS always returns the identity of the caller
+        const arn = result.Arn!;
+        const accountId = result.Account!;
         const partition = arn.split(':')[1]; // ex: arn:aws:iam:acctId:user/xyz
         return {
           accountId,
           partition,
-          arn: result.Arn,
-          userId: result.UserId,
+          arn: result.Arn!,
+          userId: result.UserId!,
         };
       },
       { promise: true }
     ),
     getAccountId: methodDescriptor(
-      async function () {
+      async function (this: AwsProvider) {
         const result = await this.getAccountInfo();
         return result.accountId;
       },
@@ -2201,7 +2280,7 @@ Object.defineProperties(
       { promise: true }
     ),
     dockerLoginToEcr: methodDescriptor(
-      async function () {
+      async function (this: AwsProvider) {
         const registryId = await this.getAccountId();
         const ecr = new ECRClient(await this.getAwsSdkV3Config());
         const result = await ecr.send(
@@ -2209,8 +2288,10 @@ Object.defineProperties(
             registryIds: [registryId],
           })
         );
-        const { authorizationToken, proxyEndpoint } = result.authorizationData[0];
-        const decodedAuthToken = Buffer.from(authorizationToken, 'base64').toString().split(':')[1];
+        const { authorizationToken, proxyEndpoint } = result.authorizationData![0];
+        const decodedAuthToken = Buffer.from(authorizationToken!, 'base64')
+          .toString()
+          .split(':')[1];
         // Guard the spawn below: with no input to write, `docker login --password-stdin`
         // would block awaiting stdin EOF instead of failing.
         if (!decodedAuthToken) {
@@ -2230,7 +2311,7 @@ Object.defineProperties(
               'Docker authentication token will be stored unencrypted in docker config. Configure Docker credential helper to remove this warning.'
             );
           }
-        } catch (err) {
+        } catch (err: any) {
           throw new ServerlessError(
             `Encountered error during executing: docker ${dockerArgs.join(
               ' '
@@ -2242,11 +2323,11 @@ Object.defineProperties(
       { promise: true }
     ),
     getOrCreateEcrRepository: methodDescriptor(
-      async function (scanOnPush, maxImageCount) {
+      async function (this: AwsProvider, scanOnPush: boolean, maxImageCount: number) {
         const registryId = await this.getAccountId();
         const repositoryName = this.naming.getEcrRepositoryName();
         const ecr = new ECRClient(await this.getAwsSdkV3Config());
-        let repositoryUri;
+        let repositoryUri: string | undefined;
         try {
           const result = await ecr.send(
             new DescribeRepositoriesCommand({
@@ -2254,7 +2335,7 @@ Object.defineProperties(
               registryId,
             })
           );
-          repositoryUri = result.repositories[0].repositoryUri;
+          repositoryUri = result.repositories![0].repositoryUri;
         } catch (err) {
           if (!isEcrRepositoryNotFoundError(err)) throw err;
           const result = await ecr.send(
@@ -2263,7 +2344,7 @@ Object.defineProperties(
               imageScanningConfiguration: { scanOnPush },
             })
           );
-          repositoryUri = result.repository.repositoryUri;
+          repositoryUri = result.repository!.repositoryUri;
         }
 
         // Set ECR Lifecycle policy. See https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html
@@ -2296,23 +2377,30 @@ Object.defineProperties(
       { promise: true }
     ),
     resolveImageUriAndShaFromPath: methodDescriptor(
-      async function ({
-        imageName,
-        imagePath,
-        imageFilename,
-        buildArgs,
-        buildOptions,
-        cacheFrom,
-        platform,
-        provenance,
-        scanOnPush,
-        maxImageCount,
-      }) {
+      async function (
+        this: AwsProvider,
+        {
+          imageName,
+          imagePath,
+          imageFilename,
+          buildArgs,
+          buildOptions,
+          cacheFrom,
+          platform,
+          provenance,
+          scanOnPush,
+          maxImageCount,
+        }: ImageBuildOptions
+      ): Promise<FunctionImageUriAndSha> {
         const imageProgress = progress.get(`containerImage:${imageName}`);
         await this.ensureDockerIsAvailable();
 
         let isDockerfileAvailable = false;
-        const pathToDockerfile = path.resolve(this.serverless.serviceDir, imagePath, imageFilename);
+        const pathToDockerfile = path.resolve(
+          this.serverless.serviceDir!,
+          imagePath,
+          imageFilename
+        );
 
         try {
           const stats = await fsp.stat(pathToDockerfile);
@@ -2337,10 +2425,10 @@ Object.defineProperties(
 
         const buildArgsArr = Object.keys(buildArgs)
           .map((key) => `${key}=${buildArgs[key]}`)
-          .reduce((accumulator, current) => [...accumulator, '--build-arg', current], []);
+          .reduce((accumulator: string[], current) => [...accumulator, '--build-arg', current], []);
 
         const cacheFromArr = cacheFrom.reduce(
-          (accumulator, current) => [...accumulator, '--cache-from', current],
+          (accumulator: string[], current) => [...accumulator, '--cache-from', current],
           []
         );
 
@@ -2361,7 +2449,7 @@ Object.defineProperties(
         if (platform !== '') buildDockerArgs.push(`--platform=${platform}`);
         if (provenance !== '') buildDockerArgs.push(`--provenance=${provenance}`);
 
-        let imageSha;
+        let imageSha: string;
         try {
           imageProgress.notice(`Building image "${imageName}"`);
           try {
@@ -2372,7 +2460,7 @@ Object.defineProperties(
             if (buildDockerStdBuffer) {
               log.info(buildDockerStdBuffer.toString().trimRight());
             }
-          } catch (err) {
+          } catch (err: any) {
             throw new ServerlessError(
               `Encountered error during executing: docker ${buildDockerArgs.join(
                 ' '
@@ -2391,7 +2479,7 @@ Object.defineProperties(
             if (tagDockerStdBuffer) {
               log.info(tagDockerStdBuffer.toString().trimRight());
             }
-          } catch (err) {
+          } catch (err: any) {
             throw new ServerlessError(
               `Encountered error during executing: docker ${tagDockerArgs.join(
                 ' '
@@ -2403,7 +2491,7 @@ Object.defineProperties(
           imageProgress.notice(`Uploading image "${imageName}"`);
           const dockerPushOutput = await this.dockerPushToEcr(remoteTag);
           // Extract imageSha from `docker push` output
-          imageSha = dockerPushOutput.match(/(sha256:[a-f0-9]{64})/)[0];
+          imageSha = dockerPushOutput.match(/(sha256:[a-f0-9]{64})/)![0];
         } finally {
           imageProgress.remove();
         }
@@ -2415,11 +2503,11 @@ Object.defineProperties(
       },
       {
         promise: true,
-        normalizer: (args) => toCacheKey(args[0]),
+        normalizer: (args: unknown[]) => toCacheKey(args[0]),
       }
     ),
     resolveImageUriAndShaFromUri: methodDescriptor(
-      async function (image) {
+      async function (this: AwsProvider, image: string): Promise<FunctionImageUriAndSha> {
         const providedImageSha = image.split('@')[1];
         if (providedImageSha) {
           return {
@@ -2469,7 +2557,7 @@ Object.defineProperties(
       { promise: true }
     ),
     resolveImageUriAndSha: methodDescriptor(
-      async function (functionName) {
+      async function (this: AwsProvider, functionName: string): Promise<FunctionImageUriAndSha> {
         const { image } = this.serverless.service.getFunction(functionName);
         // Resolve if image on function was defined with uri or with name (reference to image in `provider.ecr.images`)
         const resolveImageUriOrName = () => {
@@ -2506,8 +2594,8 @@ Object.defineProperties(
         const { imageUri, imageName } = resolveImageUriOrName();
         const defaultDockerfile = 'Dockerfile';
         const defaultBuildArgs = {};
-        const defaultBuildOptions = [];
-        const defaultCacheFrom = [];
+        const defaultBuildOptions: string[] = [];
+        const defaultCacheFrom: string[] = [];
         const defaultScanOnPush = false;
         const defaultPlatform = '';
         const defaultProvenance = '';
@@ -2517,9 +2605,11 @@ Object.defineProperties(
           return await this.resolveImageUriAndShaFromUri(imageUri);
         }
 
-        const providerEcrConfig = this.serverless.service.provider.ecr || {};
+        const providerEcrConfig: Partial<NonNullable<ServiceProvider['ecr']>> =
+          this.serverless.service.provider.ecr || {};
+        // Without a URI, the function image is referenced by name
         const imageDefinedInProvider =
-          providerEcrConfig.images && providerEcrConfig.images[imageName];
+          providerEcrConfig.images && providerEcrConfig.images[imageName!];
 
         const imageScanDefinedInProvider =
           providerEcrConfig.scanOnPush === undefined
@@ -2583,7 +2673,7 @@ Object.defineProperties(
           }
           if (imageDefinedInProvider.path) {
             return await this.resolveImageUriAndShaFromPath({
-              imageName,
+              imageName: imageName!,
               imagePath: imageDefinedInProvider.path,
               imageFilename: imageDefinedInProvider.file || defaultDockerfile,
               buildArgs: imageDefinedInProvider.buildArgs || defaultBuildArgs,
@@ -2595,20 +2685,21 @@ Object.defineProperties(
               maxImageCount: maxImageCountProvider,
             });
           }
-          return await this.resolveImageUriAndShaFromUri(imageDefinedInProvider.uri);
+          return await this.resolveImageUriAndShaFromUri(imageDefinedInProvider.uri!);
         }
         if (isEcrUri(imageDefinedInProvider)) {
           return await this.resolveImageUriAndShaFromUri(imageDefinedInProvider);
         }
         return await this.resolveImageUriAndShaFromPath({
-          imageName,
+          imageName: imageName!,
           imagePath: imageDefinedInProvider,
           imageFilename: defaultDockerfile,
-          buildArgs: imageDefinedInProvider.buildArgs || defaultBuildArgs,
-          buildOptions: imageDefinedInProvider.buildOptions || defaultBuildOptions,
-          cacheFrom: imageDefinedInProvider.cacheFrom || defaultCacheFrom,
-          platform: imageDefinedInProvider.platform || defaultPlatform,
-          provenance: imageDefinedInProvider.provenance || defaultProvenance,
+          // A path string has no build properties
+          buildArgs: defaultBuildArgs,
+          buildOptions: defaultBuildOptions,
+          cacheFrom: defaultCacheFrom,
+          platform: defaultPlatform,
+          provenance: defaultProvenance,
           scanOnPush: imageScanDefinedInProvider,
           maxImageCount: maxImageCountProvider,
         });

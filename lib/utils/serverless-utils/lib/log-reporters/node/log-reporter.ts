@@ -34,15 +34,15 @@ class ServerlessLogReporter extends NodeLogReporter {
       }
     });
   }
-  isLoggerEnabled(logger) {
+  isLoggerEnabled(logger: any) {
     return logger.namespaceTokens[0] === 'serverless' && logger.isEnabled;
   }
-  setupLevelMessageDecorator(levelLogger) {
+  setupLevelMessageDecorator(levelLogger: any) {
     if (levelLogger.levelIndex === WARNING_LEVEL_INDEX) {
       levelLogger.messageContentDecorator = style.warning;
     }
   }
-  resolveMessageContent(event) {
+  resolveMessageContent(event: any) {
     super.resolveMessageContent(event);
     if (event.logger.levelIndex !== ERROR_LEVEL_INDEX) {
       return;
@@ -62,7 +62,7 @@ ServerlessLogReporter.levelPrefixes = {
   warning: style.warning('Warning:'),
 };
 
-ServerlessLogReporter.resolveNamespaceMessagePrefix = function (logger) {
+ServerlessLogReporter.resolveNamespaceMessagePrefix = function (logger: any) {
   if (logger.level !== 'debug') {
     return null;
   }

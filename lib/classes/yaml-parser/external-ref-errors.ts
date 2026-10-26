@@ -3,16 +3,20 @@ import ServerlessError from '../../serverless-error.ts';
 const YAML_REF_ACCESS_DENIED = 'YAML_REF_ACCESS_DENIED';
 const YAML_REF_OPTIONS_ERROR = 'YAML_REF_OPTIONS_ERROR';
 
-const isExternalRefAccessDeniedError = (error) => error && error.code === YAML_REF_ACCESS_DENIED;
+const isExternalRefAccessDeniedError = (error: any) =>
+  error && error.code === YAML_REF_ACCESS_DENIED;
 
-const createExternalRefAccessDeniedError = (message) =>
+const createExternalRefAccessDeniedError = (message: string) =>
   new ServerlessError(message, YAML_REF_ACCESS_DENIED);
 
-const denyExternalRef = (message) => {
+const denyExternalRef: (message: string) => never = (message) => {
   throw createExternalRefAccessDeniedError(message);
 };
 
-const getExternalRefAccessDeniedError = (error, seenErrors = new Set()) => {
+const getExternalRefAccessDeniedError = (
+  error: any,
+  seenErrors = new Set<unknown>()
+): Error | null => {
   if (error == null || typeof error !== 'object') return null;
   if (seenErrors.has(error)) return null;
 
@@ -33,7 +37,7 @@ const getExternalRefAccessDeniedError = (error, seenErrors = new Set()) => {
   return null;
 };
 
-const throwOptionsError = (message) => {
+const throwOptionsError: (message: string) => never = (message) => {
   throw new ServerlessError(message, YAML_REF_OPTIONS_ERROR);
 };
 
