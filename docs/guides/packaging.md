@@ -197,6 +197,16 @@ package:
   excludeDevDependencies: false
 ```
 
+### TypeScript handlers
+
+`package.stripTypeScript: true` packages TypeScript sources as JavaScript, with their types
+stripped the way Node.js runs `.ts` files: see [Lambda handlers in TypeScript](typescript.md#packagestriptypescript).
+
+```yml
+package:
+  stripTypeScript: true
+```
+
 ### Pruning previous deployment artifacts
 
 Each deployment uploads its artifacts to the deployment bucket. To avoid that bucket growing unbounded, osls prunes older deployment artifacts after a successful deploy, keeping the 5 most recent deployments by default. You can change how many previous deployments are retained with the `maxPreviousDeploymentArtifacts` property under `provider.deploymentBucket`:

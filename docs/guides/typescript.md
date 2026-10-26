@@ -133,7 +133,34 @@ JavaScript (for example with `tsc`) and publish the `.js` files with their `.d.t
 
 ## Lambda handlers in TypeScript
 
-The Lambda Node.js runtimes run JavaScript: compile TypeScript handlers before packaging.
+The Lambda Node.js runtimes run JavaScript. osls can package TypeScript handlers as JavaScript
+itself, or a build step can compile them first.
+
+### `package.stripTypeScript`
+
+```yaml
+package:
+  stripTypeScript: true
+
+functions:
+  hello:
+    handler: src/handler.hello # src/handler.ts
+```
+
+When packaging, osls strips the types of the `.ts`, `.mts` and `.cts` files it includes (not
+`.d.ts` files, not `node_modules`) and adds them as `.js`, `.mjs` and `.cjs` files, so the
+`handler` setting stays the same. Relative imports of TypeScript files (`./util.ts`) are rewritten
+to the JavaScript files. Types are removed the way Node.js runs `.ts` files: only erasable syntax is
+supported (enable `erasableSyntaxOnly` in `tsconfig.json`), types are not checked (run `tsc`), and
+line and column positions are kept, so stack traces match the sources. Code is not bundled:
+dependencies are packaged from `node_modules` as usual. `osls invoke local` runs the `.ts`
+handlers directly.
+
+Packaging fails when a TypeScript source and a JavaScript file would have the same name in the
+artifact (for example `handler.ts` next to a compiled `handler.js`): exclude one of them with
+`package.patterns`.
+
+### Other ways to build handlers
 
 - With TypeScript 7 only: compile with `tsc` (with `outDir`, without `noEmit`), point `handler`
   to the compiled files (`dist/handlers/users.create`) and include them in the

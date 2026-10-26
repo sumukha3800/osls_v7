@@ -57,6 +57,7 @@
     "cross-spawn": "7.0.6",
     "dotenv": "17.4.2",
     "dotenv-expand": "13.0.0",
+    "es-module-lexer": "3.0.3",
     "ext": "1.7.0",
     "fast-glob": "3.3.3",
     "fastest-levenshtein": "1.0.16",

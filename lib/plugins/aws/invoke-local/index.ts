@@ -918,6 +918,7 @@ class AwsInvokeLocal {
   }
 
   async invokeLocalNodeJs(handlerPath, handlerName, event, customContext) {
+    const stripsTypeScript = Boolean(this.serverless.service.package?.stripTypeScript);
     let lambda;
     let pathToHandler;
     let hasResponded = false;
@@ -950,12 +951,14 @@ class AwsInvokeLocal {
     }
 
     async function loadModule(modulePath) {
-      // Same lookup order as the AWS Lambda Node.js runtime
+      // Same lookup order as the AWS Lambda Node.js runtime; with `package.stripTypeScript`,
+      // TypeScript sources are packaged as these JavaScript files, and Node.js runs them directly
       for (const candidate of [
         modulePath,
         `${modulePath}.js`,
         `${modulePath}.mjs`,
         `${modulePath}.cjs`,
+        ...(stripsTypeScript ? [`${modulePath}.ts`, `${modulePath}.mts`, `${modulePath}.cts`] : []),
       ]) {
         let stats;
         try {
